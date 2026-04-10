@@ -89,8 +89,8 @@
     .report-id { font-size: 12px; color: #a0aec0; font-weight: 600; }
     .report-title { font-size: 16px; font-weight: 700; color: #1a202c; }
     .report-meta { display: flex; gap: 16px; flex-wrap: wrap; }
-    .meta-item { font-size: 13px; color: #718096; display: flex; align-items: center; gap: 4px; }
-    .report-desc { font-size: 13px; color: #4a5568; line-height: 1.5; margin-top: 4px; background: #f7fafc; padding: 8px 12px; border-radius: 6px; border-left: 3px solid #bee3f8; }
+    .meta-item { font-size: 15px; color: #718096; display: flex; align-items: center; gap: 4px; }
+    .report-desc { font-size: 15px; color: #4a5568; line-height: 1.5; margin-top: 4px; background: #f7fafc; padding: 8px 12px; border-radius: 6px; border-left: 3px solid #bee3f8; }
     .report-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; min-width: 140px; }
     .report-date { font-size: 11px; color: #a0aec0; }
 
@@ -308,9 +308,11 @@
             <label>고장 유형 <span class="required">*</span></label>
             <select id="f-type" required>
               <option value="">-- 선택하세요 --</option>
-              <option>문 개폐 불량</option><option>버튼 고장</option><option>소음/진동</option>
-              <option>층 정지 불량</option><option>비상 인터폰 불량</option><option>조명 고장</option>
-              <option>속도 이상</option><option>갇힘 사고</option><option>기타</option>
+              <option>정지</option><option>갇힘정지</option><option>OPEN정지</option>
+              <option>도어OP-CL반복</option><option>도어개폐불량</option><option>도어소음</option>
+              <option>층레벨차이</option><option>소음&amp;진동</option><option>버튼불량</option>
+              <option>층표시기불량</option><option>카내부조명미점등</option><option>인터폰불량</option>
+              <option>침수&amp;정전</option><option>기타</option>
             </select>
           </div>
           <input type="hidden" id="f-priority" value="" />
@@ -407,30 +409,18 @@
         </h2>
         <div class="filters" style="flex-wrap:wrap;gap:8px">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-            <label style="font-size:13px;color:#4a5568">기간:</label>
-            <select id="done-year-from" onchange="renderDoneList()" style="padding:6px 8px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit"></select>
-            <select id="done-mon-from" onchange="renderDoneList()" style="padding:6px 8px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit">
-              <option value="">월</option>
-              <option>1</option><option>2</option><option>3</option><option>4</option>
-              <option>5</option><option>6</option><option>7</option><option>8</option>
-              <option>9</option><option>10</option><option>11</option><option>12</option>
-            </select>
-            <span style="color:#a0aec0">~</span>
-            <select id="done-year-to" onchange="renderDoneList()" style="padding:6px 8px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit"></select>
-            <select id="done-mon-to" onchange="renderDoneList()" style="padding:6px 8px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit">
-              <option value="">월</option>
-              <option>1</option><option>2</option><option>3</option><option>4</option>
-              <option>5</option><option>6</option><option>7</option><option>8</option>
-              <option>9</option><option>10</option><option>11</option><option>12</option>
-            </select>
+            <label style="font-size:13px;color:#4a5568">날짜:</label>
+            <input type="date" id="done-date" onchange="renderDoneList()" style="padding:6px 8px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit" />
             <button onclick="clearDoneFilter()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:12px;font-family:inherit;background:white;cursor:pointer;color:#718096">초기화</button>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <select id="done-type-filter" onchange="renderDoneList()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit">
               <option value="">전체 유형</option>
-              <option>문 개폐 불량</option><option>버튼 고장</option><option>소음/진동</option>
-              <option>층 정지 불량</option><option>비상 인터폰 불량</option><option>조명 고장</option>
-              <option>속도 이상</option><option>갇힘 사고</option><option>기타</option>
+              <option>정지</option><option>갇힘정지</option><option>OPEN정지</option>
+              <option>도어OP-CL반복</option><option>도어개폐불량</option><option>도어소음</option>
+              <option>층레벨차이</option><option>소음&amp;진동</option><option>버튼불량</option>
+              <option>층표시기불량</option><option>카내부조명미점등</option><option>인터폰불량</option>
+              <option>침수&amp;정전</option><option>기타</option>
             </select>
             <input class="search-input" type="text" id="done-search" placeholder="🔍 건물명·호기·신고자 검색" oninput="renderDoneList()" style="margin-left:0" />
             <span id="done-count-label" style="font-size:13px;color:#4a5568;white-space:nowrap"></span>
@@ -498,33 +488,33 @@
     </div>
     <div style=padding:20px 24px>
       <div style=background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:20px>
-        <div style=font-size:11px;font-weight:700;color:#718096;letter-spacing:0.5px;margin-bottom:12px>접수 정보</div>
+        <div style=font-size:14px;font-weight:700;color:#e53e3e;letter-spacing:0.5px;margin-bottom:12px>접수 정보</div>
         <div id=rdm-report-info style=font-size:13px></div>
       </div>
-      <div id=rdm-edit-section>
-        <div style=font-size:11px;font-weight:700;color:#718096;letter-spacing:0.5px;margin-bottom:14px>처리 정보</div>
+      <div id=rdm-edit-section style=margin-top:24px>
+        <div style=font-size:14px;font-weight:700;color:#e53e3e;letter-spacing:0.5px;margin-bottom:14px>처리 정보</div>
         <div style=display:grid;grid-template-columns:1fr 1fr;gap:12px 16px>
           <div><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리 상태</label>
             <select id=rdm-status style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit><option>접수중</option><option>배치완료</option><option>완료</option></select></div>
           <div><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리담당자</label>
             <input type=text id=rdm-handler placeholder=담당자 이름 style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit /></div>
-          <div><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리일시 (날짜)</label>
-            <input type=date id=rdm-date style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit /></div>
-          <div><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리일시 (시간)</label>
-            <input type=time id=rdm-time style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit /></div>
+          <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리일시</label>
+            <div style=display:flex;gap:8px>
+            <input type=date id=rdm-date style=flex:1;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit />
+            <input type=time id=rdm-time oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3))this.blur();this._v=this.value;" style=flex:1;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit />
+            </div></div>
           <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리내용</label>
-            <input type=text id=rdm-content placeholder=처리한 내용을 간략히 입력 style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit /></div>
+            <input type=text id=rdm-content placeholder="처리한 내용을 적어주세요. 부품교체를 하셨으면 아래 체크해주세요." style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit /></div>
           <div style=grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fffbeb;border:1.5px solid #fbd38d;border-radius:8px>
             <input type=checkbox id=rdm-parts style=width:18px;height:18px;cursor:pointer;accent-color:#d69e2e;flex-shrink:0 />
             <label for=rdm-parts style=font-size:13px;font-weight:600;color:#744210;cursor:pointer;user-select:none>부품 교체 있음</label></div>
           <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>상세내역</label>
-            <textarea id=rdm-detail placeholder=부품명, 교체 수량, 특이사항 등 상세 내용 입력 rows=4 style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical></textarea></div>
+            <textarea id=rdm-detail placeholder="상세내역을 자세하게 적어주세요." rows=4 style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical></textarea></div>
         </div>
       </div>
     </div>
     <div style=padding:14px 24px;border-top:1.5px solid #e2e8f0;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;background:white>
       <button onclick=deleteFromDetail() id=rdm-delete-btn style=display:none;padding:9px 18px;background:none;border:1.5px solid #fed7d7;color:#c53030;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;margin-right:auto>삭제</button>
-      <button onclick=confirmAssignment() id=rdm-assign-btn style=display:none;padding:9px 20px;background:#2b6cb0;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer>✅ 배치 확인</button>
       <button onclick=closeReportDetail() style=padding:9px 20px;background:none;border:1.5px solid #cbd5e0;color:#718096;border-radius:8px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer>닫기</button>
       <button onclick=saveReportDetail() id=rdm-save-btn style=padding:9px 24px;background:#2b6cb0;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer>저장</button>
     </div>
@@ -889,25 +879,27 @@
 
     const dt = r.created_at ? new Date(r.created_at).toLocaleString('ko-KR') : '';
     const priorityMap = { '높음':'🔴 높음', '중간':'🟡 중간', '낮음':'🟢 낮음' };
-    document.getElementById('rdm-report-info').innerHTML =
-      '<div style=display:grid;grid-template-columns:1fr_1fr;gap:8px_16px>'  .replace(/_/g,' ') +
-      '<div><span style=color:#718096;font-size:11px;font-weight:700>접수번호</span><br><strong>' + escHtml(r.id) + '</strong></div>' +
-      '<div><span style=color:#718096;font-size:11px;font-weight:700>접수일시</span><br>' + dt + '</div>' +
-      '<div><span style=color:#718096;font-size:11px;font-weight:700>고장유형</span><br>' + escHtml(r.type||'-') + '</div>' +
-      '<div><span style=color:#718096;font-size:11px;font-weight:700>긴급도</span><br>' + (priorityMap[r.priority]||escHtml(r.priority||'-')) + '</div>' +
-      '<div><span style=color:#718096;font-size:11px;font-weight:700>신고자</span><br>' + escHtml(r.name||'-') + '</div>' +
-      '<div><span style=color:#718096;font-size:11px;font-weight:700>연락처</span><br>' + escHtml(r.phone||'-') + '</div>' +
-      (r.regno ? '<div><span style=color:#718096;font-size:11px;font-weight:700>승강기번호</span><br>' + escHtml(r.regno) + '</div>' : '') +
-      (r.description ? '<div style=grid-column:1/-1><span style=color:#718096;font-size:11px;font-weight:700>신고내용</span><br><span style=white-space:pre-wrap>' + escHtml(r.description) + '</span></div>' : '') +
+    const infoRow = (label, value) =>
+      '<div style="display:flex;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid #edf2f7">' +
+      '<span style="color:#718096;font-size:11px;font-weight:700;min-width:72px;flex-shrink:0">' + label + '</span>' +
+      '<span style="font-size:13px;color:#2d3748;font-weight:500;word-break:break-all">' + value + '</span>' +
       '</div>';
+    document.getElementById('rdm-report-info').innerHTML =
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">' +
+      infoRow('접수번호', '<strong>' + escHtml(r.id) + '</strong>') +
+      infoRow('접수일시', dt) +
+      infoRow('고장유형', escHtml(r.type||'-')) +
+      infoRow('신고자', escHtml(r.name||'-')) +
+      infoRow('연락처', escHtml(r.phone||'-')) +
+      (r.regno ? infoRow('승강기번호', escHtml(r.regno)) : '<div></div>') +
+      '</div>' +
+      (r.description ? '<div style="margin-top:10px;padding:10px 12px;background:#f7fafc;border-radius:8px;border-left:3px solid #bee3f8">' +
+      '<span style="color:#718096;font-size:11px;font-weight:700;display:block;margin-bottom:4px">신고내용</span>' +
+      '<span style="font-size:13px;color:#2d3748;white-space:pre-wrap">' + escHtml(r.description) + '</span></div>' : '');
 
     const editSec   = document.getElementById('rdm-edit-section');
     const saveBtn   = document.getElementById('rdm-save-btn');
     const delBtn    = document.getElementById('rdm-delete-btn');
-    const assignBtn = document.getElementById('rdm-assign-btn');
-
-    // 배치 확인 버튼: 접수중 상태이고 직원 또는 관리자인 경우
-    assignBtn.style.display = (r.status === '접수중' && canEdit) ? '' : 'none';
 
     if (canEdit) {
       editSec.style.display = '';
@@ -915,14 +907,16 @@
       delBtn.style.display = currentRole === '관리자' ? '' : 'none';
 
       document.getElementById('rdm-status').value = r.status || '접수중';
+      document.getElementById('rdm-status').disabled = currentRole !== '관리자';
       document.getElementById('rdm-handler').value = r.completion_handler || (currentRole !== '관리주체' && currentUser ? currentUser.username : '');
       if (r.completion_at) {
         const d = new Date(r.completion_at);
         document.getElementById('rdm-date').value = d.toISOString().slice(0,10);
         document.getElementById('rdm-time').value = d.toTimeString().slice(0,5);
       } else {
-        document.getElementById('rdm-date').value = '';
-        document.getElementById('rdm-time').value = '';
+        const now = new Date();
+        document.getElementById('rdm-date').value = now.toISOString().slice(0,10);
+        document.getElementById('rdm-time').value = now.toTimeString().slice(0,5);
       }
       document.getElementById('rdm-content').value  = r.completion_content || '';
       document.getElementById('rdm-parts').checked  = r.parts_replaced || false;
@@ -935,16 +929,6 @@
     document.getElementById('report-detail-modal').style.display = 'flex';
   }
 
-  async function confirmAssignment() {
-    const btn = document.getElementById('rdm-assign-btn');
-    btn.disabled = true; btn.textContent = '처리 중...';
-    const { error } = await db.from('reports').update({ status: '배치완료' }).eq('id', currentReportId);
-    btn.disabled = false; btn.textContent = '✅ 배치 확인';
-    if (error) { showToast('❌ 실패: ' + error.message); return; }
-    showToast('✅ 배치 확인되었습니다.');
-    document.getElementById('report-detail-modal').style.display = 'none';
-    await loadReports(); updateStats(); updatePendingBadge(); renderList();
-  }
 
   async function confirmAssignById(id) {
     const { error } = await db.from('reports').update({ status: '배치완료' }).eq('id', id);
@@ -1028,26 +1012,18 @@
   }
 
   function initDoneYearSelects() {
-    const cur = new Date().getFullYear();
-    ['from','to'].forEach(p => {
-      const sel = document.getElementById('done-year-'+p);
-      if (!sel) return;
-      sel.innerHTML = '<option value="">년도</option>';
-      for (let y = cur; y >= cur - 5; y--) {
-        sel.innerHTML += `<option value="${y}">${y}년</option>`;
-      }
-    });
+    const dateEl = document.getElementById('done-date');
+    if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0,10);
   }
 
   function renderDoneList() {
     const q = (document.getElementById('done-search')?.value || '').trim().toLowerCase();
     const typeFilter = document.getElementById('done-type-filter')?.value || '';
-    const fromVal = getDoneYM('from');
-    const toVal   = getDoneYM('to');
+    const dateVal = document.getElementById('done-date')?.value || '';
     let list = doneReports.filter(r => {
       if (typeFilter && (r.type||'') !== typeFilter) return false;
       if (q && !((r.building||'').toLowerCase().includes(q)||(r.elevator||'').toLowerCase().includes(q)||(r.type||'').toLowerCase().includes(q)||(r.name||'').toLowerCase().includes(q))) return false;
-      if (fromVal||toVal) { const ym=(r.created_at||'').slice(0,7); if(fromVal&&ym<fromVal) return false; if(toVal&&ym>toVal) return false; }
+      if (dateVal) { const d = (r.completion_at||r.created_at||'').slice(0,10); if(d !== dateVal) return false; }
       return true;
     });
     const countEl = document.getElementById('done-count-label');
@@ -1083,10 +1059,7 @@
   }
 
   function clearDoneFilter() {
-    document.getElementById('done-year-from').value = '';
-    document.getElementById('done-mon-from').value = '';
-    document.getElementById('done-year-to').value = '';
-    document.getElementById('done-mon-to').value = '';
+    document.getElementById('done-date').value = new Date().toISOString().slice(0,10);
     document.getElementById('done-type-filter').value = '';
     document.getElementById('done-search').value = '';
     renderDoneList();
@@ -1336,7 +1309,6 @@
         '</div>' +
         '<div class=report-meta>' +
         '<span class=meta-item>🔧 ' + escHtml(r.type||'') + '</span>' +
-        '<span class="meta-item ' + (pC[r.priority]||'') + '">' + (pI[r.priority]||'') + ' 긴급도: ' + escHtml(r.priority||'') + '</span>' +
         (r.regno ? '<span class=meta-item>🔖 승강기번호: ' + escHtml(r.regno) + '</span>' : '') +
         '<span class=meta-item>👤 ' + escHtml(r.name||'') + ' (' + escHtml(r.phone||'') + ')</span>' +
         '<span class=report-date>📅 ' + dt + '</span>' +
