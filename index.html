@@ -804,6 +804,20 @@
 
 <div id="toast"></div>
 
+<!-- 미처리 배치 알림 모달 -->
+<div id="pending-alert-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2100;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:16px;padding:28px 28px 22px;width:360px;max-width:calc(100vw - 32px);box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+    <div style="font-size:32px;text-align:center;margin-bottom:10px">⚠️</div>
+    <h3 style="font-size:17px;font-weight:800;color:#c53030;text-align:center;margin-bottom:6px">미처리 배치 건 알림</h3>
+    <p style="font-size:13px;color:#718096;text-align:center;margin-bottom:16px">담당자로 배치됐지만 아직 완료 처리되지 않은 건이 있어요.</p>
+    <div id="pending-alert-list" style="max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:18px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="closePendingAlert()" style="flex:1;padding:11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;background:white;color:#4a5568">나중에</button>
+      <button onclick="goPendingList()" style="flex:1;padding:11px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;background:#c53030;color:white">목록 보기</button>
+    </div>
+  </div>
+</div>
+
 <script>
   /* ── CONFIG ── */
   const SUPABASE_URL = 'https://bbnmxwpacdfqvicybhau.supabase.co';
@@ -2150,6 +2164,44 @@
     setTimeout(() => t.classList.remove('show'), 3000);
   }
 
+  async function checkPendingAssignments() {
+    if (!currentUser || currentRole === '관리주체' || currentRole === '관리자') return;
+    const handler = currentUser.name || currentUser.username;
+    const { data } = await db.from('reports').select('*').eq('status', '배치완료').eq('completion_handler', handler);
+    if (!data || !data.length) return;
+    const tenHoursAgo = new Date(Date.now() - 10 * 60 * 60 * 1000);
+    const overdue = data.filter(r => new Date(r.created_at) < tenHoursAgo);
+    if (!overdue.length) return;
+
+    const listEl = document.getElementById('pending-alert-list');
+    listEl.innerHTML = overdue.map(r => {
+      const elapsed = Math.floor((Date.now() - new Date(r.created_at)) / (1000 * 60 * 60));
+      return '<div style="background:#fff5f5;border:1.5px solid #fed7d7;border-radius:8px;padding:10px 14px">' +
+        '<div style="font-size:14px;font-weight:700;color:#1a202c">' + escHtml(r.building||'') + ' · ' + escHtml(r.elevator||'') + '</div>' +
+        '<div style="font-size:12px;color:#c53030;margin-top:3px">⏰ ' + elapsed + '시간째 미처리 · ' + escHtml(r.type||'') + '</div>' +
+        '</div>';
+    }).join('');
+
+    document.getElementById('pending-alert-modal').style.display = 'flex';
+  }
+
+  function closePendingAlert() {
+    document.getElementById('pending-alert-modal').style.display = 'none';
+  }
+
+  function goPendingList() {
+    closePendingAlert();
+    switchTab('list', null);
+    setTimeout(() => {
+      const searchEl = document.getElementById('list-search');
+      if (searchEl) {
+        const handler = currentUser.name || currentUser.username;
+        searchEl.value = handler;
+        setFilter('배치완료', document.querySelector('.filter-btn[onclick*="배치완료"]'));
+      }
+    }, 100);
+  }
+
   /* ── AUTOCOMPLETE ── */
   let SITES = [];
 
@@ -3213,6 +3265,7 @@
     showToast(getRoleIcon(currentRole) + ' ' + username + '님으로 로그인되었습니다.');
     renderReportPage();
     switchTab('report', null);
+    setTimeout(() => checkPendingAssignments(), 500);
   }
 
   /* ── 건물명 필드 제어 ── */
@@ -3285,7 +3338,8 @@
           applyRoleUI();
           updateSiteBadge();
           setBuildingField();
-    setReporterField();
+          setReporterField();
+          setTimeout(() => checkPendingAssignments(), 500);
         } else {
           localStorage.removeItem('daesol_autologin');
         }
