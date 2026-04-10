@@ -409,9 +409,13 @@
         </h2>
         <div class="filters" style="flex-wrap:wrap;gap:8px">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-            <label style="font-size:13px;color:#4a5568">날짜:</label>
-            <input type="date" id="done-date" onchange="renderDoneList()" style="padding:6px 8px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit" />
-            <button onclick="clearDoneFilter()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:12px;font-family:inherit;background:white;cursor:pointer;color:#718096">초기화</button>
+            <label style="font-size:13px;color:#4a5568;white-space:nowrap">날짜:</label>
+            <input type="date" id="done-date-from" onchange="renderDoneList()" style="padding:6px 8px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit" />
+            <span style="font-size:13px;color:#718096">~</span>
+            <input type="date" id="done-date-to" onchange="renderDoneList()" style="padding:6px 8px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit" />
+            <button onclick="setDoneFilterToday()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:12px;font-family:inherit;background:white;cursor:pointer;color:#4a5568;white-space:nowrap">오늘</button>
+            <button onclick="setDoneFilterMonth()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:12px;font-family:inherit;background:white;cursor:pointer;color:#4a5568;white-space:nowrap">이번달</button>
+            <button onclick="clearDoneFilter()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:12px;font-family:inherit;background:white;cursor:pointer;color:#718096;white-space:nowrap">전체</button>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <select id="done-type-filter" onchange="renderDoneList()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit">
@@ -449,7 +453,7 @@
       <div class="filters" style="margin-bottom:16px">
         <button class="filter-btn active" id="mgmt-filter-all" onclick="setMgmtFilter('all',this)">전체</button>
         <button class="filter-btn" id="mgmt-filter-expire" onclick="setMgmtFilter('expire',this)">⚠️ 계약만료 <span id="mgmt-expire-badge2" style="background:#e53e3e;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;display:none"></span></button>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+        <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span id="mgmt-total-stats" style="font-size:13px;color:#4a5568;white-space:nowrap"></span>
           <select id="mgmt-contract-filter" onchange="renderMgmtList()" style="padding:7px 12px;border:1.5px solid #cbd5e0;border-radius:20px;font-size:13px;font-family:inherit;color:#4a5568;background:white;cursor:pointer">
             <option value="">계약구분 전체</option>
@@ -462,8 +466,10 @@
             <option>대솔POG</option>
             <option>대솔FM</option>
           </select>
-          <input class="search-input" type="text" id="mgmt-search" placeholder="🔍 현장명·점검자 검색" oninput="renderMgmtList()" style="margin-left:0;width:220px" />
           <button onclick="exportMgmtExcel()" style="padding:7px 14px;background:#1d6f42;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">📥 엑셀</button>
+        </div>
+        <div style="width:100%;margin-top:8px">
+          <input class="search-input" type="text" id="mgmt-search" placeholder="🔍 현장명·점검자 검색" oninput="renderMgmtList()" onkeyup="renderMgmtList()" onchange="renderMgmtList()" style="margin-left:0;width:100%" />
         </div>
       </div>
       <div id="mgmt-action-bar" style="display:none;align-items:center;gap:10px;background:#ebf8ff;border:1.5px solid #bee3f8;border-radius:10px;padding:10px 16px;margin-bottom:12px;flex-wrap:wrap">
@@ -482,9 +488,9 @@
 <!-- 신고 상세/처리 모달 -->
 <div class=modal-overlay id=report-detail-modal style="display:none;align-items:flex-start;overflow-y:auto;padding:20px 0" onclick=if(event.target===this)closeReportDetail()>
   <div style="background:white;border-radius:14px;width:640px;max-width:calc(100vw - 24px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.2);margin:auto">
-    <div style=padding:20px 24px 16px;border-bottom:1.5px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0>
-      <h3 id=rdm-title style=font-size:16px;font-weight:700;color:#1a365d;margin:0></h3>
-      <button onclick=closeReportDetail() style=background:none;border:none;font-size:22px;cursor:pointer;color:#718096;padding:4px;line-height:1>x</button>
+    <div style="padding:20px 24px 16px;border-bottom:1.5px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <h3 id=rdm-title style="font-size:16px;font-weight:700;color:#1a365d;margin:0"></h3>
+      <button onclick=closeReportDetail() style="background:none;border:none;font-size:22px;cursor:pointer;color:#718096;padding:4px;line-height:1;flex-shrink:0">×</button>
     </div>
     <div style=padding:20px 24px>
       <div style=background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:20px>
@@ -908,7 +914,7 @@
 
       document.getElementById('rdm-status').value = r.status || '접수중';
       document.getElementById('rdm-status').disabled = currentRole !== '관리자';
-      document.getElementById('rdm-handler').value = r.completion_handler || (currentRole !== '관리주체' && currentUser ? currentUser.username : '');
+      document.getElementById('rdm-handler').value = r.completion_handler || (currentRole !== '관리주체' && currentUser ? (currentUser.name || currentUser.username) : '');
       if (r.completion_at) {
         const d = new Date(r.completion_at);
         document.getElementById('rdm-date').value = d.toISOString().slice(0,10);
@@ -931,7 +937,8 @@
 
 
   async function confirmAssignById(id) {
-    const { error } = await db.from('reports').update({ status: '배치완료' }).eq('id', id);
+    const handler = currentUser ? (currentUser.name || currentUser.username) : null;
+    const { error } = await db.from('reports').update({ status: '배치완료', completion_handler: handler }).eq('id', id);
     if (error) { showToast('❌ 실패: ' + error.message); return; }
     showToast('✅ 배치 확인되었습니다.');
     await loadReports(); updateStats(); updatePendingBadge(); renderList();
@@ -997,37 +1004,63 @@
     if (currentRole === '관리주체') q = q.eq('building', currentSite);
     const { data } = await q;
     doneReports = data || [];
-    const today = todayStr();
-    const todayCount = doneReports.filter(r => (r.completion_at || r.created_at || '').slice(0,10) === today).length;
-    const badge = document.getElementById('done-today-badge');
-    if (badge) badge.textContent = '오늘 완료 ' + todayCount + '건';
     renderDoneList();
   }
 
-  function getDoneYM(prefix) {
-    const y = document.getElementById('done-year-'+prefix)?.value || '';
-    const m = document.getElementById('done-mon-'+prefix)?.value || '';
-    if (!y || !m) return '';
-    return y + '-' + String(m).padStart(2,'0');
+  function initDoneYearSelects() {
+    const today = new Date().toISOString().slice(0,10);
+    const fromEl = document.getElementById('done-date-from');
+    const toEl   = document.getElementById('done-date-to');
+    if (fromEl && !fromEl.value) fromEl.value = today;
+    if (toEl   && !toEl.value)   toEl.value   = today;
   }
 
-  function initDoneYearSelects() {
-    const dateEl = document.getElementById('done-date');
-    if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0,10);
+  function setDoneFilterToday() {
+    const today = new Date().toISOString().slice(0,10);
+    document.getElementById('done-date-from').value = today;
+    document.getElementById('done-date-to').value   = today;
+    renderDoneList();
+  }
+
+  function setDoneFilterMonth() {
+    const now   = new Date();
+    const y     = now.getFullYear();
+    const m     = String(now.getMonth()+1).padStart(2,'0');
+    const last  = new Date(y, now.getMonth()+1, 0).getDate();
+    document.getElementById('done-date-from').value = y+'-'+m+'-01';
+    document.getElementById('done-date-to').value   = y+'-'+m+'-'+String(last).padStart(2,'0');
+    renderDoneList();
   }
 
   function renderDoneList() {
     const q = (document.getElementById('done-search')?.value || '').trim().toLowerCase();
     const typeFilter = document.getElementById('done-type-filter')?.value || '';
-    const dateVal = document.getElementById('done-date')?.value || '';
+    const fromVal = document.getElementById('done-date-from')?.value || '';
+    const toVal   = document.getElementById('done-date-to')?.value || '';
     let list = doneReports.filter(r => {
       if (typeFilter && (r.type||'') !== typeFilter) return false;
       if (q && !((r.building||'').toLowerCase().includes(q)||(r.elevator||'').toLowerCase().includes(q)||(r.type||'').toLowerCase().includes(q)||(r.name||'').toLowerCase().includes(q))) return false;
-      if (dateVal) { const d = (r.completion_at||r.created_at||'').slice(0,10); if(d !== dateVal) return false; }
+      if (fromVal || toVal) {
+        const d = (r.completion_at||r.created_at||'').slice(0,10);
+        if (fromVal && d < fromVal) return false;
+        if (toVal   && d > toVal)   return false;
+      }
       return true;
     });
     const countEl = document.getElementById('done-count-label');
     if (countEl) countEl.innerHTML = '총 <strong>'+list.length+'</strong>건';
+    const badge = document.getElementById('done-today-badge');
+    if (badge) {
+      if (!fromVal && !toVal) {
+        badge.textContent = '전체 ' + list.length + '건';
+      } else if (fromVal === toVal && fromVal === todayStr()) {
+        badge.textContent = '오늘 완료 ' + list.length + '건';
+      } else if (fromVal && toVal && fromVal === toVal) {
+        badge.textContent = fromVal + ' 완료 ' + list.length + '건';
+      } else {
+        badge.textContent = (fromVal||'?') + ' ~ ' + (toVal||'?') + '  ' + list.length + '건';
+      }
+    }
     const el = document.getElementById('done-list');
     if (!el) return;
     if (!list.length) { el.innerHTML = '<div class=empty-state><div class=icon>✅</div>처리완료 내역이 없습니다.</div>'; return; }
@@ -1059,7 +1092,8 @@
   }
 
   function clearDoneFilter() {
-    document.getElementById('done-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('done-date-from').value = '';
+    document.getElementById('done-date-to').value   = '';
     document.getElementById('done-type-filter').value = '';
     document.getElementById('done-search').value = '';
     renderDoneList();
@@ -1069,8 +1103,8 @@
     if (!doneReports.length) { showToast('내보낼 내역이 없습니다.'); return; }
     const q = (document.getElementById('done-search')?.value || '').trim().toLowerCase();
     const typeFilter = document.getElementById('done-type-filter')?.value || '';
-    const fromVal = getDoneYM('from');
-    const toVal   = getDoneYM('to');
+    const fromVal = document.getElementById('done-date-from')?.value || '';
+    const toVal   = document.getElementById('done-date-to')?.value || '';
     let list = doneReports.filter(r => {
       if (typeFilter && (r.type||'') !== typeFilter) return false;
       if (q && !(
@@ -1080,9 +1114,9 @@
         (r.name||'').toLowerCase().includes(q)
       )) return false;
       if (fromVal || toVal) {
-        const ym = (r.created_at || '').slice(0, 7);
-        if (fromVal && ym < fromVal) return false;
-        if (toVal && ym > toVal) return false;
+        const d = (r.completion_at||r.created_at||'').slice(0,10);
+        if (fromVal && d < fromVal) return false;
+        if (toVal   && d > toVal)   return false;
       }
       return true;
     });
