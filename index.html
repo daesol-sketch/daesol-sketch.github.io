@@ -2169,7 +2169,7 @@
     const handler = currentUser.name || currentUser.username;
     const { data } = await db.from('reports').select('*').eq('status', '배치완료').eq('completion_handler', handler);
     if (!data || !data.length) return;
-    const tenHoursAgo = new Date(Date.now() - 10 * 60 * 60 * 1000);
+    const tenHoursAgo = new Date(Date.now() - 2 * 60 * 1000);
     const overdue = data.filter(r => new Date(r.created_at) < tenHoursAgo);
     if (!overdue.length) return;
 
