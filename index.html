@@ -332,13 +332,20 @@
           </div>
         </div>
         <div class="form-group full" id="team-select-group" style="display:none">
-          <label>담당팀 선택 <span class="required">*</span></label>
-          <select id="f-team" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit">
+          <label>담당팀 선택</label>
+          <select id="f-team" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit" onchange="loadDutyHandlers()">
             <option value="">-- 팀 선택 --</option>
             <option value="1팀">1팀</option>
             <option value="2팀">2팀</option>
             <option value="3팀">3팀 (파주)</option>
           </select>
+        </div>
+        <div class="form-group full" id="handler-select-group" style="display:none">
+          <label>담당자 선택 <span class="required">*</span></label>
+          <select id="f-handler" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit">
+            <option value="">-- 담당자 선택 --</option>
+          </select>
+          <span id="handler-no-duty" style="display:none;font-size:12px;color:#c53030;margin-top:4px">⚠️ 현재 등록된 당직자가 없습니다.</span>
         </div>
         <button type="submit" class="btn-submit" id="submit-btn">✅ 신고 접수하기</button>
       </form>
@@ -502,10 +509,10 @@
       <div id="duty-register-section" style="margin-bottom:24px">
         <div style="font-size:15px;font-weight:700;color:#1a365d;margin-bottom:12px">내 당직 등록</div>
         <div id="duty-my-info" style="background:#f7fafc;border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:#4a5568"></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn-submit" style="max-width:200px;padding:11px" onclick="registerDuty('주간')">☀️ 주간 담당자 등록</button>
-          <button class="btn-submit" style="max-width:200px;padding:11px;background:linear-gradient(135deg,#744210,#c05621)" onclick="registerDuty('평일당직')">🌙 평일 당직 등록</button>
-          <button class="btn-submit" style="max-width:200px;padding:11px;background:linear-gradient(135deg,#276749,#2f855a)" onclick="registerDuty('주말당직')">📅 주말/휴일 등록</button>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button id="duty-btn-주간" onclick="toggleDuty('주간')" style="max-width:260px;padding:11px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">☀️ 주간 담당자 등록</button>
+          <button id="duty-btn-평일당직" onclick="toggleDuty('평일당직')" style="max-width:260px;padding:11px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">🌙 평일 당직 등록</button>
+          <button id="duty-btn-주말당직" onclick="toggleDuty('주말당직')" style="max-width:260px;padding:11px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">📅 주말/휴일 등록</button>
         </div>
       </div>
       <div style="font-size:15px;font-weight:700;color:#1a365d;margin-bottom:12px">오늘 당직 현황</div>
@@ -934,18 +941,35 @@
     return now.toISOString().slice(0,10);
   }
 
-  async function registerDuty(shiftType) {
+  async function toggleDuty(shiftType) {
     if (!currentUser || currentRole === '관리주체') return showToast('❌ 직원 계정으로 로그인하세요.');
     const team = currentUser.team;
     const handler = currentUser.name || currentUser.username;
     if (!team) return showToast('❌ 계정에 팀 정보가 없습니다. 관리자에게 문의하세요.');
     const date = getShiftDate();
-    const { error } = await db.from('duty_roster').upsert(
-      { date, shift_type: shiftType, team, handler_name: handler, account_id: String(currentUser.id) },
-      { onConflict: 'date,shift_type,team' }
-    );
-    if (error) { showToast('❌ 등록 실패: ' + error.message); return; }
-    showToast('✅ ' + shiftType + ' 당직 등록 완료!');
+    // 이미 본인이 등록됐는지 확인
+    const { data: existing } = await db.from('duty_roster').select('id')
+      .eq('date', date).eq('shift_type', shiftType).eq('team', team).eq('handler_name', handler).maybeSingle();
+    if (existing) {
+      // 해제
+      const { error } = await db.from('duty_roster').delete().eq('id', existing.id);
+      if (error) { showToast('❌ 해제 실패: ' + error.message); return; }
+      showToast('🗑️ ' + shiftType + ' 등록이 해제되었습니다.');
+    } else {
+      // 등록 - 주간은 최대 2명, 나머지는 1명
+      const maxCount = shiftType === '주간' ? 2 : 1;
+      const { data: current } = await db.from('duty_roster').select('id')
+        .eq('date', date).eq('shift_type', shiftType).eq('team', team);
+      if (current && current.length >= maxCount) {
+        showToast('❌ ' + shiftType + ' 인원이 이미 ' + maxCount + '명 등록되었습니다.');
+        return;
+      }
+      const { error } = await db.from('duty_roster').insert(
+        { date, shift_type: shiftType, team, handler_name: handler, account_id: String(currentUser.id) }
+      );
+      if (error) { showToast('❌ 등록 실패: ' + error.message); return; }
+      showToast('✅ ' + shiftType + ' 당직 등록 완료!');
+    }
     loadDutyPage();
   }
 
@@ -965,27 +989,79 @@
 
     const date = getShiftDate();
     const { data } = await db.from('duty_roster').select('*').eq('date', date).order('team');
+
+    // 버튼 상태 업데이트 (본인 등록 여부 반영)
+    const myName = currentUser ? (currentUser.name || currentUser.username) : null;
+    const myTeam = currentUser ? currentUser.team : null;
+    const shiftStyles = {
+      '주간':     { reg: 'background:linear-gradient(135deg,#2b6cb0,#1a365d);color:white', cancel: 'background:linear-gradient(135deg,#c53030,#9b2c2c);color:white', regText: '☀️ 주간 담당자 등록', cancelText: '☀️ 주간 담당자 해제' },
+      '평일당직': { reg: 'background:linear-gradient(135deg,#744210,#c05621);color:white',  cancel: 'background:linear-gradient(135deg,#c53030,#9b2c2c);color:white', regText: '🌙 평일 당직 등록', cancelText: '🌙 평일 당직 해제' },
+      '주말당직': { reg: 'background:linear-gradient(135deg,#276749,#2f855a);color:white',  cancel: 'background:linear-gradient(135deg,#c53030,#9b2c2c);color:white', regText: '📅 주말/휴일 등록', cancelText: '📅 주말/휴일 해제' }
+    };
+    ['주간','평일당직','주말당직'].forEach(s => {
+      const btn = document.getElementById('duty-btn-' + s);
+      if (!btn) return;
+      const isMe = (data||[]).some(r => r.shift_type===s && r.team===myTeam && r.handler_name===myName);
+      const st = shiftStyles[s];
+      btn.style.cssText = 'max-width:260px;padding:11px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s;' + (isMe ? st.cancel : st.reg);
+      btn.textContent = isMe ? st.cancelText : st.regText;
+    });
+
     const el = document.getElementById('duty-today-list');
     if (!el) return;
     const teams = ['1팀','2팀','3팀'];
     const shifts = ['주간','평일당직','주말당직'];
     const shiftLabel = { '주간':'☀️ 주간','평일당직':'🌙 평일당직','주말당직':'📅 주말/휴일' };
-    el.innerHTML = '<table class="site-table" style="width:100%"><thead><tr><th>팀</th><th>☀️ 주간</th><th>🌙 평일당직</th><th>📅 주말/휴일</th></tr></thead><tbody>' +
+    el.innerHTML = '<table class="site-table" style="width:100%"><thead><tr><th>팀</th><th>☀️ 주간 (2명)</th><th>🌙 평일당직</th><th>📅 주말/휴일</th></tr></thead><tbody>' +
       teams.map(team => {
         const cells = shifts.map(s => {
-          const found = (data||[]).find(r => r.team===team && r.shift_type===s);
-          return '<td style="text-align:center">' + (found ? '<span style="color:#276749;font-weight:700">'+found.handler_name+'</span>' : '<span style="color:#a0aec0">미등록</span>') + '</td>';
+          const found = (data||[]).filter(r => r.team===team && r.shift_type===s);
+          if (!found.length) return '<td style="text-align:center"><span style="color:#a0aec0">미등록</span></td>';
+          const names = found.map(r => '<span style="color:#276749;font-weight:700">'+r.handler_name+'</span>').join('<br>');
+          return '<td style="text-align:center">' + names + '</td>';
         }).join('');
         return '<tr><td><b>' + team + '</b></td>' + cells + '</tr>';
       }).join('') +
       '</tbody></table>';
   }
 
+  async function loadDutyHandlers() {
+    const team = document.getElementById('f-team')?.value;
+    const handlerGroup = document.getElementById('handler-select-group');
+    const handlerSel = document.getElementById('f-handler');
+    const nodutyEl = document.getElementById('handler-no-duty');
+    if (!team) { handlerGroup.style.display = 'none'; return; }
+
+    const shiftType = getCurrentShiftType();
+    const date = getShiftDate();
+    const { data } = await db.from('duty_roster').select('handler_name, account_id')
+      .eq('date', date).eq('shift_type', shiftType).eq('team', team);
+
+    handlerGroup.style.display = 'block';
+    handlerSel.innerHTML = '<option value="">-- 담당자 선택 --</option>';
+
+    if (!data || !data.length) {
+      nodutyEl.style.display = 'block';
+      handlerSel.style.display = 'none';
+    } else {
+      nodutyEl.style.display = 'none';
+      handlerSel.style.display = 'block';
+      data.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = JSON.stringify({ handler_name: r.handler_name, account_id: r.account_id });
+        opt.textContent = r.handler_name;
+        handlerSel.appendChild(opt);
+      });
+    }
+  }
+
   async function getOnDutyHandler(team) {
     const shiftType = getCurrentShiftType();
     const date = getShiftDate();
-    const { data } = await db.from('duty_roster').select('handler_name, account_id').eq('date', date).eq('shift_type', shiftType).eq('team', team).maybeSingle();
-    return data || null;
+    const { data } = await db.from('duty_roster').select('handler_name, account_id').eq('date', date).eq('shift_type', shiftType).eq('team', team);
+    if (!data || !data.length) return null;
+    // 여러 명이면 첫 번째 반환 (추후 라운드로빈 가능)
+    return data[0];
   }
 
   const SUPABASE_URL = 'https://bbnmxwpacdfqvicybhau.supabase.co';
@@ -1411,11 +1487,14 @@
       let assignedHandler = null;
       let assignedUsername = null;
       if (selectedTeam) {
-        const duty = await getOnDutyHandler(selectedTeam);
-        if (duty) {
-          assignedHandler = duty.handler_name;
-          const { data: acc } = await db.from('accounts').select('username').eq('id', duty.account_id).maybeSingle();
-          if (acc) assignedUsername = acc.username;
+        const handlerVal = document.getElementById('f-handler')?.value;
+        if (handlerVal) {
+          try {
+            const parsed = JSON.parse(handlerVal);
+            assignedHandler = parsed.handler_name;
+            const { data: acc } = await db.from('accounts').select('username').eq('id', parsed.account_id).maybeSingle();
+            if (acc) assignedUsername = acc.username;
+          } catch(e) {}
         }
       }
       const { error } = await db.from('reports').insert({
@@ -1443,6 +1522,9 @@
       }
       document.getElementById('report-form').reset();
       if (document.getElementById('f-team')) document.getElementById('f-team').value = '';
+      if (document.getElementById('handler-select-group')) document.getElementById('handler-select-group').style.display = 'none';
+      setBuildingField();
+      setReporterField();
       updatePendingBadge();
     } catch(err) {
       showToast('❌ 접수 실패: ' + err.message);
