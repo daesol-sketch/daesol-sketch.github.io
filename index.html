@@ -325,28 +325,29 @@
             <label>연락처 <span class="required">*</span></label>
             <input type="tel" id="f-phone" placeholder="010-0000-0000" required oninput="autoFormatPhone(this)" />
           </div>
+          <div class="form-group" id="team-select-group" style="display:none">
+            <label>담당팀 선택</label>
+            <select id="f-team" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit" onchange="loadDutyHandlers()">
+              <option value="">-- 팀 선택 --</option>
+              <option value="1팀">1팀</option>
+              <option value="2팀">2팀</option>
+              <option value="3팀">3팀 (파주)</option>
+            </select>
+          </div>
+          <div class="form-group" id="handler-select-group" style="display:none">
+            <label>담당자 선택</label>
+            <select id="f-handler" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit">
+              <option value="">-- 담당자 선택 --</option>
+            </select>
+            <span id="handler-no-duty" style="display:none;font-size:12px;color:#c53030;margin-top:4px">⚠️ 현재 등록된 당직자가 없습니다.</span>
+          </div>
           <input type="hidden" id="f-regno" />
           <div class="form-group full">
             <label>고장 상세 내용</label>
             <textarea id="f-desc" placeholder="고장 증상, 발생 시간, 상황 등을 자세히 적어주세요."></textarea>
           </div>
         </div>
-        <div class="form-group full" id="team-select-group" style="display:none">
-          <label>담당팀 선택</label>
-          <select id="f-team" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit" onchange="loadDutyHandlers()">
-            <option value="">-- 팀 선택 --</option>
-            <option value="1팀">1팀</option>
-            <option value="2팀">2팀</option>
-            <option value="3팀">3팀 (파주)</option>
-          </select>
-        </div>
-        <div class="form-group full" id="handler-select-group" style="display:none">
-          <label>담당자 선택 <span class="required">*</span></label>
-          <select id="f-handler" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit">
-            <option value="">-- 담당자 선택 --</option>
-          </select>
-          <span id="handler-no-duty" style="display:none;font-size:12px;color:#c53030;margin-top:4px">⚠️ 현재 등록된 당직자가 없습니다.</span>
-        </div>
+
         <button type="submit" class="btn-submit" id="submit-btn">✅ 신고 접수하기</button>
       </form>
     </div>
@@ -509,10 +510,10 @@
       <div id="duty-register-section" style="margin-bottom:24px">
         <div style="font-size:15px;font-weight:700;color:#1a365d;margin-bottom:12px">내 당직 등록</div>
         <div id="duty-my-info" style="background:#f7fafc;border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:#4a5568"></div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <button id="duty-btn-주간" onclick="toggleDuty('주간')" style="max-width:260px;padding:11px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">☀️ 주간 담당자 등록</button>
-          <button id="duty-btn-평일당직" onclick="toggleDuty('평일당직')" style="max-width:260px;padding:11px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">🌙 평일 당직 등록</button>
-          <button id="duty-btn-주말당직" onclick="toggleDuty('주말당직')" style="max-width:260px;padding:11px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">📅 주말/휴일 등록</button>
+        <div style="display:flex;flex-direction:row;gap:10px;flex-wrap:wrap">
+          <button id="duty-btn-주간" onclick="toggleDuty('주간')" style="flex:1;min-width:140px;padding:11px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">☀️ 주간 담당자 등록</button>
+          <button id="duty-btn-평일당직" onclick="toggleDuty('평일당직')" style="flex:1;min-width:140px;padding:11px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">🌙 평일 당직 등록</button>
+          <button id="duty-btn-주말당직" onclick="toggleDuty('주말당직')" style="flex:1;min-width:140px;padding:11px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">📅 주말/휴일 등록</button>
         </div>
       </div>
       <div style="font-size:15px;font-weight:700;color:#1a365d;margin-bottom:12px">오늘 당직 현황</div>
@@ -1012,13 +1013,13 @@
     const teams = ['1팀','2팀','3팀'];
     const shifts = ['주간','평일당직','주말당직'];
     const shiftLabel = { '주간':'☀️ 주간','평일당직':'🌙 평일당직','주말당직':'📅 주말/휴일' };
-    el.innerHTML = '<table class="site-table" style="width:100%"><thead><tr><th>팀</th><th>☀️ 주간 (2명)</th><th>🌙 평일당직</th><th>📅 주말/휴일</th></tr></thead><tbody>' +
+    el.innerHTML = '<table class="site-table" style="width:100%;text-align:center"><thead><tr><th style="text-align:center">팀</th><th style="text-align:center">☀️ 주간 (2명)</th><th style="text-align:center">🌙 평일당직</th><th style="text-align:center">📅 주말/휴일</th></tr></thead><tbody>' +
       teams.map(team => {
         const cells = shifts.map(s => {
           const found = (data||[]).filter(r => r.team===team && r.shift_type===s);
-          if (!found.length) return '<td style="text-align:center"><span style="color:#a0aec0">미등록</span></td>';
+          if (!found.length) return '<td><span style="color:#a0aec0">미등록</span></td>';
           const names = found.map(r => '<span style="color:#276749;font-weight:700">'+r.handler_name+'</span>').join('<br>');
-          return '<td style="text-align:center">' + names + '</td>';
+          return '<td>' + names + '</td>';
         }).join('');
         return '<tr><td><b>' + team + '</b></td>' + cells + '</tr>';
       }).join('') +
@@ -3686,6 +3687,15 @@
   }
 
   /* ── INIT ── */
+  // SW 메시지 수신 (알림 클릭 → 신고내역 탭 이동)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data?.action === 'switchTab') switchTab(e.data.tab, null);
+    });
+  }
+  const _tabParam = new URLSearchParams(location.search).get('tab');
+  if (_tabParam) setTimeout(() => switchTab(_tabParam, null), 800);
+
   // 자동로그인 시도 → 완료 후 페이지 초기화
   (async () => {
     try {

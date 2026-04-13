@@ -1,4 +1,4 @@
-const CACHE_NAME = 'daesol-el-v6';
+const CACHE_NAME = 'daesol-el-v7';
 // index.html은 캐시하지 않음 — 항상 최신 버전 사용
 const STATIC_ASSETS = [
   './manifest.json',
@@ -37,13 +37,16 @@ self.addEventListener('push', event => {
   );
 });
 
-// 알림 클릭 시 앱 열기
+// 알림 클릭 시 신고 내역 탭으로 이동
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
-    clients.matchAll({ type: 'window' }).then(list => {
-      if (list.length) return list[0].focus();
-      return clients.openWindow('./');
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      if (list.length) {
+        list[0].postMessage({ action: 'switchTab', tab: 'list' });
+        return list[0].focus();
+      }
+      return clients.openWindow('./?tab=list');
     })
   );
 });
