@@ -63,7 +63,7 @@
     .ac-item mark { background: #bee3f8; color: #1a365d; font-weight: 700; border-radius: 2px; padding: 0 1px; }
     .ac-count { font-size: 11px; color: #a0aec0; padding: 5px 14px; background: #f7fafc; border-top: 1px solid #e2e8f0; text-align: right; }
 
-    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+    .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 24px; }
     .stat-card { background: white; border-radius: 10px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); text-align: center; border-top: 4px solid #e2e8f0; }
     .stat-card.all { border-top-color: #4299e1; } .stat-card.new { border-top-color: #fc8181; }
     .stat-card.wip { border-top-color: #f6ad55; } .stat-card.done { border-top-color: #68d391; }
@@ -97,6 +97,7 @@
     .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; }
     .status-접수중   { background: #fff5f5; color: #c53030; border: 1.5px solid #feb2b2; }
     .status-배치완료 { background: #ebf8ff; color: #2b6cb0; border: 1.5px solid #bee3f8; }
+    .status-처리중   { background: #fffaf0; color: #c05621; border: 1.5px solid #fbd38d; }
     .status-완료     { background: #f0fff4; color: #276749; border: 1.5px solid #9ae6b4; }
     .status-select { padding: 6px 10px; border: 1.5px solid #cbd5e0; border-radius: 6px; font-size: 13px; font-family: inherit; cursor: pointer; background: white; width: 100%; }
     .status-select:focus { outline: none; border-color: #2b6cb0; }
@@ -316,16 +317,9 @@
               <option>침수&amp;정전</option><option>기타</option>
             </select>
           </div>
+          <div></div>
           <input type="hidden" id="f-priority" value="" />
-          <div class="form-group">
-            <label>접수자 성명 <span class="required">*</span></label>
-            <input type="text" id="f-name" placeholder="홍길동" required />
-          </div>
-          <div class="form-group">
-            <label>연락처 <span class="required">*</span></label>
-            <input type="tel" id="f-phone" placeholder="010-0000-0000" required oninput="autoFormatPhone(this)" />
-          </div>
-          <div class="form-group" id="team-select-group" style="display:none">
+          <div class="form-group" id="team-select-group">
             <label>담당팀 선택</label>
             <select id="f-team" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit" onchange="loadDutyHandlers()">
               <option value="">-- 팀 선택 --</option>
@@ -334,12 +328,20 @@
               <option value="3팀">3팀 (파주)</option>
             </select>
           </div>
-          <div class="form-group" id="handler-select-group" style="display:none">
+          <div class="form-group" id="handler-select-group">
             <label>담당자 선택</label>
             <select id="f-handler" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit">
               <option value="">-- 담당자 선택 --</option>
             </select>
             <span id="handler-no-duty" style="display:none;font-size:12px;color:#c53030;margin-top:4px">⚠️ 현재 등록된 당직자가 없습니다.</span>
+          </div>
+          <div class="form-group">
+            <label>접수자 성명 <span class="required">*</span></label>
+            <input type="text" id="f-name" placeholder="홍길동" required />
+          </div>
+          <div class="form-group">
+            <label>연락처 <span class="required">*</span></label>
+            <input type="tel" id="f-phone" placeholder="010-0000-0000" required oninput="autoFormatPhone(this)" />
           </div>
           <input type="hidden" id="f-regno" />
           <div class="form-group full">
@@ -374,6 +376,7 @@
         <div class="stat-card all"><div class="num" id="stat-all">0</div><div class="lbl">전체</div></div>
         <div class="stat-card new"><div class="num" id="stat-new">0</div><div class="lbl">접수중</div></div>
         <div class="stat-card" style="background:linear-gradient(135deg,#ebf8ff,#bee3f8)"><div class="num" id="stat-assigned" style="color:#2b6cb0">0</div><div class="lbl">배치완료</div></div>
+        <div class="stat-card" style="background:linear-gradient(135deg,#fffaf0,#fbd38d)"><div class="num" id="stat-processing" style="color:#c05621">0</div><div class="lbl">처리중</div></div>
         <div class="stat-card done"><div class="num" id="stat-done">0</div><div class="lbl">완료</div></div>
       </div>
       <div class="card">
@@ -386,6 +389,7 @@
           <button class="filter-btn active" onclick="setFilter('전체',this)">전체</button>
           <button class="filter-btn" onclick="setFilter('접수중',this)">접수중</button>
           <button class="filter-btn" onclick="setFilter('배치완료',this)">배치완료</button>
+          <button class="filter-btn" onclick="setFilter('처리중',this)">처리중</button>
           <button class="filter-btn" onclick="setFilter('완료',this)">완료</button>
           <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
             <label style="font-size:13px;color:#4a5568">날짜:</label>
@@ -539,7 +543,7 @@
         <div style=font-size:14px;font-weight:700;color:#e53e3e;letter-spacing:0.5px;margin-bottom:14px>처리 정보</div>
         <div style=display:grid;grid-template-columns:1fr 1fr;gap:12px 16px>
           <div><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리 상태</label>
-            <select id=rdm-status style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit><option>접수중</option><option>배치완료</option><option>완료</option></select></div>
+            <select id=rdm-status style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit><option>접수중</option><option>배치완료</option><option>처리중</option><option>완료</option></select></div>
           <div><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리담당자</label>
             <input type=text id=rdm-handler placeholder=담당자 이름 style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit /></div>
           <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리일시</label>
@@ -910,12 +914,12 @@
     } catch(e) { console.warn('Push 구독 실패:', e); }
   }
 
-  async function sendPushToUser(username, title, body) {
+  async function sendPushToUser(username, title, body, reportId) {
     try {
       await fetch(EDGE_FUNCTION_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY },
-        body: JSON.stringify({ username, title, body })
+        body: JSON.stringify({ username, title, body, reportId: reportId || null })
       });
     } catch(e) { console.warn('푸시 발송 실패:', e); }
   }
@@ -1031,7 +1035,7 @@
     const handlerGroup = document.getElementById('handler-select-group');
     const handlerSel = document.getElementById('f-handler');
     const nodutyEl = document.getElementById('handler-no-duty');
-    if (!team) { handlerGroup.style.display = 'none'; return; }
+    if (!team) { handlerSel.innerHTML = '<option value="">-- 담당자 선택 --</option>'; return; }
 
     const shiftType = getCurrentShiftType();
     const date = getShiftDate();
@@ -1106,11 +1110,7 @@
     if (tab === 'mgmt')   loadMgmt();
   }
 
-  function updateTeamSelectVisibility() {
-    const grp = document.getElementById('team-select-group');
-    if (!grp) return;
-    grp.style.display = (currentRole === '관리주체' || currentRole === '직원' || currentRole === '관리자') ? 'block' : 'none';
-  }
+  function updateTeamSelectVisibility() {}
 
   function renderReportPage() {
     if (!currentRole) {
@@ -1226,7 +1226,7 @@
     const detail   = document.getElementById('rdm-detail').value.trim() || null;
     // 배치완료 상태에서 처리내용 or 처리담당자 + 처리일시가 입력되면 자동으로 완료 처리
     let status = document.getElementById('rdm-status').value;
-    if (currentReport?.status === '배치완료' && handler && completionAt && content) {
+    if ((currentReport?.status === '배치완료' || currentReport?.status === '처리중') && handler && completionAt && content) {
       status = '완료';
     }
     const update = {
@@ -1516,7 +1516,7 @@
       if (assignedHandler && assignedUsername) {
         const building = document.getElementById('f-building').value.trim();
         const elevator = document.getElementById('f-elevator').value.trim();
-        sendPushToUser(assignedUsername, '🔧 고장 신고 배정', building + ' ' + elevator + ' 고장 신고가 배정되었습니다.');
+        sendPushToUser(assignedUsername, '🔧 고장 신고 배정', building + ' ' + elevator + ' 고장 신고가 배정되었습니다.', id);
         showToast('✅ 신고 접수 완료! ' + assignedHandler + '님께 배정되었습니다. (' + id + ')');
       } else {
         showToast('✅ 신고가 접수되었습니다. (' + id + ')');
@@ -1563,10 +1563,11 @@
 
   /* ── RENDER ── */
   function updateStats() {
-    document.getElementById('stat-all').textContent  = reports.length;
-    document.getElementById('stat-new').textContent      = reports.filter(r=>r.status==='접수중').length;
-    document.getElementById('stat-assigned').textContent = reports.filter(r=>r.status==='배치완료').length;
-    document.getElementById('stat-done').textContent     = reports.filter(r=>r.status==='완료').length;
+    document.getElementById('stat-all').textContent        = reports.length;
+    document.getElementById('stat-new').textContent        = reports.filter(r=>r.status==='접수중').length;
+    document.getElementById('stat-assigned').textContent   = reports.filter(r=>r.status==='배치완료').length;
+    document.getElementById('stat-processing').textContent = reports.filter(r=>r.status==='처리중').length;
+    document.getElementById('stat-done').textContent       = reports.filter(r=>r.status==='완료').length;
   }
 
   async function updatePendingBadge() {
@@ -2479,10 +2480,16 @@
   async function checkPendingAssignments() {
     if (!currentUser || currentRole === '관리주체' || currentRole === '관리자') return;
     const handler = currentUser.name || currentUser.username;
-    const { data } = await db.from('reports').select('*').eq('status', '배치완료').eq('completion_handler', handler);
-    if (!data || !data.length) return;
-    const tenHoursAgo = new Date(Date.now() - 2 * 60 * 1000);
-    const overdue = data.filter(r => new Date(r.created_at) < tenHoursAgo);
+    const { data: d1 } = await db.from('reports').select('*').eq('status', '배치완료').eq('completion_handler', handler);
+    const { data: d2 } = await db.from('reports').select('*').eq('status', '처리중').eq('completion_handler', handler);
+    const data = [...(d1||[]), ...(d2||[])];
+    if (!data.length) return;
+    const thresholdAgo = new Date(Date.now() - 2 * 60 * 1000);
+    const overdue = data.filter(r => {
+      // 처리중은 confirmed_at 기준, 배치완료는 created_at 기준
+      const ref = r.status === '처리중' && r.confirmed_at ? new Date(r.confirmed_at) : new Date(r.created_at);
+      return ref < thresholdAgo;
+    });
     if (!overdue.length) return;
 
     const listEl = document.getElementById('pending-alert-list');

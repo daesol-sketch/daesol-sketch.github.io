@@ -1,10 +1,13 @@
-const CACHE_NAME = 'daesol-el-v7';
+const CACHE_NAME = 'daesol-el-v8';
 // index.html은 캐시하지 않음 — 항상 최신 버전 사용
 const STATIC_ASSETS = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
 ];
+
+const SUPABASE_URL = 'https://bbnmxwpacdfqvicybhau.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJibm14d3BhY2RmcXZpY3liaGF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NDA3NDYsImV4cCI6MjA5MTAxNjc0Nn0.cGqnmu5BeaXosxoE-IEmjX-dF4zDYipzpYb5hhc8S6I';
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -32,22 +35,40 @@ self.addEventListener('push', event => {
       icon: './icon-192.png',
       badge: './icon-192.png',
       vibrate: [300, 150, 300, 150, 300],
-      requireInteraction: true
+      requireInteraction: true,
+      data: { reportId: data.reportId || null }
     })
   );
 });
 
-// 알림 클릭 시 신고 내역 탭으로 이동
+// 알림 클릭 시 처리중으로 상태 변경 + 신고 내역 탭으로 이동
 self.addEventListener('notificationclick', event => {
   event.notification.close();
+  const reportId = event.notification.data?.reportId;
+
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      if (list.length) {
-        list[0].postMessage({ action: 'switchTab', tab: 'list' });
-        return list[0].focus();
-      }
-      return clients.openWindow('./?tab=list');
-    })
+    Promise.all([
+      // 처리중으로 상태 변경 (reportId 있을 때만)
+      reportId ? fetch(SUPABASE_URL + '/rest/v1/reports?id=eq.' + encodeURIComponent(reportId), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ status: '처리중', confirmed_at: new Date().toISOString() })
+      }).catch(() => {}) : Promise.resolve(),
+
+      // 앱 열기 + 탭 전환
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+        if (list.length) {
+          list[0].postMessage({ action: 'switchTab', tab: 'list' });
+          return list[0].focus();
+        }
+        return clients.openWindow('./?tab=list');
+      })
+    ])
   );
 });
 
