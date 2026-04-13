@@ -267,6 +267,7 @@
   <button class="tab-btn" id="tab-done-btn" onclick="switchTab('done',event)" style="display:none">✅ 처리완료내역</button>
   <button class="tab-btn" id="tab-mgmt-btn" onclick="switchTab('mgmt',event)" style="display:none">🏢 관리현장 <span id="mgmt-expire-badge" class="count-badge" style="display:none"></span></button>
   <button class="tab-btn" id="tab-sites-btn" onclick="switchTab('sites',event)" style="display:none">👤 계정 관리</button>
+  <button class="tab-btn" id="tab-duty-btn" onclick="switchTab('duty',event)" style="display:none">🕐 당직 등록</button>
 </div>
 
 <main>
@@ -329,6 +330,15 @@
             <label>고장 상세 내용</label>
             <textarea id="f-desc" placeholder="고장 증상, 발생 시간, 상황 등을 자세히 적어주세요."></textarea>
           </div>
+        </div>
+        <div class="form-group full" id="team-select-group" style="display:none">
+          <label>담당팀 선택 <span class="required">*</span></label>
+          <select id="f-team" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit">
+            <option value="">-- 팀 선택 --</option>
+            <option value="1팀">1팀</option>
+            <option value="2팀">2팀</option>
+            <option value="3팀">3팀 (파주)</option>
+          </select>
         </div>
         <button type="submit" class="btn-submit" id="submit-btn">✅ 신고 접수하기</button>
       </form>
@@ -483,6 +493,26 @@
       <div class="site-table-wrap"><div id="mgmt-list"><div class="loading-state">불러오는 중...</div></div></div>
     </div>
   </div>
+
+  <!-- 당직 등록 -->
+  <div class="page" id="page-duty">
+    <div class="card">
+      <h2>🕐 당직 등록</h2>
+      <div id="duty-current-shift" style="background:#ebf8ff;border:1.5px solid #bee3f8;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:14px;color:#2b6cb0;font-weight:600"></div>
+      <div id="duty-register-section" style="margin-bottom:24px">
+        <div style="font-size:15px;font-weight:700;color:#1a365d;margin-bottom:12px">내 당직 등록</div>
+        <div id="duty-my-info" style="background:#f7fafc;border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:#4a5568"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn-submit" style="max-width:200px;padding:11px" onclick="registerDuty('주간')">☀️ 주간 담당자 등록</button>
+          <button class="btn-submit" style="max-width:200px;padding:11px;background:linear-gradient(135deg,#744210,#c05621)" onclick="registerDuty('평일당직')">🌙 평일 당직 등록</button>
+          <button class="btn-submit" style="max-width:200px;padding:11px;background:linear-gradient(135deg,#276749,#2f855a)" onclick="registerDuty('주말당직')">📅 주말/휴일 등록</button>
+        </div>
+      </div>
+      <div style="font-size:15px;font-weight:700;color:#1a365d;margin-bottom:12px">오늘 당직 현황</div>
+      <div id="duty-today-list"><div class="loading-state">불러오는 중...</div></div>
+    </div>
+  </div>
+
 </main>
 
 <!-- 신고 상세/처리 모달 -->
@@ -560,7 +590,7 @@
       <div style="font-size:11px;font-weight:700;color:#718096;letter-spacing:0.5px;margin-bottom:8px">직원 정보 (선택)</div>
       <input type="text" class="modal-input normal" id="new-acc-name" placeholder="이름 (실명)" style="margin-bottom:8px" />
       <input type="tel" class="modal-input normal" id="new-acc-phone" placeholder="핸드폰번호 (010-0000-0000)" style="margin-bottom:8px" oninput="autoFormatPhone(this)" />
-      <select class="modal-input normal" id="new-acc-position" style="margin-bottom:0;letter-spacing:0">
+      <select class="modal-input normal" id="new-acc-position" style="margin-bottom:8px;letter-spacing:0">
         <option value="">-- 직급/직책 선택 --</option>
         <option>대표</option>
         <option>전무</option>
@@ -571,6 +601,17 @@
         <option>대리</option>
         <option>사원</option>
       </select>
+      <div id="new-acc-team-section" style="display:none;margin-top:8px">
+        <select class="modal-input normal" id="new-acc-team" style="margin-bottom:8px;letter-spacing:0" onchange="updateNewAccUnit()">
+          <option value="">-- 팀 선택 --</option>
+          <option value="1팀">1팀</option>
+          <option value="2팀">2팀</option>
+          <option value="3팀">3팀 (파주)</option>
+        </select>
+        <select class="modal-input normal" id="new-acc-unit" style="margin-bottom:0;letter-spacing:0">
+          <option value="">-- 조 선택 --</option>
+        </select>
+      </div>
     </div>
     <div class="modal-error" id="add-account-error" style="display:none; margin-top:8px"></div>
     <div class="modal-btn-row" style="margin-top:16px">
@@ -611,7 +652,7 @@
       <div style="font-size:11px;font-weight:700;color:#718096;letter-spacing:0.5px;margin-bottom:8px">직원 정보 (선택)</div>
       <input type="text" class="modal-input normal" id="edit-acc-name" placeholder="이름 (실명)" style="margin-bottom:8px" />
       <input type="tel" class="modal-input normal" id="edit-acc-phone" placeholder="핸드폰번호 (010-0000-0000)" style="margin-bottom:8px" oninput="autoFormatPhone(this)" />
-      <select class="modal-input normal" id="edit-acc-position" style="margin-bottom:0;letter-spacing:0">
+      <select class="modal-input normal" id="edit-acc-position" style="margin-bottom:8px;letter-spacing:0">
         <option value="">-- 직급/직책 선택 --</option>
         <option>대표</option>
         <option>전무</option>
@@ -622,6 +663,17 @@
         <option>대리</option>
         <option>사원</option>
       </select>
+      <div id="edit-acc-team-section" style="display:none;margin-top:8px">
+        <select class="modal-input normal" id="edit-acc-team" style="margin-bottom:8px;letter-spacing:0" onchange="updateEditAccUnit()">
+          <option value="">-- 팀 선택 --</option>
+          <option value="1팀">1팀</option>
+          <option value="2팀">2팀</option>
+          <option value="3팀">3팀 (파주)</option>
+        </select>
+        <select class="modal-input normal" id="edit-acc-unit" style="margin-bottom:0;letter-spacing:0">
+          <option value="">-- 조 선택 --</option>
+        </select>
+      </div>
     </div>
     <div class="modal-error" id="edit-account-error" style="display:none; margin-top:8px"></div>
     <div class="modal-btn-row" style="margin-top:16px">
@@ -820,6 +872,122 @@
 
 <script>
   /* ── CONFIG ── */
+  const VAPID_PUBLIC_KEY = 'BBm8mLQiBtBUOsOtCFWbGMcFW5ew3yfjvyuKbVIJphiC53yhILrGGEEFTcdIJqLojdOBmxG2NInM4cuz30sVV1o';
+  const EDGE_FUNCTION_URL = 'https://bbnmxwpacdfqvicybhau.supabase.co/functions/v1/send-push';
+
+  const TEAM_UNITS = { '1팀': ['1조','2조','3조'], '2팀': ['1조','2조','3조'], '3팀': ['1조','2조'] };
+
+  function urlBase64ToUint8Array(b64) {
+    const pad = '='.repeat((4 - b64.length % 4) % 4);
+    const base64 = (b64 + pad).replace(/-/g,'+').replace(/_/g,'/');
+    const raw = atob(base64);
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  }
+
+  async function subscribePush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') return;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+      await db.from('push_subscriptions').upsert({
+        account_id: String(currentUser.id),
+        username: currentUser.username,
+        subscription: sub.toJSON()
+      }, { onConflict: 'account_id' });
+    } catch(e) { console.warn('Push 구독 실패:', e); }
+  }
+
+  async function sendPushToUser(username, title, body) {
+    try {
+      await fetch(EDGE_FUNCTION_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY },
+        body: JSON.stringify({ username, title, body })
+      });
+    } catch(e) { console.warn('푸시 발송 실패:', e); }
+  }
+
+  function getCurrentShiftType() {
+    const now = new Date();
+    const day = now.getDay();
+    const h = now.getHours(), m = now.getMinutes();
+    const t = h * 60 + m;
+    if (day === 0 || day === 6) return '주말당직';
+    if (t >= 8*60+30 && t < 17*60+30) return '주간';
+    return '평일당직';
+  }
+
+  function getShiftDate() {
+    const now = new Date();
+    const h = now.getHours(), m = now.getMinutes();
+    const t = h * 60 + m;
+    // 자정~8:30은 전날 당직으로 간주
+    if (t < 8*60+30) {
+      const d = new Date(now); d.setDate(d.getDate()-1);
+      return d.toISOString().slice(0,10);
+    }
+    return now.toISOString().slice(0,10);
+  }
+
+  async function registerDuty(shiftType) {
+    if (!currentUser || currentRole === '관리주체') return showToast('❌ 직원 계정으로 로그인하세요.');
+    const team = currentUser.team;
+    const handler = currentUser.name || currentUser.username;
+    if (!team) return showToast('❌ 계정에 팀 정보가 없습니다. 관리자에게 문의하세요.');
+    const date = getShiftDate();
+    const { error } = await db.from('duty_roster').upsert(
+      { date, shift_type: shiftType, team, handler_name: handler, account_id: String(currentUser.id) },
+      { onConflict: 'date,shift_type,team' }
+    );
+    if (error) { showToast('❌ 등록 실패: ' + error.message); return; }
+    showToast('✅ ' + shiftType + ' 당직 등록 완료!');
+    loadDutyPage();
+  }
+
+  async function loadDutyPage() {
+    const shiftType = getCurrentShiftType();
+    const shiftEl = document.getElementById('duty-current-shift');
+    const shiftNames = { '주간': '☀️ 주간 (08:30~17:30)', '평일당직': '🌙 평일 당직 (17:30~익일 08:30)', '주말당직': '📅 주말/휴일 당직' };
+    if (shiftEl) shiftEl.textContent = '현재 시간대: ' + (shiftNames[shiftType] || shiftType);
+
+    const myEl = document.getElementById('duty-my-info');
+    if (myEl && currentUser) {
+      const team = currentUser.team || '미설정';
+      const unit = currentUser.unit || '미설정';
+      const name = currentUser.name || currentUser.username;
+      myEl.innerHTML = '👷 <b>' + name + '</b> · ' + team + ' ' + unit;
+    }
+
+    const date = getShiftDate();
+    const { data } = await db.from('duty_roster').select('*').eq('date', date).order('team');
+    const el = document.getElementById('duty-today-list');
+    if (!el) return;
+    const teams = ['1팀','2팀','3팀'];
+    const shifts = ['주간','평일당직','주말당직'];
+    const shiftLabel = { '주간':'☀️ 주간','평일당직':'🌙 평일당직','주말당직':'📅 주말/휴일' };
+    el.innerHTML = '<table class="site-table" style="width:100%"><thead><tr><th>팀</th><th>☀️ 주간</th><th>🌙 평일당직</th><th>📅 주말/휴일</th></tr></thead><tbody>' +
+      teams.map(team => {
+        const cells = shifts.map(s => {
+          const found = (data||[]).find(r => r.team===team && r.shift_type===s);
+          return '<td style="text-align:center">' + (found ? '<span style="color:#276749;font-weight:700">'+found.handler_name+'</span>' : '<span style="color:#a0aec0">미등록</span>') + '</td>';
+        }).join('');
+        return '<tr><td><b>' + team + '</b></td>' + cells + '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }
+
+  async function getOnDutyHandler(team) {
+    const shiftType = getCurrentShiftType();
+    const date = getShiftDate();
+    const { data } = await db.from('duty_roster').select('handler_name, account_id').eq('date', date).eq('shift_type', shiftType).eq('team', team).maybeSingle();
+    return data || null;
+  }
+
   const SUPABASE_URL = 'https://bbnmxwpacdfqvicybhau.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJibm14d3BhY2RmcXZpY3liaGF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NDA3NDYsImV4cCI6MjA5MTAxNjc0Nn0.cGqnmu5BeaXosxoE-IEmjX-dF4zDYipzpYb5hhc8S6I';
 
@@ -857,7 +1025,14 @@
     if (tab === 'list')   renderListPage();
     if (tab === 'done')   renderDonePage();
     if (tab === 'sites')  loadSites();
+    if (tab === 'duty')   loadDutyPage();
     if (tab === 'mgmt')   loadMgmt();
+  }
+
+  function updateTeamSelectVisibility() {
+    const grp = document.getElementById('team-select-group');
+    if (!grp) return;
+    grp.style.display = (currentRole === '관리주체' || currentRole === '직원' || currentRole === '관리자') ? 'block' : 'none';
   }
 
   function renderReportPage() {
@@ -867,6 +1042,7 @@
     } else {
       document.getElementById('report-login-required').style.display = 'none';
       document.getElementById('report-content').style.display = 'block';
+      updateTeamSelectVisibility();
     }
   }
 
@@ -1175,6 +1351,7 @@
     document.getElementById('tab-sites-btn').style.display = isAdmin ? 'inline-block' : 'none';
     document.getElementById('tab-mgmt-btn').style.display = (isAdmin || currentRole === '직원') ? 'inline-block' : 'none';
     document.getElementById('tab-done-btn').style.display = 'inline-block';
+    document.getElementById('tab-duty-btn').style.display = (isAdmin || currentRole === '직원') ? 'inline-block' : 'none';
     document.getElementById('btn-excel').style.display = canExcel ? 'flex' : 'none';
     document.getElementById('btn-change-pw').style.display = 'inline-block';
     const btn = document.getElementById('admin-btn');
@@ -1192,6 +1369,7 @@
     document.getElementById('tab-sites-btn').style.display = 'none';
     document.getElementById('tab-mgmt-btn').style.display = 'none';
     document.getElementById('tab-done-btn').style.display = 'none';
+    document.getElementById('tab-duty-btn').style.display = 'none';
     document.getElementById('btn-excel').style.display = 'none';
     document.getElementById('btn-change-pw').style.display = 'none';
     updateSiteBadge();
@@ -1229,6 +1407,17 @@
     btn.disabled = true; btn.textContent = '접수 중...';
     try {
       const id = await generateId();
+      const selectedTeam = document.getElementById('f-team')?.value || null;
+      let assignedHandler = null;
+      let assignedUsername = null;
+      if (selectedTeam) {
+        const duty = await getOnDutyHandler(selectedTeam);
+        if (duty) {
+          assignedHandler = duty.handler_name;
+          const { data: acc } = await db.from('accounts').select('username').eq('id', duty.account_id).maybeSingle();
+          if (acc) assignedUsername = acc.username;
+        }
+      }
       const { error } = await db.from('reports').insert({
         id,
         building:    document.getElementById('f-building').value.trim(),
@@ -1239,11 +1428,21 @@
         name:        document.getElementById('f-name').value.trim(),
         phone:       document.getElementById('f-phone').value.trim(),
         description: document.getElementById('f-desc').value.trim(),
-        status:      '접수중',
+        status:      assignedHandler ? '배치완료' : '접수중',
+        completion_handler: assignedHandler || null,
+        assigned_team: selectedTeam || null,
       });
       if (error) throw error;
+      if (assignedHandler && assignedUsername) {
+        const building = document.getElementById('f-building').value.trim();
+        const elevator = document.getElementById('f-elevator').value.trim();
+        sendPushToUser(assignedUsername, '🔧 고장 신고 배정', building + ' ' + elevator + ' 고장 신고가 배정되었습니다.');
+        showToast('✅ 신고 접수 완료! ' + assignedHandler + '님께 배정되었습니다. (' + id + ')');
+      } else {
+        showToast('✅ 신고가 접수되었습니다. (' + id + ')');
+      }
       document.getElementById('report-form').reset();
-      showToast('✅ 신고가 접수되었습니다. (' + id + ')');
+      if (document.getElementById('f-team')) document.getElementById('f-team').value = '';
       updatePendingBadge();
     } catch(err) {
       showToast('❌ 접수 실패: ' + err.message);
@@ -1252,7 +1451,7 @@
     }
   }
 
-  async function loadReports() {
+    async function loadReports() {
     let q = db.from('reports').select('*').order('created_at', { ascending: false });
     if (currentRole === '관리주체') q = q.eq('building', currentSite);
     const { data, error } = await q;
@@ -1414,6 +1613,9 @@
     document.getElementById('new-acc-phone').value = '';
     document.getElementById('new-acc-position').value = '';
     document.getElementById('site-name-field').style.display = 'none';
+    document.getElementById('new-acc-team-section').style.display = 'none';
+    document.getElementById('new-acc-team').value = '';
+    document.getElementById('new-acc-unit').innerHTML = '<option value="">-- 조 선택 --</option>';
     document.getElementById('add-account-error').style.display = 'none';
     document.getElementById('add-account-modal').style.display = 'flex';
     setTimeout(() => document.getElementById('new-acc-username').focus(), 100);
@@ -1422,6 +1624,13 @@
   function toggleSiteNameField() {
     const role = document.getElementById('new-acc-role').value;
     document.getElementById('site-name-field').style.display = role === '관리주체' ? 'block' : 'none';
+    document.getElementById('new-acc-team-section').style.display = (role === '직원' || role === '관리자') ? 'block' : 'none';
+  }
+  function updateNewAccUnit() {
+    const team = document.getElementById('new-acc-team').value;
+    const units = { '1팀': ['1조','2조','3조'], '2팀': ['1조','2조','3조'], '3팀': ['1조','2조'] };
+    const sel = document.getElementById('new-acc-unit');
+    sel.innerHTML = '<option value="">-- 조 선택 --</option>' + (units[team]||[]).map(u=>'<option>'+u+'</option>').join('');
   }
 
   async function addAccountConfirm() {
@@ -1435,7 +1644,9 @@
     const position = document.getElementById('new-acc-position').value.trim();
     if (!username || !pw || !role) { errEl.textContent='아이디, 비밀번호, 유형을 모두 입력하세요.'; errEl.style.display='block'; return; }
     if (role === '관리주체' && !siteName) { errEl.textContent='관리주체 계정은 담당 현장명을 입력하세요.'; errEl.style.display='block'; return; }
-    const payload = { username, password: pw, role, site_name: role === '관리주체' ? siteName : null, name: name||null, phone: phone||null, position: position||null };
+    const team = document.getElementById('new-acc-team')?.value || null;
+    const unit = document.getElementById('new-acc-unit')?.value || null;
+    const payload = { username, password: pw, role, site_name: role === '관리주체' ? siteName : null, name: name||null, phone: phone||null, position: position||null, team: team||null, unit: unit||null };
     const { error } = await db.from('accounts').insert(payload);
     if (error) {
       errEl.textContent = error.code==='23505' ? '이미 존재하는 아이디입니다.' : '추가 실패: ' + error.message;
@@ -1459,6 +1670,15 @@
     document.getElementById('edit-acc-name').value = data.name || '';
     document.getElementById('edit-acc-phone').value = data.phone || '';
     document.getElementById('edit-acc-position').value = data.position || '';
+    // 팀/조 불러오기
+    const editTeamSec = document.getElementById('edit-acc-team-section');
+    editTeamSec.style.display = (data.role === '직원' || data.role === '관리자') ? 'block' : 'none';
+    document.getElementById('edit-acc-team').value = data.team || '';
+    if (data.team) {
+      const units = { '1팀': ['1조','2조','3조'], '2팀': ['1조','2조','3조'], '3팀': ['1조','2조'] };
+      const sel = document.getElementById('edit-acc-unit');
+      sel.innerHTML = '<option value="">-- 조 선택 --</option>' + (units[data.team]||[]).map(u=>'<option'+(u===data.unit?' selected':'')+'>'+u+'</option>').join('');
+    }
     document.getElementById('edit-site-name-field').style.display = data.role === '관리주체' ? 'block' : 'none';
     document.getElementById('edit-account-error').style.display = 'none';
     document.getElementById('edit-account-modal').style.display = 'flex';
@@ -1468,6 +1688,13 @@
   function toggleEditSiteNameField() {
     const role = document.getElementById('edit-acc-role').value;
     document.getElementById('edit-site-name-field').style.display = role === '관리주체' ? 'block' : 'none';
+    document.getElementById('edit-acc-team-section').style.display = (role === '직원' || role === '관리자') ? 'block' : 'none';
+  }
+  function updateEditAccUnit() {
+    const team = document.getElementById('edit-acc-team').value;
+    const units = { '1팀': ['1조','2조','3조'], '2팀': ['1조','2조','3조'], '3팀': ['1조','2조'] };
+    const sel = document.getElementById('edit-acc-unit');
+    sel.innerHTML = '<option value="">-- 조 선택 --</option>' + (units[team]||[]).map(u=>'<option>'+u+'</option>').join('');
   }
 
   async function editAccountConfirm() {
@@ -1481,7 +1708,9 @@
     const errEl    = document.getElementById('edit-account-error');
     if (!username || !pw || !role) { errEl.textContent='아이디, 비밀번호, 유형을 모두 입력하세요.'; errEl.style.display='block'; return; }
     if (role === '관리주체' && !siteName) { errEl.textContent='관리주체 계정은 담당 현장명을 입력하세요.'; errEl.style.display='block'; return; }
-    const payload = { username, password: pw, role, site_name: role === '관리주체' ? siteName : null, name: name||null, phone: phone||null, position: position||null };
+    const teamE = document.getElementById('edit-acc-team')?.value || null;
+    const unitE = document.getElementById('edit-acc-unit')?.value || null;
+    const payload = { username, password: pw, role, site_name: role === '관리주체' ? siteName : null, name: name||null, phone: phone||null, position: position||null, team: teamE||null, unit: unitE||null };
     const { error } = await db.from('accounts').update(payload).eq('id', editingAccountId);
     if (error) {
       errEl.textContent = error.code==='23505' ? '이미 존재하는 아이디입니다.' : '수정 실패: ' + error.message;
@@ -3317,6 +3546,7 @@
     renderReportPage();
     switchTab('report', null);
     setTimeout(() => checkPendingAssignments(), 500);
+    subscribePush();
   }
 
   /* ── 건물명 필드 제어 ── */
@@ -3391,6 +3621,7 @@
           setBuildingField();
           setReporterField();
           setTimeout(() => checkPendingAssignments(), 500);
+          subscribePush();
         } else {
           localStorage.removeItem('daesol_autologin');
         }

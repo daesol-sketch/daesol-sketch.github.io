@@ -1,4 +1,4 @@
-const CACHE_NAME = 'daesol-el-v5';
+const CACHE_NAME = 'daesol-el-v6';
 // index.html은 캐시하지 않음 — 항상 최신 버전 사용
 const STATIC_ASSETS = [
   './manifest.json',
@@ -20,6 +20,32 @@ self.addEventListener('activate', event => {
     )
   );
   self.clients.claim();
+});
+
+// 푸시 알림 수신
+self.addEventListener('push', event => {
+  let data = { title: '대솔이엘', body: '새 고장 신고가 배정되었습니다.' };
+  try { data = JSON.parse(event.data.text()); } catch(e) {}
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: './icon-192.png',
+      badge: './icon-192.png',
+      vibrate: [300, 150, 300, 150, 300],
+      requireInteraction: true
+    })
+  );
+});
+
+// 알림 클릭 시 앱 열기
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then(list => {
+      if (list.length) return list[0].focus();
+      return clients.openWindow('./');
+    })
+  );
 });
 
 self.addEventListener('fetch', event => {
