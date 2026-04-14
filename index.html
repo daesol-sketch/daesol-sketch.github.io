@@ -983,7 +983,7 @@
   async function toggleDutyShift(shiftType, teamOverride) {
     if (!currentUser || currentRole === '관리주체') return showToast('❌ 직원 계정으로 로그인하세요.');
     const team = teamOverride || currentUser.team;
-    const handler = currentUser.name || currentUser.username;
+    const handler = currentUser.username;
     if (!team) return showToast('❌ 계정에 팀 정보가 없습니다. 관리자에게 문의하세요.');
     const date = getShiftDate();
     const { data: existing } = await db.from('duty_roster').select('id')
@@ -1025,14 +1025,14 @@
     if (myEl && currentUser) {
       const team = currentUser.team || '미설정';
       const unit = currentUser.unit || '미설정';
-      const name = currentUser.name || currentUser.username;
+      const name = currentUser.username;
       myEl.innerHTML = '👷 <b>' + name + '</b> · ' + team + ' ' + unit;
     }
 
     const date = getShiftDate();
     const { data } = await db.from('duty_roster').select('*').eq('date', date).order('team');
 
-    const myName = currentUser ? (currentUser.name || currentUser.username) : null;
+    const myName = currentUser ? (currentUser.username) : null;
     const myTeam = currentUser ? currentUser.team : null;
     const cancelStyle = 'background:linear-gradient(135deg,#c53030,#9b2c2c);color:white';
     const btnDefs = [
@@ -1248,7 +1248,7 @@
 
       document.getElementById('rdm-status').value = r.status || '접수중';
       document.getElementById('rdm-status').disabled = currentRole !== '관리자';
-      document.getElementById('rdm-handler').value = r.completion_handler || (currentRole !== '관리주체' && currentUser ? (currentUser.name || currentUser.username) : '');
+      document.getElementById('rdm-handler').value = r.completion_handler || (currentRole !== '관리주체' && currentUser ? (currentUser.username) : '');
       if (r.completion_at) {
         const d = new Date(r.completion_at);
         document.getElementById('rdm-date').value = d.toISOString().slice(0,10);
@@ -1271,7 +1271,7 @@
 
 
   async function confirmAssignById(id) {
-    const handler = currentUser ? (currentUser.name || currentUser.username) : null;
+    const handler = currentUser ? (currentUser.username) : null;
     const { error } = await db.from('reports').update({ status: '배치완료', completion_handler: handler }).eq('id', id);
     if (error) { showToast('❌ 실패: ' + error.message); return; }
     showToast('✅ 배치 확인되었습니다.');
@@ -1280,7 +1280,7 @@
 
   async function confirmDispatch(directId) {
     const id = directId || currentReportId;
-    const handler = currentUser.name || currentUser.username;
+    const handler = currentUser.username;
     const { error } = await db.from('reports').update({
       status: '처리중',
       completion_handler: handler,
@@ -2595,7 +2595,7 @@
 
   async function checkPendingAssignments() {
     if (!currentUser || currentRole === '관리주체' || currentRole === '관리자') return;
-    const handler = currentUser.name || currentUser.username;
+    const handler = currentUser.username;
     const { data: d1 } = await db.from('reports').select('*').eq('status', '배치완료').eq('completion_handler', handler);
     const { data: d2 } = await db.from('reports').select('*').eq('status', '처리중').eq('completion_handler', handler);
     const data = [...(d1||[]), ...(d2||[])];
@@ -2681,7 +2681,7 @@
     setTimeout(() => {
       const searchEl = document.getElementById('list-search');
       if (searchEl) {
-        const handler = currentUser.name || currentUser.username;
+        const handler = currentUser.username;
         searchEl.value = handler;
         setFilter('배치완료', document.querySelector('.filter-btn[onclick*="배치완료"]'));
       }
@@ -3781,7 +3781,7 @@
     const phoneInput = document.getElementById('f-phone');
     if (!nameInput) return;
     if (currentRole === '직원' || currentRole === '관리자') {
-      nameInput.value = currentUser ? (currentUser.name || currentUser.username) : '';
+      nameInput.value = currentUser ? (currentUser.username) : '';
       nameInput.readOnly = true;
       nameInput.style.background = '#edf2f7';
       nameInput.style.color = '#4a5568';
