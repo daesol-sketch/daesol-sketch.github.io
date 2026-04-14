@@ -1790,11 +1790,10 @@
       return (a.username||'').localeCompare(b.username||'', 'ko');
     });
     el.innerHTML = `<table class="site-table">
-      <thead><tr><th>#</th><th>아이디</th><th>이름</th><th>직급/직책</th><th>핸드폰</th><th>유형</th><th>담당 현장</th><th>비밀번호</th><th></th></tr></thead>
+      <thead><tr><th>#</th><th>아이디</th><th>직급/직책</th><th>핸드폰</th><th>유형</th><th>담당 현장</th><th>비밀번호</th><th></th></tr></thead>
       <tbody>${data.map((a,i) => `<tr>
         <td>${i+1}</td>
         <td><strong>${escHtml(a.username)}</strong></td>
-        <td>${escHtml(a.name||'-')}</td>
         <td>${escHtml(a.position||'-')}</td>
         <td>${escHtml(a.phone||'-')}</td>
         <td>${ROLE_LABEL[a.role] || a.role}</td>
