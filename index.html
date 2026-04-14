@@ -31,6 +31,13 @@
     .tab-btn:hover { color: #2b6cb0; }
     .tab-btn.active { color: #2b6cb0; border-bottom-color: #2b6cb0; font-weight: 700; }
     .tab-btn .count-badge { background: #e53e3e; color: white; border-radius: 10px; padding: 1px 7px; font-size: 11px; margin-left: 6px; font-weight: 700; }
+    .sub-tabs { display: flex; background: #f7fafc; border-bottom: 1.5px solid #e2e8f0; padding: 0 16px; gap: 0; }
+    .sub-tab-btn { padding: 10px 20px; border: none; background: none; font-size: 14px; font-family: inherit; color: #718096; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
+    .sub-tab-btn:hover { color: #2b6cb0; }
+    .sub-tab-btn.active { color: #2b6cb0; border-bottom-color: #2b6cb0; font-weight: 700; }
+    .sub-tab-btn .count-badge { background: #e53e3e; color: white; border-radius: 10px; padding: 1px 7px; font-size: 11px; margin-left: 6px; font-weight: 700; }
+    .sub-page { display: none; }
+    .sub-page.active { display: block; }
 
     main { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
     main:has(#page-mgmt.active) { max-width: 100%; padding: 32px 16px; }
@@ -195,6 +202,8 @@
     /* 탭 */
     .tabs { padding: 0 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
     .tab-btn { padding: 12px 12px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+    .sub-tabs { padding: 0 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .sub-tab-btn { padding: 9px 14px; font-size: 12px; flex-shrink: 0; }
 
     /* 본문 */
     main { padding: 16px 10px; }
@@ -257,11 +266,7 @@
 </header>
 
 <div class="tabs">
-  <button class="tab-btn active" id="tab-report-btn" onclick="switchTab('report',event)">📋 고장 신고 접수</button>
-  <button class="tab-btn" id="tab-list-btn" onclick="switchTab('list',event)">
-    📂 신고 내역 <span class="count-badge" id="pending-count" style="display:none"></span>
-  </button>
-  <button class="tab-btn" id="tab-done-btn" onclick="switchTab('done',event)" style="display:none">✅ 고장처리내역</button>
+  <button class="tab-btn active" id="tab-fault-btn" onclick="switchTab('fault',event)">🔧 고장 관리 <span class="count-badge" id="pending-count" style="display:none"></span></button>
   <button class="tab-btn" id="tab-duty-btn" onclick="switchTab('duty',event)" style="display:none">🕐 고장담당자 등록</button>
   <button class="tab-btn" id="tab-mgmt-btn" onclick="switchTab('mgmt',event)" style="display:none">🏢 관리현장 <span id="mgmt-expire-badge" class="count-badge" style="display:none"></span></button>
   <button class="tab-btn" id="tab-sites-btn" onclick="switchTab('sites',event)" style="display:none">👤 계정 관리</button>
@@ -269,7 +274,13 @@
 
 <main>
   <!-- 고장 신고 접수 -->
-  <div class="page active" id="page-report">
+  <div class="page active" id="page-fault">
+  <div class="sub-tabs">
+    <button class="sub-tab-btn active" id="sub-tab-report-btn" onclick="switchSubTab('report',this)">📋 신고 접수</button>
+    <button class="sub-tab-btn" id="sub-tab-list-btn" onclick="switchSubTab('list',this)">📂 신고 내역</button>
+    <button class="sub-tab-btn" id="sub-tab-done-btn" onclick="switchSubTab('done',this)">✅ 고장처리내역</button>
+  </div>
+  <div class="sub-page active" id="page-report">
     <div id="report-login-required" style="display:none">
       <div class="card">
         <div class="login-required">
@@ -350,7 +361,7 @@
   </div>
 
   <!-- 신고 내역 -->
-  <div class="page" id="page-list">
+  <div class="sub-page" id="page-list">
     <div id="list-login-required" style="display:none">
       <div class="card">
         <div class="login-required">
@@ -397,8 +408,7 @@
     </div>
   </div>
 
-  <!-- 고장처리내역 -->
-  <div class="page" id="page-done">
+  <div class="sub-page" id="page-done">
     <div id="done-login-required" style="display:none">
       <div class="card">
         <div class="login-required">
@@ -447,6 +457,7 @@
       </div>
     </div>
   </div>
+  </div><!-- /page-fault -->
 
   <!-- 현장 계정 관리 (관리자 전용) -->
   <div class="page" id="page-sites">
@@ -1160,21 +1171,33 @@
 
   /* ── TABS ── */
   function switchTab(tab, e) {
-    if (tab === 'list' && !currentRole) { goHome(); return; }
+    // report/list/done은 fault 탭 안의 서브탭으로 처리
+    if (tab === 'report' || tab === 'list' || tab === 'done') {
+      switchTab('fault', null);
+      switchSubTab(tab);
+      return;
+    }
     if (tab === 'sites' && currentRole !== '관리자') return;
     if (tab === 'mgmt' && !currentRole) return;
-    if (tab === 'done' && !currentRole) return;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-' + tab).classList.add('active');
     if (e) e.currentTarget.classList.add('active');
     else document.getElementById('tab-' + tab + '-btn').classList.add('active');
-    if (tab === 'report') renderReportPage();
-    if (tab === 'list')   renderListPage();
-    if (tab === 'done')   renderDonePage();
+    if (tab === 'fault')  {} // 서브탭이 처리
     if (tab === 'sites')  { loadSites(); loadHolidayList(); }
     if (tab === 'duty')   loadDutyPage();
     if (tab === 'mgmt')   loadMgmt();
+  }
+
+  function switchSubTab(subTab) {
+    document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.sub-page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + subTab).classList.add('active');
+    document.getElementById('sub-tab-' + subTab + '-btn').classList.add('active');
+    if (subTab === 'report') renderReportPage();
+    if (subTab === 'list')   renderListPage();
+    if (subTab === 'done')   renderDonePage();
   }
 
   function updateTeamSelectVisibility() {}
@@ -1517,8 +1540,9 @@
     const canExcel = currentRole === '관리자' || currentRole === '직원';
     document.getElementById('tab-sites-btn').style.display = isAdmin ? 'inline-block' : 'none';
     document.getElementById('tab-mgmt-btn').style.display = (isAdmin || currentRole === '직원') ? 'inline-block' : 'none';
-    document.getElementById('tab-done-btn').style.display = 'inline-block';
     document.getElementById('tab-duty-btn').style.display = (isAdmin || currentRole === '직원') ? 'inline-block' : 'none';
+    // 고장처리내역 서브탭: 관리주체는 숨김
+    document.getElementById('sub-tab-done-btn').style.display = currentRole !== '관리주체' ? 'inline-block' : 'none';
     document.getElementById('btn-change-pw').style.display = 'inline-block';
     const btn = document.getElementById('admin-btn');
     btn.textContent = getRoleIcon(currentRole) + ' ' + currentUser.username + ' 로그아웃';
@@ -1534,15 +1558,14 @@
     btn.classList.remove('logged-in');
     document.getElementById('tab-sites-btn').style.display = 'none';
     document.getElementById('tab-mgmt-btn').style.display = 'none';
-    document.getElementById('tab-done-btn').style.display = 'none';
     document.getElementById('tab-duty-btn').style.display = 'none';
     document.getElementById('btn-change-pw').style.display = 'none';
     updateSiteBadge();
     setBuildingField();
     setReporterField();
     renderReportPage();
-    switchTab('report', null);
-    document.getElementById('tab-report-btn').classList.add('active');
+    switchTab('fault', null);
+    switchSubTab('report');
     goHome();
   }
 
