@@ -3861,6 +3861,13 @@
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
+
+  // 앱 포그라운드 복귀 시 구독 갱신 (구독이 만료/변경돼도 DB 최신 유지)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && currentUser) {
+      subscribePush();
+    }
+  });
 </script>
 </body>
 </html>
