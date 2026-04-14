@@ -1283,19 +1283,20 @@
     await loadReports(); updateStats(); updatePendingBadge(); renderList();
   }
 
-  async function confirmDispatch() {
-    const btn = document.getElementById('rdm-dispatch-btn');
-    btn.disabled = true; btn.textContent = '처리 중...';
+  async function confirmDispatch(directId) {
+    const id = directId || currentReportId;
     const handler = currentUser.name || currentUser.username;
     const { error } = await db.from('reports').update({
       status: '처리중',
       completion_handler: handler,
       confirmed_at: new Date().toISOString()
-    }).eq('id', currentReportId);
-    if (error) { alert('오류: ' + error.message); btn.disabled = false; btn.textContent = '배치'; return; }
-    closeReportDetail();
+    }).eq('id', id);
+    if (error) { showToast('❌ 오류: ' + error.message); return; }
+    showToast('✅ 처리중으로 변경되었습니다.');
+    if (!directId) closeReportDetail();
     await loadReports();
     updateStats();
+    renderList();
   }
 
   async function saveReportDetail() {
@@ -1718,7 +1719,7 @@
         '<span class=report-id>' + r.id + '</span>' +
         '<span class=report-title>' + escHtml(r.building||'') + ' · ' + escHtml(r.elevator||'') + '</span>' +
         '<span class=status-badge status-PLACEHOLDER>' + r.status + '</span>'.replace('status-PLACEHOLDER', 'status-'+r.status) +
-        (r.status === '접수중' && (currentRole==='직원'||currentRole==='관리자') ? '<button style=background:#2b6cb0;color:white;border:none;border-radius:4px;padding:4px_12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1.4;white-space:nowrap onclick=event.stopPropagation();confirmAssignById(' + JSON.stringify(r.id) + ')>✅ 배치확인</button>'.replace(/_/g,' ') : '') +
+        (r.status === '배치완료' && (currentRole==='직원'||currentRole==='관리자') ? '<button style=background:#c05621;color:white;border:none;border-radius:4px;padding:4px_12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1.4;white-space:nowrap onclick=event.stopPropagation();confirmDispatch(' + JSON.stringify(r.id) + ')>배치</button>'.replace(/_/g,' ') : '') +
         (r.parts_replaced ? '<span style=background:#fffbeb;color:#744210;border:1px_solid_#fbd38d;border-radius:12px;padding:2px_8px;font-size:11px;font-weight:700>부품교체</span>'.replace(/_/g,' ') : '') +
         '</div>' +
         '<div class=report-meta>' +
