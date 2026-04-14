@@ -92,7 +92,7 @@
     .meta-item { font-size: 15px; color: #718096; display: flex; align-items: center; gap: 4px; }
     .report-desc { font-size: 15px; color: #4a5568; line-height: 1.5; margin-top: 4px; background: #f7fafc; padding: 8px 12px; border-radius: 6px; border-left: 3px solid #bee3f8; }
     .report-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; min-width: 140px; }
-    .report-date { font-size: 11px; color: #a0aec0; }
+    .report-date { font-size: 12px; font-weight: 600; color: #4a5568; background: #edf2f7; border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
 
     .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; }
     .status-배치완료 { background: #ebf8ff; color: #2b6cb0; border: 1.5px solid #bee3f8; }
@@ -1419,8 +1419,10 @@
     const pC = { '높음':'priority-high','중간':'priority-mid','낮음':'priority-low' };
     const pI = { '높음':'🔴','중간':'🟡','낮음':'🟢' };
     el.innerHTML = list.map(r => {
-      const dt = r.created_at ? new Date(r.created_at).toLocaleString('ko-KR') : '';
-      const compDt = r.completion_at ? new Date(r.completion_at).toLocaleString('ko-KR') : '';
+      const _d = r.created_at ? new Date(r.created_at) : null;
+      const dt = _d ? (_d.getMonth()+1) + '/' + _d.getDate() + ' ' + String(_d.getHours()).padStart(2,'0') + ':' + String(_d.getMinutes()).padStart(2,'0') : '';
+      const _cd = r.completion_at ? new Date(r.completion_at) : null;
+      const compDt = _cd ? (_cd.getMonth()+1) + '/' + _cd.getDate() + ' ' + String(_cd.getHours()).padStart(2,'0') + ':' + String(_cd.getMinutes()).padStart(2,'0') : '';
       return '<div class=report-item style=cursor:pointer onclick=showReportDetail('  + JSON.stringify(r.id) + ') >' +
         '<div class=report-left>' +
         '<div class=report-header>' +
@@ -1708,7 +1710,8 @@
     const pC = { '높음':'priority-high','중간':'priority-mid','낮음':'priority-low' };
     const pI = { '높음':'높','중간':'중','낮음':'낮' };
     el.innerHTML = list.map(r => {
-      const dt = r.created_at ? new Date(r.created_at).toLocaleString('ko-KR') : '';
+      const _d = r.created_at ? new Date(r.created_at) : null;
+      const dt = _d ? (_d.getMonth()+1) + '/' + _d.getDate() + ' ' + String(_d.getHours()).padStart(2,'0') + ':' + String(_d.getMinutes()).padStart(2,'0') : '';
       const hc = r.status !== '접수중' && (r.completion_content || r.completion_handler || r.completion_at);
       return '<div class=report-item style=cursor:pointer onclick=showReportDetail(' + JSON.stringify(r.id) + ')>' +
         '<div class=report-left>' +
