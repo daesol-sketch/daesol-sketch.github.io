@@ -1032,7 +1032,7 @@
     const handlerGroup = document.getElementById('handler-select-group');
     const handlerSel = document.getElementById('f-handler');
     const nodutyEl = document.getElementById('handler-no-duty');
-    if (!team) { handlerSel.innerHTML = '<option value="">-- 담당자 선택 --</option>'; return; }
+    if (!team) { handlerSel.innerHTML = '<option value="">-- 담당자 선택 --</option>'; handlerGroup.style.display = 'block'; return; }
 
     const shiftType = getCurrentShiftType();
     const date = getShiftDate();
@@ -1518,7 +1518,6 @@
       }
       document.getElementById('report-form').reset();
       if (document.getElementById('f-team')) document.getElementById('f-team').value = '';
-      if (document.getElementById('handler-select-group')) document.getElementById('handler-select-group').style.display = 'none';
       setBuildingField();
       setReporterField();
       updatePendingBadge();
