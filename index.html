@@ -3752,6 +3752,20 @@
     switchTab('report', null);
     setTimeout(() => checkPendingAssignments(), 500);
     subscribePush();
+    startReportsRealtime();
+  }
+
+  let _realtimeChannel = null;
+  function startReportsRealtime() {
+    if (_realtimeChannel) db.removeChannel(_realtimeChannel);
+    _realtimeChannel = db.channel('reports-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, async () => {
+        await loadReports();
+        updateStats();
+        renderList();
+        updatePendingBadge();
+      })
+      .subscribe();
   }
 
   /* ── 건물명 필드 제어 ── */
@@ -3839,6 +3853,7 @@
           setReporterField();
           setTimeout(() => checkPendingAssignments(), 500);
           subscribePush();
+          startReportsRealtime();
         } else {
           localStorage.removeItem('daesol_autologin');
         }
