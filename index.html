@@ -884,7 +884,7 @@
 
 <script>
   /* ── CONFIG ── */
-  const VAPID_PUBLIC_KEY = 'BBm8mLQiBtBUOsOtCFWbGMcFW5ew3yfjvyuKbVIJphiC53yhILrGGEEFTcdIJqLojdOBmxG2NInM4cuz30sVV1o';
+  const VAPID_PUBLIC_KEY = 'BMlZ6UXftPo83VjxEAHMF2jahnvmtEaHGuy0QO5YdF5731n5C8CHUDwF9uCuxbqiv2IOEChTGgU_aWteUGuXfDE';
   const EDGE_FUNCTION_URL = 'https://bbnmxwpacdfqvicybhau.supabase.co/functions/v1/smooth-responder';
 
   const TEAM_UNITS = { '1팀': ['1조','2조','3조'], '2팀': ['1조','2조','3조'], '3팀': ['1조','2조'] };
@@ -3636,6 +3636,8 @@
     renderReportPage();
     switchTab('report', null);
     setTimeout(() => checkPendingAssignments(), 500);
+    if (window._pendingCheckInterval) clearInterval(window._pendingCheckInterval);
+    window._pendingCheckInterval = setInterval(() => checkPendingAssignments(), 60 * 1000);
     subscribePush();
   }
 
@@ -3720,6 +3722,8 @@
           setBuildingField();
           setReporterField();
           setTimeout(() => checkPendingAssignments(), 500);
+          if (window._pendingCheckInterval) clearInterval(window._pendingCheckInterval);
+          window._pendingCheckInterval = setInterval(() => checkPendingAssignments(), 60 * 1000);
           subscribePush();
         } else {
           localStorage.removeItem('daesol_autologin');
