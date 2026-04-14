@@ -369,7 +369,6 @@
         <div class="stat-card all"><div class="num" id="stat-all">0</div><div class="lbl">전체</div></div>
         <div class="stat-card" style="background:linear-gradient(135deg,#ebf8ff,#bee3f8)"><div class="num" id="stat-assigned" style="color:#2b6cb0">0</div><div class="lbl">배치완료</div></div>
         <div class="stat-card" style="background:linear-gradient(135deg,#fffaf0,#fbd38d)"><div class="num" id="stat-processing" style="color:#c05621">0</div><div class="lbl">처리중</div></div>
-        <div class="stat-card done"><div class="num" id="stat-done">0</div><div class="lbl">완료</div></div>
       </div>
       <div class="card">
         <h2>
@@ -380,7 +379,6 @@
           <button class="filter-btn active" onclick="setFilter('전체',this)">전체</button>
           <button class="filter-btn" onclick="setFilter('배치완료',this)">배치완료</button>
           <button class="filter-btn" onclick="setFilter('처리중',this)">처리중</button>
-          <button class="filter-btn" onclick="setFilter('완료',this)">완료</button>
           <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
             <label style="font-size:13px;color:#4a5568">날짜:</label>
             <input type="date" id="report-month-from" onchange="renderList()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit" />
@@ -1628,7 +1626,7 @@
   }
 
     async function loadReports() {
-    let q = db.from('reports').select('*').order('created_at', { ascending: false });
+    let q = db.from('reports').select('*').neq('status', '완료').order('created_at', { ascending: false });
     if (currentRole === '관리주체') q = q.eq('building', currentSite);
     const { data, error } = await q;
     if (error) { showToast('❌ 데이터 로드 실패'); return; }
@@ -1659,7 +1657,6 @@
     document.getElementById('stat-all').textContent        = reports.length;
     document.getElementById('stat-assigned').textContent   = reports.filter(r=>r.status==='배치완료').length;
     document.getElementById('stat-processing').textContent = reports.filter(r=>r.status==='처리중').length;
-    document.getElementById('stat-done').textContent       = reports.filter(r=>r.status==='완료').length;
   }
 
   async function updatePendingBadge() {
