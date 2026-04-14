@@ -619,7 +619,6 @@
     </div>
     <div style="border-top:1.5px solid #e2e8f0;margin:12px 0 8px;padding-top:12px">
       <div style="font-size:11px;font-weight:700;color:#718096;letter-spacing:0.5px;margin-bottom:8px">직원 정보 (선택)</div>
-      <input type="text" class="modal-input normal" id="new-acc-name" placeholder="이름 (실명)" style="margin-bottom:8px" />
       <input type="tel" class="modal-input normal" id="new-acc-phone" placeholder="핸드폰번호 (010-0000-0000)" style="margin-bottom:8px" oninput="autoFormatPhone(this)" />
       <select class="modal-input normal" id="new-acc-position" style="margin-bottom:8px;letter-spacing:0">
         <option value="">-- 직급/직책 선택 --</option>
@@ -681,7 +680,6 @@
     </div>
     <div style="border-top:1.5px solid #e2e8f0;margin:12px 0 8px;padding-top:12px">
       <div style="font-size:11px;font-weight:700;color:#718096;letter-spacing:0.5px;margin-bottom:8px">직원 정보 (선택)</div>
-      <input type="text" class="modal-input normal" id="edit-acc-name" placeholder="이름 (실명)" style="margin-bottom:8px" />
       <input type="tel" class="modal-input normal" id="edit-acc-phone" placeholder="핸드폰번호 (010-0000-0000)" style="margin-bottom:8px" oninput="autoFormatPhone(this)" />
       <select class="modal-input normal" id="edit-acc-position" style="margin-bottom:8px;letter-spacing:0">
         <option value="">-- 직급/직책 선택 --</option>
@@ -1815,7 +1813,6 @@
     document.getElementById('new-acc-pw').value = '';
     document.getElementById('new-acc-role').value = '';
     document.getElementById('new-acc-site').value = '';
-    document.getElementById('new-acc-name').value = '';
     document.getElementById('new-acc-phone').value = '';
     document.getElementById('new-acc-position').value = '';
     document.getElementById('site-name-field').style.display = 'none';
@@ -1845,14 +1842,13 @@
     const role     = document.getElementById('new-acc-role').value;
     const siteName = document.getElementById('new-acc-site').value.trim();
     const errEl    = document.getElementById('add-account-error');
-    const name     = document.getElementById('new-acc-name').value.trim();
     const phone    = document.getElementById('new-acc-phone').value.trim();
     const position = document.getElementById('new-acc-position').value.trim();
     if (!username || !pw || !role) { errEl.textContent='아이디, 비밀번호, 유형을 모두 입력하세요.'; errEl.style.display='block'; return; }
     if (role === '관리주체' && !siteName) { errEl.textContent='관리주체 계정은 담당 현장명을 입력하세요.'; errEl.style.display='block'; return; }
     const team = document.getElementById('new-acc-team')?.value || null;
     const unit = document.getElementById('new-acc-unit')?.value || null;
-    const payload = { username, password: pw, role, site_name: role === '관리주체' ? siteName : null, name: name||null, phone: phone||null, position: position||null, team: team||null, unit: unit||null };
+    const payload = { username, password: pw, role, site_name: role === '관리주체' ? siteName : null, name: null, phone: phone||null, position: position||null, team: team||null, unit: unit||null };
     const { error } = await db.from('accounts').insert(payload);
     if (error) {
       errEl.textContent = error.code==='23505' ? '이미 존재하는 아이디입니다.' : '추가 실패: ' + error.message;
@@ -1873,7 +1869,6 @@
     document.getElementById('edit-acc-pw').value = data.password;
     document.getElementById('edit-acc-role').value = data.role;
     document.getElementById('edit-acc-site').value = data.site_name || '';
-    document.getElementById('edit-acc-name').value = data.name || '';
     document.getElementById('edit-acc-phone').value = data.phone || '';
     document.getElementById('edit-acc-position').value = data.position || '';
     // 팀/조 불러오기
@@ -1908,7 +1903,6 @@
     const pw       = document.getElementById('edit-acc-pw').value.trim();
     const role     = document.getElementById('edit-acc-role').value;
     const siteName = document.getElementById('edit-acc-site').value.trim();
-    const name     = document.getElementById('edit-acc-name').value.trim();
     const phone    = document.getElementById('edit-acc-phone').value.trim();
     const position = document.getElementById('edit-acc-position').value.trim();
     const errEl    = document.getElementById('edit-account-error');
@@ -1916,7 +1910,7 @@
     if (role === '관리주체' && !siteName) { errEl.textContent='관리주체 계정은 담당 현장명을 입력하세요.'; errEl.style.display='block'; return; }
     const teamE = document.getElementById('edit-acc-team')?.value || null;
     const unitE = document.getElementById('edit-acc-unit')?.value || null;
-    const payload = { username, password: pw, role, site_name: role === '관리주체' ? siteName : null, name: name||null, phone: phone||null, position: position||null, team: teamE||null, unit: unitE||null };
+    const payload = { username, password: pw, role, site_name: role === '관리주체' ? siteName : null, name: null, phone: phone||null, position: position||null, team: teamE||null, unit: unitE||null };
     const { error } = await db.from('accounts').update(payload).eq('id', editingAccountId);
     if (error) {
       errEl.textContent = error.code==='23505' ? '이미 존재하는 아이디입니다.' : '수정 실패: ' + error.message;
