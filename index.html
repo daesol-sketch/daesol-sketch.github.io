@@ -261,7 +261,7 @@
   <button class="tab-btn" id="tab-list-btn" onclick="switchTab('list',event)">
     📂 신고 내역 <span class="count-badge" id="pending-count" style="display:none"></span>
   </button>
-  <button class="tab-btn" id="tab-done-btn" onclick="switchTab('done',event)" style="display:none">✅ 처리완료내역</button>
+  <button class="tab-btn" id="tab-done-btn" onclick="switchTab('done',event)" style="display:none">✅ 고장처리내역</button>
   <button class="tab-btn" id="tab-duty-btn" onclick="switchTab('duty',event)" style="display:none">🕐 고장담당자 등록</button>
   <button class="tab-btn" id="tab-mgmt-btn" onclick="switchTab('mgmt',event)" style="display:none">🏢 관리현장 <span id="mgmt-expire-badge" class="count-badge" style="display:none"></span></button>
   <button class="tab-btn" id="tab-sites-btn" onclick="switchTab('sites',event)" style="display:none">👤 계정 관리</button>
@@ -397,14 +397,14 @@
     </div>
   </div>
 
-  <!-- 처리완료내역 -->
+  <!-- 고장처리내역 -->
   <div class="page" id="page-done">
     <div id="done-login-required" style="display:none">
       <div class="card">
         <div class="login-required">
           <div class="icon">🔒</div>
           <h3>로그인이 필요합니다</h3>
-          <p>처리완료내역을 보려면 로그인이 필요합니다.</p>
+          <p>고장처리내역을 보려면 로그인이 필요합니다.</p>
           <div class="login-btn-row">
             <button class="btn-login-big site" onclick="goHome()">🔑 로그인하러 가기</button>
           </div>
@@ -414,7 +414,7 @@
     <div id="done-content" style="display:none">
       <div class="card">
         <h2>
-          ✅ 처리완료내역
+          ✅ 고장처리내역
           <span id="done-today-badge" style="margin-left:12px;font-size:13px;font-weight:600;color:#276749;background:#f0fff4;border:1.5px solid #9ae6b4;border-radius:20px;padding:3px 12px;white-space:nowrap"></span>
           <button onclick="exportDoneExcel()" style="margin-left:auto;padding:6px 14px;background:#1d6f42;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">📥 엑셀</button>
         </h2>
@@ -1203,7 +1203,7 @@
     }
   }
 
-  /* ── 처리완료내역 ── */
+  /* ── 고장처리내역 ── */
   let doneReports = [];
 
 
@@ -1418,7 +1418,7 @@
     }
     const el = document.getElementById('done-list');
     if (!el) return;
-    if (!list.length) { el.innerHTML = '<div class=empty-state><div class=icon>✅</div>처리완료 내역이 없습니다.</div>'; return; }
+    if (!list.length) { el.innerHTML = '<div class=empty-state><div class=icon>✅</div>고장처리내역이 없습니다.</div>'; return; }
     const pC = { '높음':'priority-high','중간':'priority-mid','낮음':'priority-low' };
     const pI = { '높음':'🔴','중간':'🟡','낮음':'🟢' };
     el.innerHTML = list.map(r => {
@@ -1495,8 +1495,8 @@
     ws['!cols'] = [{wch:6},{wch:12},{wch:25},{wch:12},{wch:12},{wch:12},{wch:8},{wch:10},{wch:14},{wch:30},{wch:20}];
     const wb = XLSX.utils.book_new();
     const dateStr = new Date().toISOString().slice(0,10);
-    XLSX.utils.book_append_sheet(wb, ws, '처리완료내역');
-    XLSX.writeFile(wb, `대솔이엘_처리완료내역_${dateStr}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, '고장처리내역');
+    XLSX.writeFile(wb, `대솔이엘_고장처리내역_${dateStr}.xlsx`);
     showToast(`📥 ${list.length}건 엑셀 다운로드 완료`);
   }
 
