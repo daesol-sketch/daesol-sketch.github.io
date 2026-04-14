@@ -1242,8 +1242,6 @@
     const editSec   = document.getElementById('rdm-edit-section');
     const saveBtn   = document.getElementById('rdm-save-btn');
     const delBtn    = document.getElementById('rdm-delete-btn');
-    const dispatchBtn = document.getElementById('rdm-dispatch-btn');
-    if (dispatchBtn) dispatchBtn.style.display = (r.status === '배치완료' && (currentRole === '직원' || currentRole === '관리자')) ? '' : 'none';
 
     if (canEdit) {
       editSec.style.display = '';

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'daesol-el-v8';
+const CACHE_NAME = 'daesol-el-v9';
 // index.html은 캐시하지 않음 — 항상 최신 버전 사용
 const STATIC_ASSETS = [
   './manifest.json',
