@@ -1420,9 +1420,9 @@
     const pI = { '높음':'🔴','중간':'🟡','낮음':'🟢' };
     el.innerHTML = list.map(r => {
       const _d = r.created_at ? new Date(r.created_at) : null;
-      const dt = _d ? (_d.getMonth()+1) + '/' + _d.getDate() + ' ' + String(_d.getHours()).padStart(2,'0') + ':' + String(_d.getMinutes()).padStart(2,'0') : '';
+      const dt = _d ? (_d.getMonth()+1) + '월' + _d.getDate() + '일 ' + String(_d.getHours()).padStart(2,'0') + ':' + String(_d.getMinutes()).padStart(2,'0') : '';
       const _cd = r.completion_at ? new Date(r.completion_at) : null;
-      const compDt = _cd ? (_cd.getMonth()+1) + '/' + _cd.getDate() + ' ' + String(_cd.getHours()).padStart(2,'0') + ':' + String(_cd.getMinutes()).padStart(2,'0') : '';
+      const compDt = _cd ? (_cd.getMonth()+1) + '월' + _cd.getDate() + '일 ' + String(_cd.getHours()).padStart(2,'0') + ':' + String(_cd.getMinutes()).padStart(2,'0') : '';
       return '<div class=report-item style=cursor:pointer onclick=showReportDetail('  + JSON.stringify(r.id) + ') >' +
         '<div class=report-left>' +
         '<div class=report-header>' +
@@ -1711,7 +1711,7 @@
     const pI = { '높음':'높','중간':'중','낮음':'낮' };
     el.innerHTML = list.map(r => {
       const _d = r.created_at ? new Date(r.created_at) : null;
-      const dt = _d ? (_d.getMonth()+1) + '/' + _d.getDate() + ' ' + String(_d.getHours()).padStart(2,'0') + ':' + String(_d.getMinutes()).padStart(2,'0') : '';
+      const dt = _d ? (_d.getMonth()+1) + '월' + _d.getDate() + '일 ' + String(_d.getHours()).padStart(2,'0') + ':' + String(_d.getMinutes()).padStart(2,'0') : '';
       const hc = r.status !== '접수중' && (r.completion_content || r.completion_handler || r.completion_at);
       return '<div class=report-item style=cursor:pointer onclick=showReportDetail(' + JSON.stringify(r.id) + ')>' +
         '<div class=report-left>' +
