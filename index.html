@@ -991,7 +991,7 @@
       if (error) { showToast('❌ 해제 실패: ' + error.message); return; }
       showToast('🗑️ 등록이 해제되었습니다.');
     } else {
-      const maxCount = team === '풍동숙직' ? 2 : 1;
+      const maxCount = team === '풍동숙직' ? 2 : 2;
       const { error } = await db.from('duty_roster').insert(
         { date, shift_type: shiftType, team, handler_name: handler, account_id: String(currentUser.id) }
       );
