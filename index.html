@@ -63,7 +63,7 @@
     .ac-item mark { background: #bee3f8; color: #1a365d; font-weight: 700; border-radius: 2px; padding: 0 1px; }
     .ac-count { font-size: 11px; color: #a0aec0; padding: 5px 14px; background: #f7fafc; border-top: 1px solid #e2e8f0; text-align: right; }
 
-    .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 24px; }
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
     .stat-card { background: white; border-radius: 10px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); text-align: center; border-top: 4px solid #e2e8f0; }
     .stat-card.all { border-top-color: #4299e1; } .stat-card.new { border-top-color: #fc8181; }
     .stat-card.wip { border-top-color: #f6ad55; } .stat-card.done { border-top-color: #68d391; }
@@ -95,7 +95,6 @@
     .report-date { font-size: 11px; color: #a0aec0; }
 
     .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-    .status-접수중   { background: #fff5f5; color: #c53030; border: 1.5px solid #feb2b2; }
     .status-배치완료 { background: #ebf8ff; color: #2b6cb0; border: 1.5px solid #bee3f8; }
     .status-처리중   { background: #fffaf0; color: #c05621; border: 1.5px solid #fbd38d; }
     .status-완료     { background: #f0fff4; color: #276749; border: 1.5px solid #9ae6b4; }
@@ -320,8 +319,8 @@
           <div></div>
           <input type="hidden" id="f-priority" value="" />
           <div class="form-group" id="team-select-group">
-            <label>담당팀 선택</label>
-            <select id="f-team" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit" onchange="loadDutyHandlers()">
+            <label>담당팀 선택 <span class="required">*</span></label>
+            <select id="f-team" required style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit" onchange="loadDutyHandlers()">
               <option value="">-- 팀 선택 --</option>
               <option value="1팀">1팀</option>
               <option value="2팀">2팀</option>
@@ -329,8 +328,8 @@
             </select>
           </div>
           <div class="form-group" id="handler-select-group">
-            <label>담당자 선택</label>
-            <select id="f-handler" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit">
+            <label>담당자 선택 <span class="required">*</span></label>
+            <select id="f-handler" required style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit">
               <option value="">-- 담당자 선택 --</option>
             </select>
             <span id="handler-no-duty" style="display:none;font-size:12px;color:#c53030;margin-top:4px">⚠️ 현재 등록된 당직자가 없습니다.</span>
@@ -374,7 +373,6 @@
     <div id="list-content" style="display:none">
       <div class="stats-row">
         <div class="stat-card all"><div class="num" id="stat-all">0</div><div class="lbl">전체</div></div>
-        <div class="stat-card new"><div class="num" id="stat-new">0</div><div class="lbl">접수중</div></div>
         <div class="stat-card" style="background:linear-gradient(135deg,#ebf8ff,#bee3f8)"><div class="num" id="stat-assigned" style="color:#2b6cb0">0</div><div class="lbl">배치완료</div></div>
         <div class="stat-card" style="background:linear-gradient(135deg,#fffaf0,#fbd38d)"><div class="num" id="stat-processing" style="color:#c05621">0</div><div class="lbl">처리중</div></div>
         <div class="stat-card done"><div class="num" id="stat-done">0</div><div class="lbl">완료</div></div>
@@ -387,7 +385,6 @@
         </h2>
         <div class="filters" style="flex-wrap:wrap;gap:8px">
           <button class="filter-btn active" onclick="setFilter('전체',this)">전체</button>
-          <button class="filter-btn" onclick="setFilter('접수중',this)">접수중</button>
           <button class="filter-btn" onclick="setFilter('배치완료',this)">배치완료</button>
           <button class="filter-btn" onclick="setFilter('처리중',this)">처리중</button>
           <button class="filter-btn" onclick="setFilter('완료',this)">완료</button>
@@ -1487,17 +1484,15 @@
       const selectedTeam = document.getElementById('f-team')?.value || null;
       let assignedHandler = null;
       let assignedUsername = null;
-      if (selectedTeam) {
-        const handlerVal = document.getElementById('f-handler')?.value;
-        if (handlerVal) {
-          try {
-            const parsed = JSON.parse(handlerVal);
-            assignedHandler = parsed.handler_name;
-            const { data: acc } = await db.from('accounts').select('username').eq('id', parsed.account_id).maybeSingle();
-            if (acc) assignedUsername = acc.username;
-          } catch(e) {}
-        }
-      }
+      if (!selectedTeam) { showToast('❌ 담당팀을 선택해주세요.'); btn.disabled = false; btn.textContent = '✅ 신고 접수하기'; return; }
+      const handlerVal = document.getElementById('f-handler')?.value;
+      if (!handlerVal) { showToast('❌ 담당자를 선택해주세요.'); btn.disabled = false; btn.textContent = '✅ 신고 접수하기'; return; }
+      try {
+        const parsed = JSON.parse(handlerVal);
+        assignedHandler = parsed.handler_name;
+        const { data: acc } = await db.from('accounts').select('username').eq('id', parsed.account_id).maybeSingle();
+        if (acc) assignedUsername = acc.username;
+      } catch(e) {}
       const { error } = await db.from('reports').insert({
         id,
         building:    document.getElementById('f-building').value.trim(),
@@ -1564,7 +1559,6 @@
   /* ── RENDER ── */
   function updateStats() {
     document.getElementById('stat-all').textContent        = reports.length;
-    document.getElementById('stat-new').textContent        = reports.filter(r=>r.status==='접수중').length;
     document.getElementById('stat-assigned').textContent   = reports.filter(r=>r.status==='배치완료').length;
     document.getElementById('stat-processing').textContent = reports.filter(r=>r.status==='처리중').length;
     document.getElementById('stat-done').textContent       = reports.filter(r=>r.status==='완료').length;
@@ -3636,8 +3630,6 @@
     renderReportPage();
     switchTab('report', null);
     setTimeout(() => checkPendingAssignments(), 500);
-    if (window._pendingCheckInterval) clearInterval(window._pendingCheckInterval);
-    window._pendingCheckInterval = setInterval(() => checkPendingAssignments(), 60 * 1000);
     subscribePush();
   }
 
@@ -3722,8 +3714,6 @@
           setBuildingField();
           setReporterField();
           setTimeout(() => checkPendingAssignments(), 500);
-          if (window._pendingCheckInterval) clearInterval(window._pendingCheckInterval);
-          window._pendingCheckInterval = setInterval(() => checkPendingAssignments(), 60 * 1000);
           subscribePush();
         } else {
           localStorage.removeItem('daesol_autologin');
