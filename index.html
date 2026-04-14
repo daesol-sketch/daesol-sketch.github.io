@@ -992,16 +992,20 @@
       showToast('🗑️ 등록이 해제되었습니다.');
     } else {
       const maxCount = team === '풍동숙직' ? 2 : 1;
-      const { data: current } = await db.from('duty_roster').select('id')
-        .eq('date', date).eq('shift_type', shiftType).eq('team', team);
-      if (current && current.length >= maxCount) {
-        showToast('❌ 해당 구분 인원이 이미 ' + maxCount + '명 등록되었습니다.');
-        return;
-      }
       const { error } = await db.from('duty_roster').insert(
         { date, shift_type: shiftType, team, handler_name: handler, account_id: String(currentUser.id) }
       );
       if (error) { showToast('❌ 등록 실패: ' + error.message); return; }
+      // insert 후 실제 DB 인원 재확인 (동시 등록 방지)
+      const { data: afterInsert } = await db.from('duty_roster').select('id')
+        .eq('date', date).eq('shift_type', shiftType).eq('team', team);
+      if (afterInsert && afterInsert.length > maxCount) {
+        // 초과됐으면 방금 내가 등록한 것 취소
+        await db.from('duty_roster').delete()
+          .eq('date', date).eq('shift_type', shiftType).eq('team', team).eq('account_id', String(currentUser.id));
+        showToast('❌ 이미 정원이 찼습니다. 다시 시도해주세요.');
+        return;
+      }
       showToast('✅ 등록 완료!');
     }
     loadDutyPage();
@@ -1207,9 +1211,13 @@
   /* 신고 상세/처리 모달 */
   let currentReportId = null;
 
-  function showReportDetail(id) {
-    const r = reports.find(x => x.id === id);
-    if (!r) return;
+  async function showReportDetail(id) {
+    // 항상 DB에서 최신 데이터 가져옴 (다른 사용자 변경사항 반영)
+    const { data: r, error } = await db.from('reports').select('*').eq('id', id).maybeSingle();
+    if (!r || error) return;
+    // 로컬 캐시도 최신으로 교체
+    const idx = reports.findIndex(x => x.id === id);
+    if (idx !== -1) reports[idx] = r;
     currentReportId = id;
     const canEdit = currentRole === '관리자' || (currentRole === '직원' && r.status !== '완료');
 
