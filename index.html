@@ -369,6 +369,7 @@
         <div class="stat-card all"><div class="num" id="stat-all">0</div><div class="lbl">전체</div></div>
         <div class="stat-card" style="background:linear-gradient(135deg,#ebf8ff,#bee3f8)"><div class="num" id="stat-assigned" style="color:#2b6cb0">0</div><div class="lbl">배치완료</div></div>
         <div class="stat-card" style="background:linear-gradient(135deg,#fffaf0,#fbd38d)"><div class="num" id="stat-processing" style="color:#c05621">0</div><div class="lbl">처리중</div></div>
+        <div class="stat-card done"><div class="num" id="stat-today-done">0</div><div class="lbl">오늘 완료</div></div>
       </div>
       <div class="card">
         <h2>
@@ -1657,6 +1658,9 @@
     document.getElementById('stat-all').textContent        = reports.length;
     document.getElementById('stat-assigned').textContent   = reports.filter(r=>r.status==='배치완료').length;
     document.getElementById('stat-processing').textContent = reports.filter(r=>r.status==='처리중').length;
+    const todayStr = new Date().toISOString().slice(0,10);
+    db.from('reports').select('*',{count:'exact',head:true}).eq('status','완료').gte('completion_at', todayStr+'T00:00:00').lte('completion_at', todayStr+'T23:59:59')
+      .then(({count}) => { const el = document.getElementById('stat-today-done'); if(el) el.textContent = count||0; });
   }
 
   async function updatePendingBadge() {
