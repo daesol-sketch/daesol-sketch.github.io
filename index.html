@@ -914,12 +914,12 @@
     } catch(e) { console.warn('Push 구독 실패:', e); }
   }
 
-  async function sendPushToUser(username, title, body, reportId) {
+  async function sendPushToUser(handlerName, title, body, reportId) {
     try {
       await fetch(EDGE_FUNCTION_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY },
-        body: JSON.stringify({ username, title, body, reportId: reportId || null })
+        body: JSON.stringify({ handlerName, title, body, reportId: reportId || null })
       });
     } catch(e) { console.warn('푸시 발송 실패:', e); }
   }
@@ -1516,7 +1516,7 @@
       if (assignedHandler && assignedUsername) {
         const building = document.getElementById('f-building').value.trim();
         const elevator = document.getElementById('f-elevator').value.trim();
-        sendPushToUser(assignedUsername, '🔧 고장 신고 배정', building + ' ' + elevator + ' 고장 신고가 배정되었습니다.', id);
+        sendPushToUser(assignedHandler, '🔧 고장 신고 배정', building + ' ' + elevator + ' 고장 신고가 배정되었습니다.', id);
         showToast('✅ 신고 접수 완료! ' + assignedHandler + '님께 배정되었습니다. (' + id + ')');
       } else {
         showToast('✅ 신고가 접수되었습니다. (' + id + ')');
