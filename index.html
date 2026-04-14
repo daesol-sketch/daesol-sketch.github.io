@@ -106,8 +106,6 @@
     .priority-mid  { color: #c05621; font-weight: 700; }
     .priority-low  { color: #276749; font-weight: 700; }
 
-    .btn-excel { padding: 8px 18px; background: #1d6f42; color: white; border: none; border-radius: 8px; font-size: 14px; font-family: inherit; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: opacity 0.2s; white-space: nowrap; margin-left: auto; }
-    .btn-excel:hover { opacity: 0.88; }
 
     /* 현장 계정 관리 */
     .site-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
@@ -378,7 +376,6 @@
         <h2>
           📂 신고 내역
           <span id="site-badge-wrap"></span>
-          <button class="btn-excel" onclick="downloadExcel()" id="btn-excel" style="display:none">📥 엑셀 다운로드</button>
         </h2>
         <div class="filters" style="flex-wrap:wrap;gap:8px">
           <button class="filter-btn active" onclick="setFilter('전체',this)">전체</button>
@@ -1514,7 +1511,6 @@
     document.getElementById('tab-mgmt-btn').style.display = (isAdmin || currentRole === '직원') ? 'inline-block' : 'none';
     document.getElementById('tab-done-btn').style.display = 'inline-block';
     document.getElementById('tab-duty-btn').style.display = (isAdmin || currentRole === '직원') ? 'inline-block' : 'none';
-    document.getElementById('btn-excel').style.display = canExcel ? 'flex' : 'none';
     document.getElementById('btn-change-pw').style.display = 'inline-block';
     const btn = document.getElementById('admin-btn');
     btn.textContent = getRoleIcon(currentRole) + ' ' + currentUser.username + ' 로그아웃';
@@ -1532,7 +1528,6 @@
     document.getElementById('tab-mgmt-btn').style.display = 'none';
     document.getElementById('tab-done-btn').style.display = 'none';
     document.getElementById('tab-duty-btn').style.display = 'none';
-    document.getElementById('btn-excel').style.display = 'none';
     document.getElementById('btn-change-pw').style.display = 'none';
     updateSiteBadge();
     setBuildingField();
@@ -2565,18 +2560,6 @@
   }
 
   /* ── EXCEL ── */
-  function downloadExcel() {
-    if (!reports.length) { showToast('⚠️ 다운로드할 신고 내역이 없습니다.'); return; }
-    const headers = ['신고번호','건물명','엘리베이터 호기','승강기 번호','고장 유형','긴급도','처리 상태','신고자','연락처','상세 내용','신고 일시'];
-    const rows = reports.map(r => [r.id, r.building, r.elevator, r.regno||'', r.type, r.priority, r.status, r.name, r.phone, r.description||'', r.created_at ? new Date(r.created_at).toLocaleString('ko-KR') : '']);
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-    ws['!cols'] = [16,20,16,16,16,10,10,10,16,40,22].map(w=>({wch:w}));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, '신고내역');
-    XLSX.writeFile(wb, `대솔이엘_신고내역_${new Date().toISOString().slice(0,10)}.xlsx`);
-    showToast('📥 엑셀 파일이 다운로드되었습니다.');
-  }
-
   /* ── 승강기종합정보망 검색 ── */
   function openElevatorSearch(num) {
     const searchNum = num.replace(/-/g, '');
