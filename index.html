@@ -1127,8 +1127,9 @@
     const handlerGroup = document.getElementById('handler-select-group');
     const handlerSel = document.getElementById('f-handler');
     const nodutyEl = document.getElementById('handler-no-duty');
-    if (!team) { handlerSel.innerHTML = '<option value="">-- 담당자 선택 --</option>'; handlerGroup.style.display = 'block'; return; }
-    if (team === '기타') { handlerGroup.style.display = 'none'; return; }
+    if (!team) { handlerSel.innerHTML = '<option value="">-- 담당자 선택 --</option>'; handlerGroup.style.display = 'block'; handlerGroup.style.visibility = 'visible'; return; }
+    if (team === '기타') { handlerGroup.style.visibility = 'hidden'; return; }
+    handlerGroup.style.visibility = 'visible';
 
     const shiftType = getCurrentShiftType();
     const date = getShiftDate();
