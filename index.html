@@ -352,6 +352,14 @@
             <label>고장 상세 내용</label>
             <textarea id="f-desc" placeholder="고장 증상, 발생 시간, 상황 등을 자세히 적어주세요."></textarea>
           </div>
+          <div class="form-group full">
+            <label>접수 일시</label>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input type="date" id="f-report-date" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit;flex:1;min-width:130px" />
+              <input type="time" id="f-report-time" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit;flex:1;min-width:110px" />
+              <button type="button" onclick="setReportTimeNow()" style="padding:9px 14px;background:#edf2f7;border:1.5px solid #cbd5e0;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;color:#4a5568;cursor:pointer;white-space:nowrap;transition:background 0.15s" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#edf2f7'">🕐 현재 시간</button>
+            </div>
+          </div>
         </div>
 
         <button type="submit" class="btn-submit" id="submit-btn">✅ 신고 접수하기</button>
@@ -1596,7 +1604,7 @@
     document.getElementById('tab-duty-btn').style.display = 'none';
     document.getElementById('btn-change-pw').style.display = 'none';
     updateSiteBadge();
-    setBuildingField();
+    setBuildingField(); initReportTime();
     setReporterField();
     renderReportPage();
     switchTab('fault', null);
@@ -1648,6 +1656,12 @@
         const { data: acc } = await db.from('accounts').select('username').eq('id', parsed.account_id).maybeSingle();
         if (acc) assignedUsername = acc.username;
       } catch(e) {}
+      const reportDateVal = document.getElementById('f-report-date')?.value;
+      const reportTimeVal = document.getElementById('f-report-time')?.value;
+      let reportedAt = null;
+      if (reportDateVal && reportTimeVal) reportedAt = new Date(reportDateVal + 'T' + reportTimeVal).toISOString();
+      else if (reportDateVal) reportedAt = new Date(reportDateVal).toISOString();
+
       const { error } = await db.from('reports').insert({
         id,
         building:    document.getElementById('f-building').value.trim(),
@@ -1661,6 +1675,7 @@
         status:      (assignedHandler || selectedTeam === '기타') ? '배치완료' : '접수중',
         completion_handler: assignedHandler || null,
         assigned_team: selectedTeam || null,
+        ...(reportedAt ? { created_at: reportedAt } : {}),
       });
       if (error) throw error;
       if (assignedHandler && assignedUsername) {
@@ -1673,7 +1688,7 @@
       }
       document.getElementById('report-form').reset();
       if (document.getElementById('f-team')) document.getElementById('f-team').value = '';
-      setBuildingField();
+      setBuildingField(); initReportTime();
       setReporterField();
       updatePendingBadge();
     } catch(err) {
@@ -3834,7 +3849,7 @@
     document.getElementById('welcome-overlay').style.display = 'none';
     applyRoleUI();
     updateSiteBadge();
-    setBuildingField();
+    setBuildingField(); initReportTime();
     setReporterField();
     showToast(getRoleIcon(currentRole) + ' ' + username + '님으로 로그인되었습니다.');
     renderReportPage();
@@ -3860,6 +3875,14 @@
   }
 
   /* ── 건물명 필드 제어 ── */
+  function initReportTime() {
+    const now = new Date();
+    const dateEl = document.getElementById('f-report-date');
+    const timeEl = document.getElementById('f-report-time');
+    if (dateEl) dateEl.value = now.toISOString().slice(0, 10);
+    if (timeEl) timeEl.value = now.toTimeString().slice(0, 5);
+  }
+
   function setBuildingField() {
     const input = document.getElementById('f-building');
     const toggleBtn = document.querySelector('.ac-toggle-btn');
@@ -3913,6 +3936,12 @@
     }
   }
 
+  function setReportTimeNow() {
+    const now = new Date();
+    document.getElementById('f-report-date').value = now.toISOString().slice(0, 10);
+    document.getElementById('f-report-time').value = now.toTimeString().slice(0, 5);
+  }
+
   /* ── INIT ── */
   // SW 메시지 수신 (알림 클릭 → 신고내역 탭 이동)
   if ('serviceWorker' in navigator) {
@@ -3940,7 +3969,7 @@
           document.getElementById('welcome-overlay').style.display = 'none';
           applyRoleUI();
           updateSiteBadge();
-          setBuildingField();
+          setBuildingField(); initReportTime();
           setReporterField();
           setTimeout(() => checkPendingAssignments(), 500);
           subscribePush();
