@@ -1772,7 +1772,8 @@
         '<div class=report-meta>' +
         '<span class=meta-item>🔧 ' + escHtml(r.type||'') + '</span>' +
         (r.regno ? '<span class=meta-item>🔖 승강기번호: ' + escHtml(r.regno) + '</span>' : '') +
-        '<span class=meta-item>👤 ' + escHtml(r.name||'') + ' (' + escHtml(r.phone||'') + ')</span>' +
+        '<span class=meta-item>👤 ' + escHtml(r.name||'') + '</span>' +
+        (r.phone ? '<span class=meta-item>📞 신고자 연락처: ' + escHtml(r.phone) + '</span>' : '') +
         '<span class=report-date>📅 ' + dt + '</span>' +
         '</div>' +
         (r.description ? '<div class=report-desc>' + r.description.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' : '') +
