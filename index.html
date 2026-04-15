@@ -327,14 +327,14 @@
           <div></div>
           <input type="hidden" id="f-priority" value="" />
           <div class="form-group" id="team-select-group">
-            <label>담당팀 선택 <span class="required">*</span></label>
-            <select id="f-team" required style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit" onchange="loadDutyHandlers()">
+            <label>담당팀 선택</label>
+            <select id="f-team" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit" onchange="loadDutyHandlers()">
               <option value="">-- 팀 선택 --</option>
             </select>
           </div>
           <div class="form-group" id="handler-select-group">
-            <label>담당자 선택 <span class="required">*</span></label>
-            <select id="f-handler" required style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit">
+            <label>담당자 선택</label>
+            <select id="f-handler" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit">
               <option value="">-- 담당자 선택 --</option>
             </select>
             <span id="handler-no-duty" style="display:none;font-size:12px;color:#c53030;margin-top:4px">⚠️ 현재 등록된 당직자가 없습니다.</span>
@@ -344,8 +344,8 @@
             <input type="text" id="f-name" placeholder="홍길동" required />
           </div>
           <div class="form-group">
-            <label>신고자 연락처 <span class="required">*</span></label>
-            <input type="tel" id="f-phone" placeholder="010-0000-0000" required oninput="autoFormatPhone(this)" />
+            <label>신고자 연락처</label>
+            <input type="tel" id="f-phone" placeholder="010-0000-0000" oninput="autoFormatPhone(this)" />
           </div>
           <input type="hidden" id="f-regno" />
           <div class="form-group full">
@@ -1116,7 +1116,8 @@
         ? [['풍동숙직','풍동숙직'],['파주대기','파주대기 (17:30~22:30)']]
         : [['풍동숙직','풍동숙직'],['파주숙직','파주숙직']];
     sel.innerHTML = '<option value="">-- 팀 선택 --</option>' +
-      opts.map(([v,l]) => '<option value="'+v+'">'+l+'</option>').join('');
+      opts.map(([v,l]) => '<option value="'+v+'">'+l+'</option>').join('') +
+      '<option value="기타">기타</option>';
     document.getElementById('f-handler').innerHTML = '<option value="">-- 담당자 선택 --</option>';
     document.getElementById('handler-no-duty').style.display = 'none';
   }
@@ -1127,6 +1128,7 @@
     const handlerSel = document.getElementById('f-handler');
     const nodutyEl = document.getElementById('handler-no-duty');
     if (!team) { handlerSel.innerHTML = '<option value="">-- 담당자 선택 --</option>'; handlerGroup.style.display = 'block'; return; }
+    if (team === '기타') { handlerGroup.style.display = 'none'; return; }
 
     const shiftType = getCurrentShiftType();
     const date = getShiftDate();
@@ -1619,9 +1621,8 @@
       const selectedTeam = document.getElementById('f-team')?.value || null;
       let assignedHandler = null;
       let assignedUsername = null;
-      if (!selectedTeam) { showToast('❌ 담당팀을 선택해주세요.'); btn.disabled = false; btn.textContent = '✅ 신고 접수하기'; return; }
       const handlerVal = document.getElementById('f-handler')?.value;
-      if (!handlerVal) { showToast('❌ 담당자를 선택해주세요.'); btn.disabled = false; btn.textContent = '✅ 신고 접수하기'; return; }
+      if (selectedTeam && selectedTeam !== '기타' && !handlerVal) { showToast('❌ 담당자를 선택해주세요.'); btn.disabled = false; btn.textContent = '✅ 신고 접수하기'; return; }
       try {
         const parsed = JSON.parse(handlerVal);
         assignedHandler = parsed.handler_name;
