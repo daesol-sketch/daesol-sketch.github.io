@@ -893,6 +893,20 @@
 
 <div id="toast"></div>
 
+<!-- 관리자용 미확인 배치 알림 모달 -->
+<div id="admin-unack-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2100;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:16px;padding:28px 28px 22px;width:380px;max-width:calc(100vw - 32px);box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+    <div style="font-size:32px;text-align:center;margin-bottom:10px">📵</div>
+    <h3 style="font-size:17px;font-weight:800;color:#c05621;text-align:center;margin-bottom:6px">담당자 미확인 알림</h3>
+    <p style="font-size:13px;color:#718096;text-align:center;margin-bottom:16px">배치 후 3분이 지났지만 담당자가 아직 확인하지 않은 건이 있습니다.</p>
+    <div id="admin-unack-list" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:18px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeAdminUnackModal()" style="flex:1;padding:11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;background:white;color:#4a5568">닫기</button>
+      <button onclick="closeAdminUnackModal();switchTab('list',null);" style="flex:1;padding:11px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;background:#c05621;color:white">신고 내역 보기</button>
+    </div>
+  </div>
+</div>
+
 <!-- 미처리 배치 알림 모달 -->
 <div id="pending-alert-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2100;align-items:center;justify-content:center">
   <div style="background:white;border-radius:16px;padding:28px 28px 22px;width:360px;max-width:calc(100vw - 32px);box-shadow:0 8px 32px rgba(0,0,0,0.2)">
@@ -2615,6 +2629,35 @@
     setTimeout(() => t.classList.remove('show'), 3000);
   }
 
+  let _adminUnackInterval = null;
+
+  async function checkUnacknowledgedAssignments() {
+    if (currentRole !== '관리자') return;
+    const thresholdAgo = new Date(Date.now() - 3 * 60 * 1000);
+    const { data } = await db.from('reports').select('*').eq('status', '배치완료').lt('created_at', thresholdAgo.toISOString());
+    if (!data || !data.length) return;
+    const listEl = document.getElementById('admin-unack-list');
+    listEl.innerHTML = data.map(r => {
+      const mins = Math.floor((Date.now() - new Date(r.created_at)) / (1000 * 60));
+      return '<div style="background:#fff5f5;border:1.5px solid #fbd38d;border-radius:8px;padding:10px 14px">' +
+        '<div style="font-size:14px;font-weight:700;color:#1a202c">' + escHtml(r.building||'') + ' · ' + escHtml(r.elevator||'') + '</div>' +
+        '<div style="font-size:12px;color:#c05621;margin-top:3px">⏰ ' + mins + '분째 미확인 · 담당: ' + escHtml(r.completion_handler||'미배치') + '</div>' +
+        '</div>';
+    }).join('');
+    document.getElementById('admin-unack-modal').style.display = 'flex';
+    playAlertSound();
+  }
+
+  function closeAdminUnackModal() {
+    document.getElementById('admin-unack-modal').style.display = 'none';
+  }
+
+  function startAdminUnackCheck() {
+    if (_adminUnackInterval) clearInterval(_adminUnackInterval);
+    _adminUnackInterval = setInterval(checkUnacknowledgedAssignments, 60 * 1000);
+    setTimeout(checkUnacknowledgedAssignments, 3000); // 로그인 후 3초 뒤 첫 체크
+  }
+
   async function checkPendingAssignments() {
     if (!currentUser || currentRole === '관리주체' || currentRole === '관리자') return;
     const handler = currentUser.username;
@@ -3776,6 +3819,7 @@
     setTimeout(() => checkPendingAssignments(), 500);
     subscribePush();
     startReportsRealtime();
+    if (currentRole === '관리자') startAdminUnackCheck();
   }
 
   let _realtimeChannel = null;
