@@ -173,20 +173,20 @@
     }
 
     /* 로그인 페이지 */
-    .welcome-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-    .login-box { text-align: center; padding: 48px 40px 40px; background: white; border-radius: 20px; width: 100%; max-width: 380px; box-shadow: 0 16px 48px rgba(0,0,0,0.25); }
-    .login-logo { font-size: 52px; margin-bottom: 12px; }
-    .login-title { font-size: 24px; font-weight: 800; color: #1a365d; letter-spacing: -0.5px; }
-    .login-sub { font-size: 13px; color: #718096; margin-top: 6px; margin-bottom: 32px; }
-    .login-label { font-size: 13px; font-weight: 700; color: #4a5568; text-align: left; display: block; margin-bottom: 8px; }
-    .login-input { width: 100%; padding: 13px 16px; border: 1.5px solid #cbd5e0; border-radius: 10px; font-size: 15px; font-family: inherit; text-align: center; letter-spacing: 2px; margin-bottom: 8px; transition: border-color 0.2s, box-shadow 0.2s; }
-    .login-input:focus { outline: none; border-color: #2b6cb0; box-shadow: 0 0 0 3px rgba(43,108,176,0.12); }
-    .login-error-msg { color: #c53030; font-size: 12px; margin-bottom: 10px; min-height: 18px; }
-    .login-btn-main { width: 100%; padding: 14px; background: linear-gradient(135deg, #2b6cb0, #1a365d); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; transition: opacity 0.2s; margin-top: 4px; }
-    .login-btn-main:hover { opacity: 0.9; }
-    .login-btn-main:disabled { opacity: 0.6; cursor: not-allowed; }
-    .login-divider { border: none; border-top: 1px solid #e2e8f0; margin: 24px 0 20px; }
-    .login-switch-link { font-size: 13px; color: #2b6cb0; cursor: pointer; font-weight: 600; }
+    .welcome-overlay { position: fixed; inset: 0; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 2000; }
+    .login-box { text-align: center; padding: 0 32px; width: 100%; max-width: 360px; }
+    .login-logo { margin-bottom: 10px; }
+    .login-title { font-size: 26px; font-weight: 800; color: #191F28; letter-spacing: -1px; }
+    .login-sub { font-size: 14px; color: #8B95A1; margin-top: 6px; margin-bottom: 36px; font-weight: 400; }
+    .login-label { font-size: 13px; font-weight: 600; color: #4E5968; text-align: left; display: block; margin-bottom: 6px; }
+    .login-input { width: 100%; padding: 15px 16px; border: 1.5px solid #E5E8EB; border-radius: 12px; font-size: 15px; font-family: inherit; text-align: left; letter-spacing: 0; margin-bottom: 12px; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s; background: #F9FAFB; box-sizing: border-box; }
+    .login-input:focus { outline: none; border-color: #3182F6; background: #fff; box-shadow: 0 0 0 3px rgba(49,130,246,0.1); }
+    .login-error-msg { color: #F04452; font-size: 13px; margin-bottom: 10px; min-height: 18px; text-align: left; }
+    .login-btn-main { width: 100%; padding: 16px; background: #3182F6; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; transition: background 0.2s; margin-top: 4px; }
+    .login-btn-main:hover { background: #1B6FEB; }
+    .login-btn-main:disabled { background: #C9D5E0; cursor: not-allowed; }
+    .login-divider { border: none; border-top: 1px solid #F2F4F6; margin: 24px 0 20px; }
+    .login-switch-link { font-size: 13px; color: #3182F6; cursor: pointer; font-weight: 600; }
     .login-switch-link:hover { text-decoration: underline; }
     @media (max-width: 480px) {
       .login-box { margin: 20px; padding: 36px 24px 32px; }
@@ -247,8 +247,8 @@
     <input type="password" class="login-input" id="login-pw" placeholder="비밀번호 입력"
       onkeydown="if(event.key==='Enter') loginFromPage()" />
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-      <input type="checkbox" id="auto-login-check" style="width:16px;height:16px;cursor:pointer;accent-color:#2563eb" />
-      <label for="auto-login-check" style="font-size:13px;color:#a0c4ff;cursor:pointer;user-select:none">자동로그인</label>
+      <input type="checkbox" id="auto-login-check" style="width:16px;height:16px;cursor:pointer;accent-color:#3182F6" />
+      <label for="auto-login-check" style="font-size:13px;color:#8B95A1;cursor:pointer;user-select:none">자동로그인</label>
     </div>
     <div class="login-error-msg" id="login-error"></div>
     <button class="login-btn-main" id="login-site-btn" onclick="initAudioCtx();loginFromPage()">로그인</button>
