@@ -3815,7 +3815,8 @@
     setReporterField();
     showToast(getRoleIcon(currentRole) + ' ' + username + '님으로 로그인되었습니다.');
     renderReportPage();
-    switchTab('report', null);
+    if (currentRole === '직원' || currentRole === '관리자') switchTab('duty', null);
+    else switchTab('fault', null);
     setTimeout(() => checkPendingAssignments(), 500);
     subscribePush();
     startReportsRealtime();
@@ -3921,6 +3922,9 @@
           setTimeout(() => checkPendingAssignments(), 500);
           subscribePush();
           startReportsRealtime();
+          if (currentRole === '관리자') startAdminUnackCheck();
+          if (currentRole === '직원' || currentRole === '관리자') switchTab('duty', null);
+          else switchTab('fault', null);
         } else {
           localStorage.removeItem('daesol_autologin');
         }
