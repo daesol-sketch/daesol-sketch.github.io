@@ -306,7 +306,10 @@
                 <button type="button" onclick="document.getElementById('f-report-date-picker').showPicker()" style="width:40px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center" title="달력">📅</button>
                 <input type="date" id="f-report-date-picker" style="position:absolute;right:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('f-report-date').value=this.value" />
               </div>
-              <input type="time" id="f-report-time" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit;flex:1;min-width:110px" />
+              <div style="position:relative;display:flex;flex:1;min-width:110px">
+                <input type="text" id="f-report-time" readonly placeholder="00:00" onclick="openCTP('f-report-time')" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:14px;font-family:inherit;width:100%;cursor:pointer;background:#fff" />
+                <button type="button" onclick="openCTP('f-report-time')" style="width:40px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center" title="시간">🕐</button>
+              </div>
               <button type="button" onclick="setReportTimeNow()" style="padding:9px 14px;background:#edf2f7;border:1.5px solid #cbd5e0;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;color:#4a5568;cursor:pointer;white-space:nowrap;transition:background 0.15s" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#edf2f7'">🕐 현재 시간</button>
             </div>
           </div>
@@ -612,7 +615,10 @@
             <button type=button onclick="document.getElementById('rdm-date-picker').showPicker()" style=width:36px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center>📅</button>
             <input type=date id=rdm-date-picker style=position:absolute;right:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none oninput="document.getElementById('rdm-date').value=this.value" />
             </div>
-            <input type=time id=rdm-time oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3))this.blur();this._v=this.value;" style=flex:1;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit />
+            <div style="position:relative;display:flex;flex:1">
+            <input type=text id=rdm-time readonly placeholder="00:00" onclick="openCTP('rdm-time')" style="flex:1;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;cursor:pointer;background:#fff;width:100%" />
+            <button type=button onclick="openCTP('rdm-time')" style="width:36px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center" title="시간">🕐</button>
+            </div>
             </div></div>
           <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리내용</label>
             <input type=text id=rdm-content placeholder="처리한 내용을 적어주세요. 부품교체를 하셨으면 아래 체크해주세요." style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit /></div>
@@ -1803,7 +1809,7 @@
     let list = reports.filter(r => r.status !== '완료');
     if (currentFilter !== '전체') list = list.filter(r => r.status === currentFilter);
     if (fromVal || toVal) list = list.filter(r => {
-      const d = (r.created_at || '').slice(0, 10);
+      const d = r.created_at ? new Date(r.created_at).toLocaleDateString('sv') : '';
       if (fromVal && d < fromVal) return false;
       if (toVal   && d > toVal)   return false;
       return true;
@@ -2710,13 +2716,15 @@
         '<div style="font-size:12px;color:#c05621;margin-top:3px">⏰ ' + mins + '분째 미확인 · 담당: ' + escHtml(r.completion_handler||'미배치') + '</div>' +
         '</div>';
     }).join('');
-    // 탭이 보이면 모달, 백그라운드면 시스템 알림
+    // 항상 OS 알림 발송 (권한 있으면)
+    if (Notification.permission === 'granted') {
+      const names = data.map(r => (r.building||'') + (r.completion_handler ? ' ('+r.completion_handler+')' : '')).join(', ');
+      new Notification('⚠️ 담당자 미확인 알림', { body: names + '\n확인 후 처리해주세요.', icon: './icon-192.png', requireInteraction: true });
+    }
+    // 탭이 보이면 모달도 표시 + 경고음
     if (!document.hidden) {
       document.getElementById('admin-unack-modal').style.display = 'flex';
       playAlertSound();
-    } else if (Notification.permission === 'granted') {
-      const names = data.map(r => (r.building||'') + ' ' + (r.completion_handler ? '('+r.completion_handler+')' : '')).join(', ');
-      new Notification('⚠️ 담당자 미확인 알림', { body: names, icon: './icon-192.png', requireInteraction: true });
     }
   }
 
@@ -4041,5 +4049,98 @@
     }
   });
 </script>
+
+<!-- ── Custom Time Picker ── -->
+<div id="ctp-overlay" onclick="if(event.target===this)closeCTP()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:24px 20px;min-width:280px;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.22)">
+    <div id="ctp-step1">
+      <div style="text-align:center;font-size:15px;font-weight:700;color:#2d3748;margin-bottom:18px">오전 / 오후 선택</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <button onclick="ctpPickAmPm('am')" style="padding:16px;border:2px solid #bee3f8;border-radius:12px;background:#ebf8ff;font-size:16px;font-weight:700;font-family:inherit;color:#2b6cb0;cursor:pointer" onmouseover="this.style.background='#bee3f8'" onmouseout="this.style.background='#ebf8ff'">오전</button>
+        <button onclick="ctpPickAmPm('pm')" style="padding:16px;border:2px solid #feebc8;border-radius:12px;background:#fffaf0;font-size:16px;font-weight:700;font-family:inherit;color:#c05621;cursor:pointer" onmouseover="this.style.background='#feebc8'" onmouseout="this.style.background='#fffaf0'">오후</button>
+      </div>
+    </div>
+    <div id="ctp-step2" style="display:none">
+      <div style="display:flex;align-items:center;margin-bottom:16px;gap:8px">
+        <button onclick="document.getElementById('ctp-step1').style.display='block';document.getElementById('ctp-step2').style.display='none'" style="border:none;background:none;font-size:18px;cursor:pointer;padding:2px 6px;border-radius:6px">◀</button>
+        <div id="ctp-step2-title" style="flex:1;text-align:center;font-size:14px;font-weight:700;color:#2d3748"></div>
+      </div>
+      <div id="ctp-hours" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div>
+    </div>
+    <div id="ctp-step3" style="display:none">
+      <div style="display:flex;align-items:center;margin-bottom:16px;gap:8px">
+        <button onclick="document.getElementById('ctp-step2').style.display='block';document.getElementById('ctp-step3').style.display='none'" style="border:none;background:none;font-size:18px;cursor:pointer;padding:2px 6px;border-radius:6px">◀</button>
+        <div id="ctp-step3-title" style="flex:1;text-align:center;font-size:14px;font-weight:700;color:#2d3748"></div>
+      </div>
+      <div id="ctp-mins" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let _ctpTarget = null, _ctpAmPm = null, _ctpHour = null, _ctpBlocked = false;
+
+function openCTP(inputId) {
+  if (_ctpBlocked) return;
+  _ctpTarget = inputId;
+  _ctpAmPm = null; _ctpHour = null;
+  document.getElementById('ctp-step1').style.display = 'block';
+  document.getElementById('ctp-step2').style.display = 'none';
+  document.getElementById('ctp-step3').style.display = 'none';
+  document.getElementById('ctp-overlay').style.display = 'flex';
+}
+function closeCTP() {
+  _ctpBlocked = true;
+  setTimeout(() => { _ctpBlocked = false; }, 400);
+  document.getElementById('ctp-overlay').style.display = 'none';
+}
+function ctpPickAmPm(ampm) {
+  _ctpAmPm = ampm;
+  const hoursDiv = document.getElementById('ctp-hours');
+  hoursDiv.innerHTML = '';
+  for (let h = 1; h <= 12; h++) {
+    const btn = document.createElement('button');
+    btn.textContent = h + '시';
+    btn.style.cssText = 'padding:10px 6px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f7fafc;font-size:14px;font-family:inherit;cursor:pointer';
+    btn.onmouseover = () => btn.style.background = '#ebf8ff';
+    btn.onmouseout = () => btn.style.background = '#f7fafc';
+    btn.onclick = () => ctpPickHour(h);
+    hoursDiv.appendChild(btn);
+  }
+  document.getElementById('ctp-step2-title').textContent = (ampm === 'am' ? '오전' : '오후') + ' — 시 선택';
+  document.getElementById('ctp-step1').style.display = 'none';
+  document.getElementById('ctp-step2').style.display = 'block';
+}
+function ctpPickHour(h) {
+  _ctpHour = h;
+  const minsDiv = document.getElementById('ctp-mins');
+  minsDiv.innerHTML = '';
+  for (let m = 0; m < 60; m += 5) {
+    const btn = document.createElement('button');
+    btn.textContent = String(m).padStart(2,'0') + '분';
+    btn.style.cssText = 'padding:10px 6px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f7fafc;font-size:14px;font-family:inherit;cursor:pointer';
+    btn.onmouseover = () => btn.style.background = '#ebf8ff';
+    btn.onmouseout = () => btn.style.background = '#f7fafc';
+    const min = m;
+    btn.onclick = (e) => { e.stopPropagation(); ctpPickMin(min); };
+    minsDiv.appendChild(btn);
+  }
+  document.getElementById('ctp-step3-title').textContent = (_ctpAmPm === 'am' ? '오전' : '오후') + ' ' + h + '시 — 분 선택';
+  document.getElementById('ctp-step2').style.display = 'none';
+  document.getElementById('ctp-step3').style.display = 'block';
+}
+function ctpPickMin(m) {
+  const target = _ctpTarget;
+  const ampm = _ctpAmPm;
+  let h = _ctpHour;
+  closeCTP();
+  if (ampm === 'am') { if (h === 12) h = 0; }
+  else { if (h !== 12) h += 12; }
+  const val = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+  const el = document.getElementById(target);
+  if (el) { el.value = val; }
+}
+</script>
+
 </body>
 </html>
