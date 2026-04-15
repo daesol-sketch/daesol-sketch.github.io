@@ -277,7 +277,7 @@
   <div class="page active" id="page-fault">
   <div class="sub-tabs">
     <button class="sub-tab-btn active" id="sub-tab-report-btn" onclick="switchSubTab('report',this)">📋 신고 접수</button>
-    <button class="sub-tab-btn" id="sub-tab-list-btn" onclick="switchSubTab('list',this)">📂 신고 내역</button>
+    <button class="sub-tab-btn" id="sub-tab-list-btn" onclick="switchSubTab('list',this)">📂 신고 내역 <span class="count-badge" id="list-count-badge" style="display:none"></span></button>
     <button class="sub-tab-btn" id="sub-tab-done-btn" onclick="switchSubTab('done',this)">✅ 고장처리내역</button>
   </div>
   <div class="sub-page active" id="page-report">
@@ -1715,6 +1715,8 @@
     const badge = document.getElementById('pending-count');
     badge.textContent = count || 0;
     badge.style.display = (count > 0) ? 'inline' : 'none';
+    const listBadge = document.getElementById('list-count-badge');
+    if (listBadge) { listBadge.textContent = count || 0; listBadge.style.display = (count > 0) ? 'inline' : 'none'; }
   }
 
   function setFilter(f, btn) {
