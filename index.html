@@ -1015,6 +1015,14 @@
       if (error) { showToast('❌ 해제 실패: ' + error.message); return; }
       showToast('🗑️ 등록이 해제되었습니다.');
     } else {
+      // 같은 시간대(shiftType)에 다른 팀으로 이미 등록됐는지 확인
+      const { data: alreadyOther } = await db.from('duty_roster').select('id, team')
+        .eq('date', date).eq('shift_type', shiftType).eq('handler_name', handler);
+      const otherTeam = (alreadyOther || []).find(r => r.team !== team);
+      if (otherTeam) {
+        showToast('❌ 이미 ' + otherTeam.team + '으로 등록되어 있습니다. 하나만 선택 가능합니다.');
+        return;
+      }
       const maxCount = (team === '풍동숙직' || team === '1팀' || team === '2팀' || team === '3팀') ? 2 : 1;
       const { error } = await db.from('duty_roster').insert(
         { date, shift_type: shiftType, team, handler_name: handler, account_id: String(currentUser.id) }
