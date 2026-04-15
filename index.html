@@ -2682,8 +2682,14 @@
         '<div style="font-size:12px;color:#c05621;margin-top:3px">⏰ ' + mins + '분째 미확인 · 담당: ' + escHtml(r.completion_handler||'미배치') + '</div>' +
         '</div>';
     }).join('');
-    document.getElementById('admin-unack-modal').style.display = 'flex';
-    playAlertSound();
+    // 탭이 보이면 모달, 백그라운드면 시스템 알림
+    if (!document.hidden) {
+      document.getElementById('admin-unack-modal').style.display = 'flex';
+      playAlertSound();
+    } else if (Notification.permission === 'granted') {
+      const names = data.map(r => (r.building||'') + ' ' + (r.completion_handler ? '('+r.completion_handler+')' : '')).join(', ');
+      new Notification('⚠️ 담당자 미확인 알림', { body: names, icon: './icon-192.png', requireInteraction: true });
+    }
   }
 
   function closeAdminUnackModal() {
