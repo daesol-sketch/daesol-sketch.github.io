@@ -2672,8 +2672,8 @@
   async function checkUnacknowledgedAssignments() {
     if (currentRole !== '관리자') return;
     const thresholdAgo = new Date(Date.now() - 3 * 60 * 1000);
-    const { data } = await db.from('reports').select('*').eq('status', '배치완료').lt('created_at', thresholdAgo.toISOString());
-    if (!data || !data.length) return;
+    const { data, error } = await db.from('reports').select('*').eq('status', '배치완료').lt('created_at', thresholdAgo.toISOString());
+    if (error || !data || !data.length) return;
     const listEl = document.getElementById('admin-unack-list');
     listEl.innerHTML = data.map(r => {
       const mins = Math.floor((Date.now() - new Date(r.created_at)) / (1000 * 60));
@@ -2692,8 +2692,15 @@
 
   function startAdminUnackCheck() {
     if (_adminUnackInterval) clearInterval(_adminUnackInterval);
-    _adminUnackInterval = setInterval(checkUnacknowledgedAssignments, 60 * 1000);
-    setTimeout(checkUnacknowledgedAssignments, 3000); // 로그인 후 3초 뒤 첫 체크
+    _adminUnackInterval = setInterval(checkUnacknowledgedAssignments, 30 * 1000); // 30초마다
+    setTimeout(checkUnacknowledgedAssignments, 2000); // 로그인 후 2초 뒤 첫 체크
+    // 탭이 다시 활성화될 때도 체크
+    document.removeEventListener('visibilitychange', _onAdminVisibility);
+    document.addEventListener('visibilitychange', _onAdminVisibility);
+  }
+
+  function _onAdminVisibility() {
+    if (!document.hidden && currentRole === '관리자') checkUnacknowledgedAssignments();
   }
 
   async function checkPendingAssignments() {
