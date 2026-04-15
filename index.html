@@ -1640,7 +1640,7 @@
         name:        document.getElementById('f-name').value.trim(),
         phone:       document.getElementById('f-phone').value.trim(),
         description: document.getElementById('f-desc').value.trim(),
-        status:      assignedHandler ? '배치완료' : '접수중',
+        status:      (assignedHandler || selectedTeam === '기타') ? '배치완료' : '접수중',
         completion_handler: assignedHandler || null,
         assigned_team: selectedTeam || null,
       });
