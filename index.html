@@ -1357,6 +1357,16 @@
     else if (dateVal) completionAt = new Date(dateVal).toISOString();
 
     const currentReport = reports.find(r => r.id === currentReportId);
+
+    // 처리일시가 접수일시보다 빠르면 저장 불가
+    if (completionAt && currentReport?.created_at) {
+      if (new Date(completionAt) < new Date(currentReport.created_at)) {
+        showToast('❌ 처리일시가 접수일시보다 빠를 수 없습니다.');
+        btn.disabled = false; btn.textContent = '저장';
+        return;
+      }
+    }
+
     const handler  = document.getElementById('rdm-handler').value.trim() || null;
     const content  = document.getElementById('rdm-content').value.trim() || null;
     const detail   = document.getElementById('rdm-detail').value.trim() || null;
