@@ -170,6 +170,7 @@
       .card { padding: 20px 18px; }
       .modal-box { width: calc(100% - 40px); padding: 28px 20px; }
       #header-date { display: none; }
+      #phone-widget { display: none !important; }
     }
 
     /* 로그인 페이지 */
@@ -892,6 +893,25 @@
 </div>
 
 <div id="toast"></div>
+
+<!-- 현장 전화번호 플로팅 위젯 (PC 우하단) -->
+<div id="phone-widget" style="display:none;position:fixed;bottom:24px;right:24px;z-index:1500;background:white;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,0.18);border:1.5px solid #bee3f8;min-width:220px;max-width:280px;overflow:hidden">
+  <div style="background:linear-gradient(135deg,#1a365d,#2b6cb0);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+    <span id="phone-widget-site" style="font-size:13px;font-weight:700;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">현장명</span>
+    <button onclick="closePhoneWidget()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:18px;cursor:pointer;line-height:1;padding:0;flex-shrink:0" title="닫기">×</button>
+  </div>
+  <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+    <div id="phone-widget-site-phone" style="display:none">
+      <div style="font-size:11px;font-weight:700;color:#718096;margin-bottom:2px">📞 현장전화</div>
+      <a id="phone-widget-site-phone-val" href="#" style="font-size:15px;font-weight:700;color:#2b6cb0;text-decoration:none;letter-spacing:0.5px"></a>
+    </div>
+    <div id="phone-widget-emerg-phone" style="display:none">
+      <div style="font-size:11px;font-weight:700;color:#718096;margin-bottom:2px">🆘 비상통화장치</div>
+      <a id="phone-widget-emerg-phone-val" href="#" style="font-size:15px;font-weight:700;color:#c05621;text-decoration:none;letter-spacing:0.5px"></a>
+    </div>
+    <div id="phone-widget-none" style="display:none;font-size:12px;color:#a0aec0;text-align:center;padding:4px 0">등록된 전화번호가 없습니다.</div>
+  </div>
+</div>
 
 <!-- 관리자용 미확인 배치 알림 모달 -->
 <div id="admin-unack-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2100;align-items:center;justify-content:center">
@@ -1655,6 +1675,7 @@
       if (document.getElementById('f-team')) document.getElementById('f-team').value = '';
       setBuildingField();
       setReporterField();
+      closePhoneWidget();
       updatePendingBadge();
     } catch(err) {
       showToast('❌ 접수 실패: ' + err.message);
@@ -3702,7 +3723,7 @@
 
   function acInput(inp) {
     const q = inp.value.trim().toLowerCase(), dd = document.getElementById('ac-dropdown');
-    if (!q) { dd.style.display='none'; acMatches=[]; resetElevatorInput(); return; }
+    if (!q) { dd.style.display='none'; acMatches=[]; resetElevatorInput(); closePhoneWidget(); return; }
     acMatches = SITES.filter(s => s.toLowerCase().includes(q));
     if (!acMatches.length) { dd.style.display='none'; return; }
     dd.innerHTML = acMatches.map((s,i) => { const sl=s.toLowerCase(),idx=sl.indexOf(q); return `<div class="ac-item" data-i="${i}" onmousedown="acPick(${i})">${escHtml(s.slice(0,idx))}<mark>${escHtml(s.slice(idx,idx+q.length))}</mark>${escHtml(s.slice(idx+q.length))}</div>`; }).join('') + `<div class="ac-count">총 ${acMatches.length}건</div>`;
@@ -3729,12 +3750,42 @@
     if (wrap) wrap.innerHTML = '<input type="text" id="f-elevator" placeholder="예: 1호기, B동 2호기" required />';
   }
 
+  function closePhoneWidget() {
+    document.getElementById('phone-widget').style.display = 'none';
+  }
+
+  function showPhoneWidget(siteName, sitePhone, emergPhone) {
+    const w = document.getElementById('phone-widget');
+    document.getElementById('phone-widget-site').textContent = siteName;
+    const spDiv = document.getElementById('phone-widget-site-phone');
+    const epDiv = document.getElementById('phone-widget-emerg-phone');
+    const noneDiv = document.getElementById('phone-widget-none');
+    if (sitePhone) {
+      document.getElementById('phone-widget-site-phone-val').textContent = sitePhone;
+      document.getElementById('phone-widget-site-phone-val').href = 'tel:' + sitePhone.replace(/[^0-9+]/g,'');
+      spDiv.style.display = 'block';
+    } else {
+      spDiv.style.display = 'none';
+    }
+    if (emergPhone) {
+      document.getElementById('phone-widget-emerg-phone-val').textContent = emergPhone;
+      document.getElementById('phone-widget-emerg-phone-val').href = 'tel:' + emergPhone.replace(/[^0-9+]/g,'');
+      epDiv.style.display = 'block';
+    } else {
+      epDiv.style.display = 'none';
+    }
+    noneDiv.style.display = (!sitePhone && !emergPhone) ? 'block' : 'none';
+    w.style.display = 'block';
+  }
+
   async function loadElevatorsForSite(siteName) {
     const wrap = document.getElementById('f-elevator-wrap');
     if (!wrap) return;
     wrap.innerHTML = '<input type="text" id="f-elevator" placeholder="불러오는 중..." disabled style="color:#a0aec0" />';
-    const { data: siteData } = await db.from('managed_sites').select('id').eq('site_name', siteName).single();
+    const { data: siteData } = await db.from('managed_sites').select('id,site_phone,emergency_phone').eq('site_name', siteName).single();
     if (!siteData) { resetElevatorInput(); return; }
+    // 전화번호 위젯 표시
+    showPhoneWidget(siteName, siteData.site_phone, siteData.emergency_phone);
     const { data: elevData } = await db.from('site_elevators').select('unit_name,elevator_number').eq('site_id', siteData.id).order('unit_name');
     if (!elevData || !elevData.length) { resetElevatorInput(); return; }
     document.getElementById('f-regno').value = '';
