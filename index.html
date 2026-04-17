@@ -2828,7 +2828,7 @@
         ${row('검사유효기간', d.applcEnDt ? d.applcEnDt.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') : null)}
       </table>`;
     } catch(e) {
-      content.innerHTML = '<div style="text-align:center;padding:20px;color:#e53e3e">오류가 발생했습니다.</div>';
+      content.innerHTML = `<div style="text-align:center;padding:20px;color:#e53e3e">오류가 발생했습니다.<br><small style="word-break:break-all;color:#718096">${e.message}</small></div>`;
     }
   }
 
