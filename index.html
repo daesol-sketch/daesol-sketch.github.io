@@ -1695,8 +1695,11 @@
       const reportDateVal = document.getElementById('f-report-date')?.value;
       const reportTimeVal = document.getElementById('f-report-time')?.value;
       let reportedAt = null;
-      if (reportDateVal && reportTimeVal) reportedAt = new Date(reportDateVal + 'T' + reportTimeVal).toISOString();
-      else if (reportDateVal) reportedAt = new Date(reportDateVal).toISOString();
+      if (reportDateVal && reportTimeVal) {
+        const entered = new Date(reportDateVal + 'T' + reportTimeVal);
+        if (entered > new Date()) { showToast('⚠️ 접수일시는 현재 시간 이후로 설정할 수 없습니다.'); btn.disabled = false; btn.textContent = '✅ 신고 접수하기'; return; }
+        reportedAt = entered.toISOString();
+      } else if (reportDateVal) reportedAt = new Date(reportDateVal).toISOString();
 
       const { error } = await db.from('reports').insert({
         id,
