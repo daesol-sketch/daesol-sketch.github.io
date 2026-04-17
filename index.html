@@ -2811,22 +2811,25 @@
       content.innerHTML = `<table style="width:100%;border-collapse:collapse">
         ${row('건물명', d.buldNm)}
         ${row('주소', (d.address1||'') + (d.address2 ? ' ' + d.address2 : ''))}
-        ${row('시도', d.sidoNm)}
+        ${row('지역', d.areaNm)}
         ${row('시군구', d.sigunguNm)}
         ${row('승강기번호', d.elevatorNo)}
         ${row('인식번호', d.elvtrAsignNo)}
+        ${row('구분', d.elvtrDivNm)}
         ${row('종류', d.elvtrKindNm)}
         ${row('형식', d.elvtrDetailForm || d.elvtrForm)}
         ${row('상태', d.elvtrSttsNm)}
         ${row('정격용량', d.ratedCap ? d.ratedCap + '인승' : null)}
         ${row('하중', d.liveLoad ? d.liveLoad + 'kg' : null)}
-        ${row('속도', d.ratedSpd ? d.ratedSpd + 'm/min' : null)}
-        ${row('지상/지하층수', (d.upperFloorCnt||d.lowerFloorCnt) ? (d.upperFloorCnt||'-') + '층 / 지하 ' + (d.lowerFloorCnt||'-') + '층' : null)}
+        ${row('운행구간', d.shuttleSection)}
+        ${row('운행층수', d.shuttleFloorCnt ? d.shuttleFloorCnt + '층' : null)}
+        ${row('지상층수', d.groundFloorCnt ? d.groundFloorCnt + '층' : null)}
+        ${row('지하층수', d.undgrndFloorCnt ? d.undgrndFloorCnt + '층' : null)}
         ${row('설치위치', d.installationPlace)}
-        ${row('제조사', d.mfactrCmpnNm)}
-        ${row('유지관리업체', d.mntnCmpnNm)}
+        ${row('최초설치일', fmtDate(d.frstInstallationDe))}
         ${row('설치일', fmtDate(d.installationDe))}
-        ${row('검사유효기간', fmtDate(d.applcEnDt))}
+        ${row('검사유효기간', d.applcBeDt && d.applcEnDt ? fmtDate(d.applcBeDt) + ' ~ ' + fmtDate(d.applcEnDt) : fmtDate(d.applcEnDt))}
+        ${row('검사결과', d.resultNm)}
       </table>`;
     } catch(e) {
       content.innerHTML = '<div style="text-align:center;padding:20px;color:#e53e3e">오류가 발생했습니다.</div>';
