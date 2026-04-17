@@ -29,14 +29,25 @@ self.addEventListener('activate', event => {
 self.addEventListener('push', event => {
   let data = { title: '대솔이엘', body: '새 고장 신고가 배정되었습니다.' };
   try { data = JSON.parse(event.data.text()); } catch(e) {}
+
+  const isCall = data.type === 'call';
+
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
       icon: './icon-192.png',
       badge: './icon-192.png',
       vibrate: [300, 150, 300, 150, 300],
-      requireInteraction: true,
-      data: { reportId: data.reportId || null }
+      requireInteraction: !isCall,
+      data: { reportId: data.reportId || null, type: data.type || null }
+    }).then(() => {
+      if (isCall) {
+        return new Promise(resolve => setTimeout(resolve, 15000)).then(() =>
+          self.registration.getNotifications().then(notifications =>
+            notifications.forEach(n => { if (n.data?.type === 'call') n.close(); })
+          )
+        );
+      }
     })
   );
 });
