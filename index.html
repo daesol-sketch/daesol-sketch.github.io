@@ -518,6 +518,7 @@
       <div class="filters" style="margin-bottom:16px">
         <button class="filter-btn active" id="mgmt-filter-all" onclick="setMgmtFilter('all',this)">전체</button>
         <button class="filter-btn" id="mgmt-filter-expire" onclick="setMgmtFilter('expire',this)">⚠️ 계약만료 <span id="mgmt-expire-badge2" style="background:#e53e3e;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;display:none"></span></button>
+        <button class="filter-btn" id="mgmt-filter-insp-expire" onclick="setMgmtFilter('insp_expire',this)">🔍 검사만료 <span id="mgmt-insp-expire-badge" style="background:#e53e3e;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;display:none"></span></button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span id="mgmt-total-stats" style="font-size:13px;color:#4a5568;white-space:nowrap"></span>
           <select id="mgmt-contract-filter" onchange="renderMgmtList()" style="padding:7px 12px;border:1.5px solid #cbd5e0;border-radius:20px;font-size:13px;font-family:inherit;color:#4a5568;background:white;cursor:pointer">
@@ -531,6 +532,7 @@
             <option>대솔POG</option>
             <option>대솔FM</option>
           </select>
+          <button id="btn-sync-all-inspection" onclick="syncAllInspectionDates()" style="display:none;padding:7px 14px;background:#38a169;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">🔄 검사만료일 갱신</button>
           <button onclick="exportMgmtExcel()" style="padding:7px 14px;background:#1d6f42;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">📥 엑셀</button>
         </div>
         <div style="width:100%;margin-top:8px">
@@ -2200,14 +2202,35 @@
     el.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
     const [{ data, error }, { data: elevData }] = await Promise.all([
       db.from('managed_sites').select('*').order('site_name'),
-      db.from('site_elevators').select('site_id'),
+      db.from('site_elevators').select('site_id, inspection_due_date'),
     ]);
     if (error || !data) { el.innerHTML = '<div class="loading-state">불러오기 실패</div>'; return; }
     const elevCounts = {};
-    (elevData || []).forEach(e => { elevCounts[e.site_id] = (elevCounts[e.site_id] || 0) + 1; });
-    mgmtData = data.map(m => ({ ...m, elev_count: elevCounts[m.id] || 0 }));
+    const inspExpired = {};
+    const inspSoon = {};
+    const today = new Date(); today.setHours(0,0,0,0);
+    (elevData || []).forEach(e => {
+      elevCounts[e.site_id] = (elevCounts[e.site_id] || 0) + 1;
+      if (e.inspection_due_date) {
+        const due = new Date(e.inspection_due_date);
+        const diff = Math.ceil((due - today) / (1000*60*60*24));
+        if (diff < 0) inspExpired[e.site_id] = (inspExpired[e.site_id] || 0) + 1;
+        else if (diff <= 30) inspSoon[e.site_id] = (inspSoon[e.site_id] || 0) + 1;
+      }
+    });
+    mgmtData = data.map(m => ({ ...m, elev_count: elevCounts[m.id] || 0, insp_expired: inspExpired[m.id] || 0, insp_soon: inspSoon[m.id] || 0 }));
     const isAdmin = currentRole === '관리자';
     document.getElementById('btn-add-mgmt').style.display = isAdmin ? 'inline-flex' : 'none';
+    document.getElementById('btn-sync-all-inspection').style.display = isAdmin ? 'inline-block' : 'none';
+
+    // 마지막 갱신일 확인 (30일 초과 시 알림)
+    if (isAdmin) {
+      const lastSync = localStorage.getItem('insp_last_sync');
+      if (lastSync) {
+        const diff = Math.ceil((today - new Date(lastSync)) / (1000*60*60*24));
+        if (diff > 30) showToast(`⚠️ 검사만료일 갱신한 지 ${diff}일 지났어요. 갱신해 주세요!`, 5000);
+      }
+    }
     renderMgmtList();
   }
 
@@ -2333,7 +2356,7 @@
       selectedMgmtIds.clear();
       document.getElementById('mgmt-action-bar').style.display = 'none';
     }
-    document.querySelectorAll('#mgmt-filter-all,#mgmt-filter-expire').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#mgmt-filter-all,#mgmt-filter-expire,#mgmt-filter-insp-expire').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     renderMgmtList();
   }
@@ -2381,6 +2404,17 @@
     if (mgmtFilter === 'expire') {
       list = list.filter(m => isAlreadyExpired(m.contract_end) || isExpireThisMonth(m.contract_end));
     }
+    if (mgmtFilter === 'insp_expire') {
+      list = list.filter(m => m.insp_expired > 0 || m.insp_soon > 0);
+    }
+
+    // 검사만료 건수 배지
+    const inspCount = mgmtData.filter(m => m.insp_expired > 0 || m.insp_soon > 0).length;
+    const inspBadge = document.getElementById('mgmt-insp-expire-badge');
+    if (inspBadge) {
+      if (inspCount > 0) { inspBadge.textContent = inspCount; inspBadge.style.display = ''; }
+      else { inspBadge.style.display = 'none'; }
+    }
 
     // 필터 적용 후 현장수 / 대수 표시
     const statsEl = document.getElementById('mgmt-total-stats');
@@ -2423,7 +2457,7 @@
         return `<tr style="${rowStyle}" onclick="showMgmtDetail(${m.id})">
         ${showCheck ? `<td onclick="event.stopPropagation()" style="text-align:center"><input type="checkbox" class="mgmt-row-check" data-id="${m.id}" onchange="handleMgmtCheck(${m.id},this.checked)" ${selectedMgmtIds.has(m.id)?'checked':''} /></td>` : ''}
         <td>${i+1}</td>
-        <td><strong>${escHtml(m.site_name||'')}</strong></td>
+        <td><strong>${escHtml(m.site_name||'')}</strong>${m.insp_expired > 0 ? ` <span style="background:#e53e3e;color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">검사만료 ${m.insp_expired}대</span>` : m.insp_soon > 0 ? ` <span style="background:#dd6b20;color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">만료임박 ${m.insp_soon}대</span>` : ''}</td>
         <td style="text-align:center">${m.elev_count > 0 ? `<span style="background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:700">${m.elev_count}대</span>` : '<span style="color:#a0aec0;font-size:12px">-</span>'}</td>
         <td><span style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;border-radius:12px;padding:2px 8px;font-size:11px;white-space:nowrap">${escHtml(m.contract_type||'-')}</span></td>
         <td>${escHtml(m.main_inspector||'-')}</td>
@@ -2552,6 +2586,29 @@
     closeModal('elev-modal');
     showToast(editingElevatorId ? '✅ 호기가 수정되었습니다.' : '✅ 호기가 추가되었습니다.');
     loadElevators();
+  }
+
+  async function syncAllInspectionDates() {
+    if (!confirm('전체 현장 검사만료일을 갱신합니다. 시간이 걸릴 수 있어요.')) return;
+    const btn = document.getElementById('btn-sync-all-inspection');
+    btn.textContent = '⏳ 갱신 중...';
+    btn.disabled = true;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/inspection-sync`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true })
+      });
+      const data = await res.json();
+      localStorage.setItem('insp_last_sync', new Date().toISOString());
+      showToast(`✅ ${data.updated}개 호기 만료일 갱신 완료`);
+      loadMgmt();
+    } catch(e) {
+      showToast('❌ 갱신 실패');
+    } finally {
+      btn.textContent = '🔄 검사만료일 갱신';
+      btn.disabled = false;
+    }
   }
 
   async function syncInspectionDates() {
