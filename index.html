@@ -2800,15 +2800,9 @@
       const res = await fetch(`${SUPABASE_URL}/functions/v1/elevator-info?elevator_no=${no}`, {
         headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` }
       });
-      const text = await res.text();
-      console.log('[elevator-info 응답]', text);
-      let data;
-      try { data = JSON.parse(text); } catch(e) {
-        content.innerHTML = `<div style="text-align:center;padding:20px;color:#e53e3e">JSON 파싱 오류<br><small style="word-break:break-all">${text.substring(0,200)}</small></div>`;
-        return;
-      }
+      const data = await res.json();
       if (data.error || !data.item) {
-        content.innerHTML = `<div style="text-align:center;padding:20px;color:#e53e3e">정보를 불러올 수 없습니다.<br><small style="word-break:break-all;color:#718096">${JSON.stringify(data).substring(0,300)}</small></div>`;
+        content.innerHTML = '<div style="text-align:center;padding:20px;color:#e53e3e">정보를 불러올 수 없습니다.</div>';
         return;
       }
       const d = data.item;
@@ -2828,7 +2822,7 @@
         ${row('검사유효기간', d.applcEnDt ? d.applcEnDt.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') : null)}
       </table>`;
     } catch(e) {
-      content.innerHTML = `<div style="text-align:center;padding:20px;color:#e53e3e">오류가 발생했습니다.<br><small style="word-break:break-all;color:#718096">${e.message}</small></div>`;
+      content.innerHTML = '<div style="text-align:center;padding:20px;color:#e53e3e">오류가 발생했습니다.</div>';
     }
   }
 
