@@ -2807,19 +2807,26 @@
       }
       const d = data.item;
       const row = (label, value) => value ? `<tr><td style="padding:6px 10px;font-size:12px;color:#718096;font-weight:600;white-space:nowrap">${label}</td><td style="padding:6px 10px;font-size:13px;color:#1a202c">${value}</td></tr>` : '';
+      const fmtDate = (v) => v ? v.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') : null;
       content.innerHTML = `<table style="width:100%;border-collapse:collapse">
         ${row('건물명', d.buldNm)}
-        ${row('주소', (d.address1||'') + ' ' + (d.address2||''))}
+        ${row('주소', (d.address1||'') + (d.address2 ? ' ' + d.address2 : ''))}
+        ${row('시도', d.sidoNm)}
         ${row('시군구', d.sigunguNm)}
         ${row('승강기번호', d.elevatorNo)}
+        ${row('인식번호', d.elvtrAsignNo)}
         ${row('종류', d.elvtrKindNm)}
         ${row('형식', d.elvtrDetailForm || d.elvtrForm)}
         ${row('상태', d.elvtrSttsNm)}
         ${row('정격용량', d.ratedCap ? d.ratedCap + '인승' : null)}
         ${row('하중', d.liveLoad ? d.liveLoad + 'kg' : null)}
+        ${row('속도', d.ratedSpd ? d.ratedSpd + 'm/min' : null)}
+        ${row('지상/지하층수', (d.upperFloorCnt||d.lowerFloorCnt) ? (d.upperFloorCnt||'-') + '층 / 지하 ' + (d.lowerFloorCnt||'-') + '층' : null)}
         ${row('설치위치', d.installationPlace)}
-        ${row('설치일', d.installationDe)}
-        ${row('검사유효기간', d.applcEnDt ? d.applcEnDt.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') : null)}
+        ${row('제조사', d.mfactrCmpnNm)}
+        ${row('유지관리업체', d.mntnCmpnNm)}
+        ${row('설치일', fmtDate(d.installationDe))}
+        ${row('검사유효기간', fmtDate(d.applcEnDt))}
       </table>`;
     } catch(e) {
       content.innerHTML = '<div style="text-align:center;padding:20px;color:#e53e3e">오류가 발생했습니다.</div>';
