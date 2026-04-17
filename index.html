@@ -807,6 +807,16 @@
   </div>
 </div>
 
+<!-- 승강기 정보 팝업 모달 -->
+<div class="modal-overlay" id="elvtr-info-modal" style="display:none">
+  <div class="modal-box" style="width:480px;max-width:calc(100vw - 40px);text-align:left;padding:28px 24px">
+    <div style="font-size:22px;text-align:center;margin-bottom:8px">🛗</div>
+    <h3 style="text-align:center;font-size:17px;font-weight:700;color:#1a365d;margin-bottom:20px">승강기 상세 정보</h3>
+    <div id="elvtr-info-content"></div>
+    <button onclick="closeModal('elvtr-info-modal')" style="margin-top:20px;width:100%;padding:10px;background:#e2e8f0;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">닫기</button>
+  </div>
+</div>
+
 <!-- 호기 추가/수정 모달 -->
 <div class="modal-overlay" id="elev-modal" style="display:none">
   <div class="modal-box" style="width:400px;max-width:calc(100vw - 40px);text-align:left;padding:28px 24px">
@@ -2778,12 +2788,42 @@
   }
 
   /* ── EXCEL ── */
-  /* ── 승강기종합정보망 검색 ── */
-  function openElevatorSearch(num) {
-    const searchNum = num.replace(/-/g, '');
-    navigator.clipboard.writeText(searchNum).catch(() => {});
-    const a = document.createElement('a'); a.href = 'https://www.elevator.go.kr/opn/info/ComElvtrNumAddrNewL01.do?wccPrm=s4KKuwE0iGU1yIU4iiDy8szxnle2xBwCP3D6%2BkLV0efuz%2F1iGd9CUTNrxQSZt%2BNCdq7lXn62KyisVhEAURaF8TCeQA%2FYM2aJXgus%2FJVjtok6Y7vYXDeiWmPOM5nKI8w0aRcQy%2B4STBSIBk04rj002g%3D%3D'; a.target = '_blank'; a.rel = 'noopener noreferrer'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    showToast('🔍 승강기번호 ' + searchNum + ' 복사됨 — 검색창에 붙여넣기 하세요');
+  /* ── 승강기 정보 API 팝업 ── */
+  async function openElevatorSearch(num) {
+    const no = num.replace(/-/g, '');
+    const modal = document.getElementById('elvtr-info-modal');
+    const content = document.getElementById('elvtr-info-content');
+    content.innerHTML = '<div style="text-align:center;padding:20px;color:#a0aec0">⏳ 불러오는 중...</div>';
+    modal.style.display = 'flex';
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/elevator-info?elevator_no=${no}`, {
+        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      });
+      const data = await res.json();
+      if (data.error || !data.item) {
+        content.innerHTML = '<div style="text-align:center;padding:20px;color:#e53e3e">정보를 불러올 수 없습니다.</div>';
+        return;
+      }
+      const d = data.item;
+      const row = (label, value) => value ? `<tr><td style="padding:6px 10px;font-size:12px;color:#718096;font-weight:600;white-space:nowrap">${label}</td><td style="padding:6px 10px;font-size:13px;color:#1a202c">${value}</td></tr>` : '';
+      content.innerHTML = `<table style="width:100%;border-collapse:collapse">
+        ${row('건물명', d.buldNm)}
+        ${row('주소', (d.address1||'') + ' ' + (d.address2||''))}
+        ${row('시군구', d.sigunguNm)}
+        ${row('승강기번호', d.elevatorNo)}
+        ${row('종류', d.elvtrKindNm)}
+        ${row('형식', d.elvtrDetailForm || d.elvtrForm)}
+        ${row('상태', d.elvtrSttsNm)}
+        ${row('정격용량', d.ratedCap ? d.ratedCap + '인승' : null)}
+        ${row('하중', d.liveLoad ? d.liveLoad + 'kg' : null)}
+        ${row('설치위치', d.installationPlace)}
+        ${row('설치일', d.installationDe)}
+        ${row('검사유효기간', d.applcEnDt ? d.applcEnDt.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') : null)}
+      </table>`;
+    } catch(e) {
+      content.innerHTML = '<div style="text-align:center;padding:20px;color:#e53e3e">오류가 발생했습니다.</div>';
+    }
   }
 
   /* ── TOAST ── */
