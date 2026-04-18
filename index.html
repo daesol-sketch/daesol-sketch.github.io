@@ -2379,16 +2379,22 @@
   async function loadMgmt() {
     const el = document.getElementById('mgmt-list');
     el.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
-    const [{ data, error }, { data: elevData }] = await Promise.all([
-      db.from('managed_sites').select('*').order('site_name'),
-      db.from('site_elevators').select('site_id, inspection_due_date').limit(10000),
-    ]);
+    const { data, error } = await db.from('managed_sites').select('*').order('site_name');
     if (error || !data) { el.innerHTML = '<div class="loading-state">불러오기 실패</div>'; return; }
+    // site_elevators 전체 페이지네이션 fetch
+    let elevData = [], elevOffset = 0;
+    while (true) {
+      const { data: batch } = await db.from('site_elevators').select('site_id, inspection_due_date').range(elevOffset, elevOffset + 999);
+      if (!batch || batch.length === 0) break;
+      elevData = elevData.concat(batch);
+      if (batch.length < 1000) break;
+      elevOffset += 1000;
+    }
     const elevCounts = {};
     const inspExpired = {};
     const inspSoon = {};
     const today = new Date(); today.setHours(0,0,0,0);
-    (elevData || []).forEach(e => {
+    elevData.forEach(e => {
       elevCounts[e.site_id] = (elevCounts[e.site_id] || 0) + 1;
       if (e.inspection_due_date) {
         const due = new Date(e.inspection_due_date);
