@@ -13,8 +13,10 @@
   <link rel="apple-touch-icon" href="./icon-192.png" />
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; overflow-anchor: none; }
     body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background: #f0f4f8; color: #1a202c; min-height: 100vh; }
 
     header { background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%); color: white; padding: 0 24px; height: 64px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
@@ -274,6 +276,7 @@
   <button class="tab-btn active" id="tab-fault-btn" onclick="switchTab('fault',event)">🔧 고장 관리 <span class="count-badge" id="pending-count" style="display:none"></span></button>
   <button class="tab-btn" id="tab-mgmt-btn" onclick="switchTab('mgmt',event)" style="display:none">🏢 관리현장 <span id="mgmt-expire-badge" class="count-badge" style="display:none"></span></button>
   <button class="tab-btn" id="tab-sites-btn" onclick="switchTab('sites',event)" style="display:none">👤 관리</button>
+  <button class="tab-btn" id="tab-jungong-btn" onclick="switchTab('jungong',event)" style="display:none">📋 준공계</button>
 </div>
 
 <main>
@@ -582,6 +585,51 @@
         <button onclick="clearMgmtSelection()" style="padding:6px 14px;background:none;border:1.5px solid #cbd5e0;color:#718096;border-radius:7px;font-size:13px;font-family:inherit;cursor:pointer;margin-left:auto">선택 해제</button>
       </div>
       <div class="site-table-wrap"><div id="mgmt-list"><div class="loading-state">불러오는 중...</div></div></div>
+    </div>
+  </div>
+
+  <!-- 준공계 -->
+  <div class="page" id="page-jungong">
+    <div class="card" style="max-width:700px;margin:0 auto">
+      <h2>📋 준공계 작성</h2>
+
+      <!-- 양식 선택 -->
+      <div style="display:flex;gap:12px;margin-bottom:24px">
+        <button id="jg-type-tke" onclick="setJungongType('tke')" style="flex:1;padding:12px;border:2px solid #2b6cb0;border-radius:8px;background:#2b6cb0;color:white;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">TKE 양식</button>
+        <button id="jg-type-daesol" onclick="setJungongType('daesol')" style="flex:1;padding:12px;border:2px solid #e2e8f0;border-radius:8px;background:white;color:#4a5568;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">대솔이엘 양식</button>
+      </div>
+
+      <!-- 입력 폼 -->
+      <div style="display:grid;gap:16px;margin-bottom:24px">
+        <div>
+          <label style="font-size:13px;font-weight:700;color:#4a5568;display:block;margin-bottom:6px">현장명</label>
+          <input id="jg-site" type="text" placeholder="현장명 입력" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit" oninput="updateJungongPreview()" />
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:700;color:#4a5568;display:block;margin-bottom:6px">공사명</label>
+          <input id="jg-title" type="text" placeholder="공사명 입력" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit" oninput="updateJungongPreview()" />
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:700;color:#4a5568;display:block;margin-bottom:6px">내용</label>
+          <textarea id="jg-content" placeholder="내용 입력" rows="3" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical" oninput="updateJungongPreview()"></textarea>
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:700;color:#4a5568;display:block;margin-bottom:6px">준공일</label>
+          <input id="jg-date" type="date" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit" oninput="updateJungongPreview()" />
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:700;color:#4a5568;display:block;margin-bottom:6px">제출일</label>
+          <input id="jg-submit-date" type="date" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit" />
+        </div>
+      </div>
+
+      <!-- 사진철 목록 -->
+      <div id="jg-photo-sets" style="margin-bottom:16px"></div>
+
+      <div style="display:flex;gap:12px;margin-bottom:40px">
+        <button onclick="addPhotoSet()" style="flex:1;padding:14px;background:white;color:#2b6cb0;border:2px dashed #2b6cb0;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">+ 사진철 추가</button>
+        <button onclick="downloadJungongPDF()" style="flex:1;padding:14px;background:#1a365d;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">📥 PDF 다운로드</button>
+      </div>
     </div>
   </div>
 
@@ -1305,15 +1353,17 @@
     }
     if (tab === 'sites' && currentRole !== '관리자') return;
     if (tab === 'mgmt' && !currentRole) return;
+    if (tab === 'jungong' && !currentRole) return;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-' + tab).classList.add('active');
     if (e) e.currentTarget.classList.add('active');
     else document.getElementById('tab-' + tab + '-btn').classList.add('active');
-    if (tab === 'fault')  {} // 서브탭이 처리
-    if (tab === 'sites')  { loadSites(); loadHolidayList(); }
-    if (tab === 'duty')   loadDutyPage();
-    if (tab === 'mgmt')   loadMgmt();
+    if (tab === 'fault')   {} // 서브탭이 처리
+    if (tab === 'sites')   { loadSites(); loadHolidayList(); }
+    if (tab === 'duty')    loadDutyPage();
+    if (tab === 'mgmt')    loadMgmt();
+    if (tab === 'jungong') initJungong();
   }
 
   function switchSubTab(subTab) {
@@ -1784,6 +1834,7 @@
     document.getElementById('tab-sites-btn').style.display = isAdmin ? 'inline-block' : 'none';
     document.getElementById('tab-mgmt-btn').style.display = (isAdmin || currentRole === '직원') ? 'inline-block' : 'none';
     document.getElementById('tab-duty-btn').style.display = (isAdmin || currentRole === '직원') ? 'inline-block' : 'none';
+    document.getElementById('tab-jungong-btn').style.display = (isAdmin || currentRole === '직원') ? 'inline-block' : 'none';
     // 고장처리내역 서브탭: 관리주체는 숨김
     document.getElementById('sub-tab-done-btn').style.display = currentRole !== '관리주체' ? 'inline-block' : 'none';
     // 반복고장현황 서브탭: 직원/관리자만
@@ -1814,6 +1865,7 @@
     document.getElementById('tab-sites-btn').style.display = 'none';
     document.getElementById('tab-mgmt-btn').style.display = 'none';
     document.getElementById('tab-duty-btn').style.display = 'none';
+    document.getElementById('tab-jungong-btn').style.display = 'none';
     document.getElementById('btn-change-pw').style.display = 'none';
     updateSiteBadge();
     setBuildingField(); initReportTime();
@@ -4385,6 +4437,286 @@
       subscribePush();
     }
   });
+
+  // ── 준공계 ──
+  let jungongType = 'tke';
+  const DEFAULT_PHOTO_LABELS = ['자재입고', '교체전', '교체중', '교체중', '교체후', '폐자재'];
+  const PHOTO_LABEL_OPTIONS = ['자재입고', '교체전', '교체중', '교체후', '폐자재'];
+
+  function makePhotoSet(num) {
+    return {
+      name: `부품 ${num}`,
+      photos: Array.from({length: 6}, (_, i) => ({ dataUrl: null, label: DEFAULT_PHOTO_LABELS[i] }))
+    };
+  }
+  let jungongPhotoSets = [makePhotoSet(1)];
+
+  function initJungong() {
+    setJungongType('tke');
+    if (!document.getElementById('jg-date').value) {
+      document.getElementById('jg-date').value = new Date().toISOString().slice(0, 10);
+    }
+    if (!document.getElementById('jg-submit-date').value) {
+      document.getElementById('jg-submit-date').value = new Date().toISOString().slice(0, 10);
+    }
+    renderAllPhotoSets();
+    // html2canvas 첫 실행 스크롤 리셋 방지: 탭 열릴 때 미리 워밍업
+    const _d = document.createElement('div');
+    _d.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px';
+    document.body.appendChild(_d);
+    html2canvas(_d, {scale:1, logging:false}).finally(() => document.body.removeChild(_d));
+  }
+
+  function setJungongType(type) {
+    jungongType = type;
+    document.getElementById('jg-type-tke').style.background = type === 'tke' ? '#2b6cb0' : 'white';
+    document.getElementById('jg-type-tke').style.color = type === 'tke' ? 'white' : '#4a5568';
+    document.getElementById('jg-type-tke').style.borderColor = type === 'tke' ? '#2b6cb0' : '#e2e8f0';
+    document.getElementById('jg-type-daesol').style.background = type === 'daesol' ? '#2b6cb0' : 'white';
+    document.getElementById('jg-type-daesol').style.color = type === 'daesol' ? 'white' : '#4a5568';
+    document.getElementById('jg-type-daesol').style.borderColor = type === 'daesol' ? '#2b6cb0' : '#e2e8f0';
+  }
+
+  function addPhotoSet() {
+    jungongPhotoSets.push(makePhotoSet(jungongPhotoSets.length + 1));
+    renderAllPhotoSets();
+  }
+
+  function removePhotoSet(setIdx) {
+    if (jungongPhotoSets.length === 1) return;
+    jungongPhotoSets.splice(setIdx, 1);
+    renderAllPhotoSets();
+  }
+
+  function renderAllPhotoSets() {
+    const container = document.getElementById('jg-photo-sets');
+    container.innerHTML = '';
+    jungongPhotoSets.forEach((set, setIdx) => {
+      const setDiv = document.createElement('div');
+      setDiv.style.cssText = 'border:1.5px solid #e2e8f0;border-radius:10px;margin-bottom:16px;overflow:hidden';
+      setDiv.innerHTML = `
+        <div style="background:#edf2f7;padding:10px 14px;display:flex;align-items:center;gap:10px">
+          <span style="font-size:13px;font-weight:700;color:#4a5568;white-space:nowrap">사진철 ${setIdx + 1}</span>
+          <input type="text" value="${set.name}" oninput="jungongPhotoSets[${setIdx}].name=this.value"
+            placeholder="부품명 입력" style="flex:1;padding:5px 10px;border:1.5px solid #cbd5e0;border-radius:6px;font-size:13px;font-family:inherit" />
+          ${jungongPhotoSets.length > 1 ? `<button onclick="removePhotoSet(${setIdx})" style="padding:4px 10px;background:#fed7d7;color:#c53030;border:none;border-radius:6px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">삭제</button>` : ''}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px" id="jg-grid-${setIdx}"></div>`;
+      container.appendChild(setDiv);
+      renderPhotoGrid(setIdx);
+    });
+  }
+
+  function renderPhotoGrid(setIdx) {
+    const grid = document.getElementById(`jg-grid-${setIdx}`);
+    if (!grid) return;
+    const set = jungongPhotoSets[setIdx];
+    grid.innerHTML = '';
+    for (let i = 0; i < 6; i++) {
+      const photo = set.photos[i];
+      const label = photo?.label || DEFAULT_PHOTO_LABELS[i];
+      grid.innerHTML += `
+        <div style="border:1.5px dashed #cbd5e0;border-radius:8px;overflow:hidden;background:#f7fafc">
+          <div style="position:relative;height:140px;display:flex;align-items:center;justify-content:center;background:#edf2f7;cursor:pointer" onclick="document.getElementById('jg-pi-${setIdx}-${i}').click()">
+            ${photo?.dataUrl ? `<img src="${photo.dataUrl}" style="width:100%;height:100%;object-fit:cover" />` : `<span style="color:#a0aec0;font-size:13px">+ 사진 추가</span>`}
+            ${photo?.dataUrl ? `<button onclick="event.stopPropagation();removeJungongPhoto(${setIdx},${i})" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);color:white;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:14px">✕</button>` : ''}
+          </div>
+          <input type="file" id="jg-pi-${setIdx}-${i}" accept="image/*" style="display:none" onchange="handleJungongPhoto(${setIdx},${i},this)" />
+          <div style="display:flex;align-items:center;padding:6px 10px;border-top:1px solid #e2e8f0;background:white">
+            <span style="font-size:12px;color:#718096;white-space:nowrap;margin-right:4px">작업명:</span>
+            <select onchange="jungongPhotoSets[${setIdx}].photos[${i}].label=this.value" style="flex:1;border:none;font-size:13px;font-family:inherit;outline:none;background:white;cursor:pointer">
+              ${PHOTO_LABEL_OPTIONS.map(o => `<option value="${o}" ${o === label ? 'selected' : ''}>${o}</option>`).join('')}
+            </select>
+          </div>
+        </div>`;
+    }
+  }
+
+  function handleJungongPhoto(setIdx, idx, input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const prev = jungongPhotoSets[setIdx].photos[idx];
+      jungongPhotoSets[setIdx].photos[idx] = { file, dataUrl: e.target.result, label: prev?.label || DEFAULT_PHOTO_LABELS[idx] };
+      renderPhotoGrid(setIdx);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeJungongPhoto(setIdx, idx) {
+    const prev = jungongPhotoSets[setIdx].photos[idx];
+    jungongPhotoSets[setIdx].photos[idx] = { dataUrl: null, label: prev?.label || DEFAULT_PHOTO_LABELS[idx] };
+    renderPhotoGrid(setIdx);
+  }
+
+  function getJungongDateStr() {
+    const val = document.getElementById('jg-date').value;
+    if (!val) return '20   년    월    일';
+    const [y, m, d] = val.split('-');
+    return `${y}년  ${parseInt(m)}월  ${parseInt(d)}일`;
+  }
+
+  function updateJungongPreview() {}
+
+  let _pdfGenerating = false;
+  async function downloadJungongPDF() {
+    if (_pdfGenerating) return;
+    _pdfGenerating = true;
+
+    const site = document.getElementById('jg-site').value.trim() || '현장명';
+    const title = document.getElementById('jg-title').value.trim() || '';
+    const content = document.getElementById('jg-content').value.trim() || '';
+    const dateStr = getJungongDateStr();
+    const submitVal = document.getElementById('jg-submit-date').value;
+    const submitDateStr = submitVal ? (() => { const [y,m,d] = submitVal.split('-'); return `${y}년  ${parseInt(m)}월  ${parseInt(d)}일`; })() : '20   년    월    일';
+    const isTke = jungongType === 'tke';
+
+    const btn = document.querySelector('#page-jungong button[onclick="downloadJungongPDF()"]');
+    if (btn) { btn.style.pointerEvents = 'none'; btn.style.opacity = '0.6'; }
+
+    const font = '"Malgun Gothic","맑은 고딕",sans-serif';
+    const W = 794, H = 1123;
+    const pageBase = `width:${W}px;height:${H}px;background:white;font-family:${font};position:relative;overflow:hidden;box-sizing:border-box;`;
+
+    // ── 도장 HTML ──
+    const stampHtml = `<div style="width:72px;height:72px;border:3.5px solid #bb0000;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;text-align:center;color:#bb0000;font-size:10px;font-weight:bold;line-height:1.5;transform:rotate(-12deg);flex-shrink:0;margin-left:8px">대표이사<br/>인</div>`;
+
+    // ── 1페이지: 표지 ──
+    const tkeLogoHtml = `<div style="display:flex;align-items:center;gap:12px"><img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBw0NDQ0NDQ0NDQ0NDQ8NDQ0PEA8NDQ0NFR0WFhYRFRUYHiggGBomGxcWLT0hJikrLi4xFx8/OzMtNygvLisBCgoKDg0OFRAPGC0fHR0rLS0rKy43LisrNystLSsrKys3KysrLS0rMSsrKy0rKy0tKy0rLystLS8tKy0tKzUrLf/AABEIAJMBVwMBEQACEQEDEQH/xAAcAAACAgMBAQAAAAAAAAAAAAAAAgEHAwQGBQj/xABOEAABAwECBRAFCAkCBwAAAAABAAIDBAURBiFBUVQHEhMWMTRScXN0kZKTstHSFWGiscEUFyIjMlNVoSQlMzVig5TD8HLhQkWBgoSjwv/EABoBAQACAwEAAAAAAAAAAAAAAAABAgMFBgT/xAA1EQACAQIBCQcDBAMBAQAAAAAAAQIDBBEFEhQVMTJRUnEhM4GRocHRNGGxE0FC4SJDcvAj/9oADAMBAAIRAxEAPwCwNU+26qz6OCWkk2KR9U2NztYx97C15uucDlAXss6Uak2pL9j12dKNSbUl+xW41RLZ0sdjB5V7nZ0uBsdDo8v5GGqHbOljsYPKsbtafAnQqPL+Rxqg2xpY7GDyrG7eHAnQqHL+RhqgWxpY7GDyrG6EOBOhUOX1Yww/tfSh2MHlVHSjwJ0Ghy+rGGHtr6UOxg8qo6aJ0Ghy+rGGHlraUOxg8qxuKJ0Ghy+rGGHdraUOyg8qo0ToFvy+rGGHVraUOyg8qo8RoFvy+rGGHNq6UOyh8qo5MnQLfl9WSMOLV0kdlD5VRzkTq+35fV/Iww3tXSR2UPlVXUlxGr7fl9X8jDDa1NJHZQ+VUdWfEnV9vy+r+SRhramkjsofKqutU4jV9vy+r+RhhramkjsofKqOvU4k6ut+X1fyTt0tPSf/AFQ+VV0ipxGrrbl9X8kjDO09JHZQ+VVdzV4k6utuX1fyTtztPSR2UPlVXdVeI1dbcvq/kYYZWnpA7KHyqul1uP4J1dbcvq/k6bAW3ausmmZUS7I1kQc0axjLjfd/wgL1WdedSUlJmuyla0qMIumsMX9zs1sDTggBACAEB5WEFtxUMWud9KV14iivxvOc5mjOvNc3MaEcXtexHrtLSdxPBdiW1leSYTWg5xd8pe28k3N1oaPUBduLQO9uG8c86RWFslhmIXbHX6VL7Pgo0y452ToNtyInbHX6VL7Pgo02452NBtuRBtjr9Kl9nwUabcc7GgW3IidsVfpUvs+Cabcc7GgW3IidsVfpUvs+CjTrjnY0C25EG2Kv0qX2fBRp1xzsnQLbkQbYq/SpfZ8E06452NAtuRBtir9Kl9nwTTrjnY0C25ETtir9Kl9nwUafcc7GgW3Ig2xV+lS+z4Jp9xzsaBbciDbFX6VL7Pgmn3HOxoFtyINsVfpUvs+Cafcc7GgW3Ig2xV+lS+z4Jp9xzsaBbciDbDX6VL7Pgo0+552NAtuRFi4Ozvlo6eSRxe9zL3OO6TeV01nOU6EJSeLaOYvYRhXnGKwSZx2rZ+76bnze5Kt3kxf/AEl090Zcn95Lp7opwFbaUTbDgrC0SOCsUoljICsLRI4KxtEjArE0SOCsbRI4KxNEjArG0WHBWNoDArG0SMCqNEjgrG0SMCsbRIwKo0BgVRokYKjRJIKo0BgVVok7TUx3xU8i3vL2WG9LoajLHdw6liraGgBACAEB5eEFtxUMWvf9KR14iiBuc93wAylee5uY0Y4vb+yPVaWk7ieC2fuyq7QrpamV00ztc93VaMjWjIAucq1JVJOUn2nV0aUKUFCC7EYAsTRlJVQCgklQAUAlQCVABQSCAFAJQAgBACgEoC08Fd4UvJ/Err7H6en0OPyh9TU6nJatv7upufM7kq32Sl/9ZdPdFrDffT3RTIK3TibYyArFKJI4KwtEjgrFKJYyArC0SOCsbRIwKxNEjgrG0SOCsTRIwKxtFhwVjaAwKxtEjAqjRI4KxtEjArG0SMCqNAYFUaJGCo0SSCqNA7XUw3zU8g3vL2WO9LoanK/dw6ljLZGgBACA8y37aioYdkk+k914iiBudI74AZSsFevGjHF7f2R6bW1ncTzY7P3ZVNo2hLVSummdrnu/6NY3I1oyALnqtSVSTlJ9p1dGjClBQguw11iwMpKqSSFDQJVQCgklQAUAlQCVABQSCAEBKgAgBACgFqYK7wpeT+JXX2P09PocflD6mp1OQ1b/AN3U3PmdyVdDkhY1pf8APuibHvH0KYBW9lE2o4KwtFjICsUokjgrC0SOCsUoljICsMokjgrG0SMCsTRI4KxtEjgrE0SMCsbRYcFY2gMCsbRIwKo0SOCsbRIwKxtEjAqjQGBVGiRgqNEna6l++ankG95eqy3pGpyv3cOpY62JoAQHm29bMNDCZJDe44oox9qR2YZhnORYa1aNKOLPRbW06882Piyp7TtGWrmdNM697sQA+yxuRrRkC0NWpKpLOkdXRowowUIbDVWJmUYKrJJVQSqkmakp5JpGRRNL5Hm5rRlPwHrUxhKclGKxbKTqRpxcpPBIxrGy4KCSVABQCVAJUAFBIIAUAlACAEBamCu8KXk/iV11j9PT6HH5Q+pqdTDhbgzDa0EdPPJLG2OUTAxa0OLgHNuOuBxfSK2lrdSt5OUUnisO0wUqrpvFHK/M/Z+lVvTD5F7Xleq/4r1+T0adPgifmhoNKremHyKryrU5V6/JOnz4IkakVBpdb0weRVeU6nKvX5Gnz4In5pKHS63pg8iq8oTf8V6/JOsJ8F6/JPzS0Ol1vTB5FV30+C9fknWNTlXr8k/NPRaXW9MHkVHeS4L1+SdZVOVevyT81FFpdb0weRV0qXBE6zqcq9fkkalNFpdb0weRRpD4Iazqcq9fkkaldFpdZ0weRVdZ8BrOpyr1+Rvmto9KrOmHyKrqPgTrSpyr1+Sfmvo9Kq+mHyKucNaVOVevyT82FHpVX0w+RVGtKnKvX5J+bKj0mr6YfIq5qJ1rU5V6/JPzZ0ek1fTD5FGYhrWpyr1+THV6nVJHFJIKiqJZG94BMVxIBOP6Kq6SLQypUcks1dvX5K2aV5mjeDgrG0SMCqNAYFUaJO21Lt81PIN7y9NpvM1OV+7h1LIXvNCedbtsw0MJllN5N4jjB+lK/MPV68ixVasaccWei2tp155sfF8CpbVtOasmdNM69xxNaPsxsyNaMgWlqzlUlnSOpoUIUYKEDUBWFozEqpJKq0CVUkz0tPJNI2KJpfI83NaN0n4D1pGDm1GKxbKzqRhFyk8Ei0cGcHo6GO83PqHj6yTMOA3MPf8AkOgtLSNBcZPa/Y5a9vZXEsF2RWxe5VZ3Txrmmu06xEqoBQSSoB7eCVlRVs745i8NbCXjWENOuvaM3rK9ljbwr1HGexLE8GULmdvTUobW8O3ozrNo9Fwqjrt8q2uqaH38zUa4uOC8v7DaRRcKo67fKmqaH38xri44Ly/sNpFFwp+u3ypqm3+/mNcXHBeX9htIouFP12+VNU2/38xri44Ly/sNpFFwp+u3ypqm3+/mNcXHBeX9k7SKLhT9dvlTVNv9/Ma4uOC8v7DaTRcKfrt8qapt/v5jXFxwXl/Z7tBSMp4mQsv1kY1rdcb3Xete+lTVOChHYjXVqsqs3OW1mwshjBACAEAIAQAgBACAEAIAQAgBACA1bU3tUcjJ3SoewvT349UUEw4hxLzNHXDgrG0SMCsbRIwKo0Dt9S3fNTyDe8vRa7zNVlfu4dTuLdtiGhhM0pvO5HGPtyP4I8ci9NSooLFmot7edeebHxZUdr2rNWzOmmdeTia0fYjZka3/ADGtTUnKcsZHUUKEKMM2BphYWjOSCqNEjBVaBKqSZqWnkmkZFE0vkebmtG6T4etRGDk1GK7WVnOMIuUngkWngxg9HQx3m59Q8fWSZAOA3MPf0Ab21tY0Vxk9rOXvb2VxLBdkVsXue4vWeEo87p41yL2ncokKrRJKqAUEnV6nW+5ebO7zFs8k99Lp7o1GWe5j/wBezLDXQHNggBACAEAIAQAgBACAEAIAQAgBACAEAIAQAgBACAEBq2pvao5CTulGXp78eqPn9hxDiWBo64cFUaA4KxtEjArG0SdRgPa8NC6rnmOLYGhjB9uR9+Jo/wAxLJRkoYtngv6EqyhGPE8q2bXmrpjNMce4xg+xGzgjxyrBUk5vFnqoUIUYZsTSWFozkgqjQGCq0SSCqNEmekppJpGRRML5Hm5rRuk/AetQoOTSiu0rOcYRcpPBItXBfB2OgjvNz6h4+skyD+BuZvv6AN1bWyor7s5e8vZXEuEVsXue4vUeIEBRpcLzjG6VyTaxO5SAOGcKmKJwYwcM4UNonAnXDOFXFDA6vU5I+Vy82d3mLZ5J76XT3RqMs9zH/r2ZYi6A5sEAIAQAgBACAEAIAQAgBACAEBwGq7a1VRwUbqWeSBz5nteYzrS5obfcVsMn0oVJSzlj2HtsqcZylnLErMYYWt+I1XX/ANlsna0uVGy0elyocYX2r+IVXXWJ21LlROj0eVDjC61fxCp66xu3p8pOjUeVDbbbUuP6fU7nDWJ0YcCytqPIi+LJe59NTOcS5zoInOccZLi0EkrWS2s5+osJNLibagoCAEBq2pvao5CXulC9Pfj1Pn1hxDiVGjrRwVjaAwKo0SOCsbRIwKxtEjAqjQGBVGiRlRokkFUaBno6aSeRkUTC+R5ua0bp8B61Cg5PBFZ1Iwi5SeCRa+C+DsdBHebn1Dx9ZLduDgNzN9/QBt7e3VJfc5m8vJXEuEVsXue6vQeIEAIDF8nj+7Z1Qq5q4Fs+XEPk8f3bOqEzVwGfLiT8nj+7Z1QmauAz5cQ+Tx/ds6oTNjwGfLieFhnM6no9kgOwv2Vjdey5rtab7xevFfydOjnQ7HijYZNiqtbNqdqwe04T0/XaXP1lpNLr87N/oVvyIPT9dpc/WUaXX52NCt+RE+n67S5+so0y452NCt+RE+n67S5uso0y452ToVvyIPT1dpU3WTTLjnY0K35EHp6u0qbrKNNuOdjQrfkR3eBVXLNSF80jpHbM9uucbzcA3Et9k2rOpRzpvF4s57KlKFOtmwWCwR762BrgQAgBACAEAICstXE/o9By8ndC22SV/lPoe+w3pdCowVt2jamQFYpRJHBWFokYnEeJYnEsj6TsXelLzaHuhaSe8zmqm/LqbqqUBACA1bU3tUchL3Shenvx6nz2w4hxKWjrBwVjaAwKxtEjAqjRI4KxtEjArG0SMCqNAYFUaJNiipZJ5GRQsL5Hm5rR7/UPWqqLk8EVnOMIuUngkWzgtg5HZ8d5ufUPH1suQfwNzN9/QBs6NBU19zmry8lXlwiti9z3VnPECAEAIAQAgBACA5rVA3h/Oj+K1+U+48UbPJH1Hgytlzp04KCSVABQCVAJUAsbU/3keXf7mrpMk9x4s5nLH1C6L3OlWzNUCAEAIAQAgBAVhq5n9HoOXl7oW4yOsZz6Husd6XQqIFbuUTaDgrC0WMgKxSiSMTiPEVicSyPpaxN50vNoe6Fz095nN1N+XU3VUoCAEBq2rvao5CXulC9Pfj1PnhhxDiWZo6scFYmgOCsbRIwKxtEjAqjRI4KxtEjArG0SMCqNA2KKrkgkZLC8skYb2uHuOcepVTcXiis4RnFxksUy28FsI47QiyMqGAbLF/8Abc7fd79jRrKovuc1eWkqEuMXsfse6sx4wQAgBACAEAIAQHNaoO8P50fxWvyn3HijZ5J+o8GVqFz7R05KqAUEkqACgEqAWNqf7ydy8nuaujyT3HizmcsfULovc6ZbM1QIAQAgBACAEBV+rqf0eg5aX3NW7yLvz6I91jvMp9pW+lE2ZkBWGUSRwVhaLDOOI8RWNxLLafTVibzpObQ90Lmam8+pzlTefU3VQoCAEBq2rvao5CXulStpenvLqfOrDiHEvTJHVGQFYmgMCsbRI4KxtEjArG0SMCqNEjgrG0SMCsbRIwKo0DYoqyWnkZNC8skYb2uHuOcepVTcXiis4RqRcZLFMtzBfCKK0IsjKhg+tiv9tudp/L37GlVVRfc5q7tJUJcYvYz3FmPGCAEBp+lqTSqftY/FY/1YcyM2j1eR+TD0rSaVT9rH4p+rT5l5jR6vI/Jh6VpNKp+1j8U/Wp8y8xo9Xkfkw9K0mlU/ax+KfrU+ZeY0eryPyZz+HFXFNRFsMscrhLG4tjc2RwGPHcMi8V/OM6LUXj2rYbDJlOcK+M012Pb2FfbE/gP6pWjzXwOizo8SRE/gP6pVXF8Cc6PEnYn8B/VKjNlwYzo8Q2J/Af1SozXwYzo8SdifwH9Uqua+DGdHiGxP4D+qVGbLgyc6PEsXABpFEbwQdnfui7I1dFkpNUO3izmcrtOusOC9zpVsjVggBACAEAIAQFW6u37Cz+Vm9zVvMib8+iPdY70in10JsxmlY5RBkBWGUSRicR4isTRZH07Ye86Tm0PdC5Spvy6nOz3n1N1UKggBAatq72qOQl7pUraXp7y6nzkw4hxBe6SOpMgKxNAcFYmiRgVjaJPYwcsZ9oSywRuDZGUz5o9d9lzmuYNYTkvDjj4lRxMNeuqMVJ7McPyaE8L4nvilY5kjHFr2OFzmuGQrE0Z4yUkmnimKCqNFhwVjaJGBWNokYFUaBs0NZLTysmheWSMN7XD8wRlBzKqbi8UVqU41IuMlimW5gvhFFaEV4uZOwDZor9z+Judp/JbKlVVRfc5m7tJUJcU9jPbWU8gICiDunjK5xo7ZEhVaJJVGiSVDQOt1Nt+Tc2d3mL3ZN719PdGqyx3Mevsyx1uznAQAgBACAEAIAQAgBACAEAIAQFWau37Kz+Un9zFvMib1Toj3WO9IqBdCbMEAzSscoge/EeJYXEsj6fsPedJzaHuhcfV35dWc9PefU3lQqCAEBqWtvao5CXulTHai0N5dT5wjOIcQWykjqTICsTQHBWNokcFYmiTtNSg/rKTmUvfiWNo8GU+4XVfhnbYZYKR2gzZI7o6tjbmP3GyD7t/qzHJ+Sq1ia6zvHReD7Yv/ANiVDUwSQyPilY6OSN2tex2ItKwtHRRkpJSi8UxAVRosOCsbRIwKxtEjAqjQNmgrZaaVk0LyyRhvByesEZQcyqm4vFFalONSLjJYplu4MYQxWhFeLmTsA2aK/G08JudpWypVVUX3OZu7SVCXFPYz2llPIUMTjPGVz7R2yJBVGiRgVVoEqpJ12ptvybmzu8xe7J3evp7o1OWO5j19mWOtyc6CAEAIAQAgBACAEAIAQAgBACAqvV3/AGdnf66j3Rre5E3qnh7nvsdsioV0BsgQAgGvWNxB9RWHvOk5tD3WriqveS6s0E95m8sZUEAIDUtbetTyEvdKtHai0N5dT5tjOIcQW2lE6j9zKCsTQGBWJokcFY2iTtdSc/rN/Mpe/CsM12Hhyl3C6r8Mt5YzQnN4YYKx2jHr2a2OrYPq5cjx92/OPXk6QYaxPZaXcqDwfbF/t7lQVVNJBI+GZjo5IzrXsdug/EevKsLR0UJxnFSi8UzGCqNFxwVjaJGBWNokYFUaBtWfXS00rJoXlkjDiOQjK0jKDmVU3F4orUpxqRcZrFMt3BnCCK0Itc25kzABNDfeWnhDO051sqVVVF9zmLu1lQlg+1PYynicZ4ytO0dWiQqNEkgqjRIwKq0DocCrVgo6iSSocWsdAWAhrnku1zTdcBmBXotKsKU258DwZRt51qajBYvH2Z2Rw2s77yQ/ypPBbDWFDi/Jmo1Xc8F5oU4cWfwpT/Lco1hR4vyJ1VccF5kbeKDPN2f+6jWNH7+ROqbj7eZG3mhzT9mPFNZUfv5E6ouPt5kHDqh4NR1G+ZV1nR+5OqK/Ff8AvAU4d0f3dSf+2PzKryrR4P0+SdT1+K9fgg4eUn3NT1YvOo1tS5X6fJOpq3NH1+D3LGtRlZDs0bXsbrnNufdrrxxEr229eNaGfFHgubeVCeZJ49DfWc84IAQAgBACAqnV3P0LN/1VPujW9yJtqeHue+x2yKjXQGyBACAEB9SWFvOk5tD3Wrhq3eS6s0E95m8sZUEAIDUtbetTyEvdKtDeRaG8j5qiP0RxBbyUe06d7TKCsDQHBWNokYFYmiTttSU/rN/MZu/CsFVf4nhyl3Hivwy4FgNECA57C7BeK0Y9cLo6qMfVS5COA/O33dIMNYnstLuVCXGL2op6spZaeV8MzDHLGbnNOTxHrWFo6KE4zipReKZiBVGi44KxtEjArG0SMCqNA27Nr5aWZk8LtZIw4szhlaRlBUJuLxRSrTjUi4yXYzBesTRlJBVGgMCqtEkgqjRIwVWgSqkkqrBKqSMqglVJJChglVBZWAG8By0nwXRZM7hdWcxlb6jwR0i2BrAQAgBACAEBU+rwcVmj11X9pb7In+zw9zYWH8vD3KlW/NiCAEAID6ksLedJzWHutXDVu8l1ZoJ7zN5YyoIAQGpa+9anm8vdKtDeRaG8j5miOIcQXQyXadK9plBWGUSTICsLRI4KxtEnbakZ/Wj+Yzd+Feasv8fH5PFlHuPFfhlxLymiBACA5/C3BiK0or8UdTGDsM13sPzt93SDDWJ67W7lQlxi9qKeraOWmlfBOwxyxm5zT7wcoOdYWjo6dSM4qUXimYQVRouOCsbRIwKxtEjAqjQGBVGiRlRokkFUaAwKq0SSCqNEjAqrQJVSSVVoDBVwJJVQSqkkhQ0Cy8AN4DlpPgugyZ3C6s5jK31HgjpFsDWAgBACAEAICpdXj/ln/l/2Vv8AIn+zw9zY2H8vD3KnW+NgCAEAID6ksLedJzWHutXDVu8l1ZoJ7zN5YyoIAQGpa+9anm8vdKvDeXUtDeR8xxnEOILpZROkMoKwtAcFYpRLGQFYWiTt9SI/rR/MZu/CvLcL/Dx+TxZR7nxX4Zci8RowQAgBAeDhXgzFaUWO6OoYDsM125/A7O0/koaxPVa3UqEuKe1FOV9FLTSvgnYY5WG5zTlGQg5Qc6wtHR06kakVKLxTMIKo0ZBwVjaJGBWNokYFUaAwKo0SMFRokkFUaAwKq0SMCqNEkhVaBKqSSq4AkKpIyqwSqkll6n+8By0nwW/yZ3HizmMrfUeCOlWwNYCAEAIAQAgKl1ed2zOKr/srf5E/2eHubCw/l4e5U63xsQQAgBAfUlhbzpOaw91q4at3kurNBPeZvLGVBACA1LX3rU83l7pV6e/HqWjvI+X2PFwxjcXVyidEZA8Zx0rDKJYcSDOOkLE4snBjiVvCHSFilBlsGd3qPOBtSS4g/oM3fhXhulhDx+Tw5R7ldV+GXMteaQEAIAQAgPDwqwbhtKK43MnYDsM12Np4Ls7TmUNYnqtbqVCXZ2p7UU1aVJJSTPgqG7HKzdBOIjI5pyg51haOkpTVSKlDtTNcSt4TekKjRkwYwlbwh0hY2icGOJW8IdIWNonBjCRvCHSFjYwYwkbwh0hUeBODGEjeEOkKjwJwZIkbwh0hUbQwYwkbwh0hUbXEnBkiRvCHSFVtcScGMJG8IdIVG1xGDG2RucdIVcVxJwZOvbnHSFGKGDJ17c46Qq4onBk68Zx0hVxQwZZ2p6b7PHLSfBb/ACb3HizmMrfUeCOlXvNYCAEAIAQAgNSusymqdb8op4J9ZfrNljZLrL7r7tcMV9w6AskKs4Y5kmseBaMpR2PA1drdm/h9F/Tw+CvpNbnfmyf1Z8WG1uzfw+i/p4fBNJrc782P1Z8WG1uzfw+i/p4fBNJrc782P1Z8WG1uzfw+i/p4fBNJrc782P1Z8WemxgaA1oDWtAa1oFwaBuADIFhbx7WUGUAEAICHAEEEXg4iDjBCA1vRtNo8HZs8FfPlxZbOfEPR1No8HZs8FGfLiM6XEPR1No8HZs8Ez5cRny4h6OptHg7NngmdLiM+XEyQ0kUZ1zIo2G669rGtN2a8KG2yHJvazMoIBACAEAIAQAgBACAEAIAQAgBACAEAIAQAgBACAEB//9k=" style="height:52px;width:auto" /><div style="margin-left:10px;font-family:Arial,sans-serif"><div style="font-size:14px;font-weight:700;letter-spacing:1.5px;color:#222;margin-bottom:3px">TKELEVATOR KOREA</div><div style="font-size:12px;color:#444;font-family:'Malgun Gothic',sans-serif">티케이엘리베이터코리아(주)</div></div></div>`;
+
+    const daeSolLogoHtml = `
+      <div style="line-height:1.7">
+        <div style="font-size:14px;font-weight:bold">주식회사 대솔이엘</div>
+        <div style="font-size:12px;color:#444">031)938-0257~8</div>
+      </div>`;
+
+    const page1 = document.createElement('div');
+    page1.style.cssText = pageBase + 'padding:0;';
+    page1.innerHTML = `
+      <div style="padding-top:260px;padding-left:80px;padding-right:80px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center">
+        <div style="font-size:30px;font-weight:bold;text-align:center;letter-spacing:2px;margin-bottom:18px;font-family:'Malgun Gothic',sans-serif">${site}</div>
+        <div style="width:220px;border-top:2px solid #333;margin-bottom:44px"></div>
+        <div style="font-size:14px;text-align:center;white-space:pre-wrap;color:#333;line-height:2;font-family:'Malgun Gothic',sans-serif">${content}</div>
+      </div>
+      <div style="position:absolute;bottom:80px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:12px">
+        ${isTke ? tkeLogoHtml : daeSolLogoHtml}
+      </div>
+    `
+
+    // ── 2페이지: 준공계 ──
+    const fixedText = isTke
+      ? '상기와 같이 부품 교체를 완료하였기에 준공계를 제출합니다.'
+      : '상기와 같이 안전사항 외 부품교체를 완료하였기에 준공계를 제출합니다.';
+
+    const tkeSignHtml = `
+      <div style="display:flex;align-items:center;gap:14px;font-family:'Malgun Gothic','맑은 고딕',sans-serif">
+        <div style="font-size:12px;line-height:2;text-align:left;color:#111">
+          <div>서울시 양천구 목동서로 201</div>
+          <div>티케이엘리베이터코리아(주)</div>
+          <div>대표이사&nbsp;&nbsp;&nbsp;조&nbsp;&nbsp;영&nbsp;&nbsp;조</div>
+        </div>
+        <div style="width:76px;height:76px;border:2.5px solid #cc1111;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#cc1111;text-align:center;line-height:1.7;padding:4px;box-sizing:border-box;font-size:8.5px;flex-shrink:0">
+          <div>티케이엘리베이터</div>
+          <div style="font-weight:bold;font-size:9px">대표이사인</div>
+          <div>코리아(주)</div>
+        </div>
+      </div>
+    `
+
+    const daeSolSignHtml = `
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:14px;position:absolute;bottom:80px;right:80px">
+        <div style="text-align:right;font-size:13px;line-height:2;font-family:'Malgun Gothic',sans-serif">
+          <div style="font-weight:bold;font-size:14px">주식회사 대솔이엘</div>
+          <div>031)938-0257~8</div>
+          <div>대&nbsp;&nbsp;표&nbsp;&nbsp;&nbsp;&nbsp;조&nbsp;&nbsp;영&nbsp;&nbsp;조</div>
+        </div>
+        <div style="width:72px;height:72px;border:3.5px solid #bb0000;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;text-align:center;color:#bb0000;font-size:10px;font-weight:bold;line-height:1.5;transform:rotate(-12deg);flex-shrink:0;margin-left:8px;font-family:'Malgun Gothic',sans-serif">대표이사<br/>인</div>
+      </div>`;
+
+    const page2 = document.createElement('div');
+    page2.style.cssText = pageBase + 'padding:0;';
+    page2.innerHTML = `
+      <div style="padding:220px 60px 40px;box-sizing:border-box;font-family:'Malgun Gothic',sans-serif">
+        <div style="text-align:center;font-size:26px;font-weight:bold;letter-spacing:8px;margin-bottom:30px;padding-bottom:14px;border-bottom:2px solid #333">준 공 계</div>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:20px">
+          <tr><td style="border:1px solid #555;padding:12px 16px;width:110px;font-weight:bold;background:#f5f5f5;text-align:center">현 장 명</td><td style="border:1px solid #555;padding:12px 16px">${site}</td></tr>
+          <tr><td style="border:1px solid #555;padding:12px 16px;font-weight:bold;background:#f5f5f5;text-align:center">공 사 명</td><td style="border:1px solid #555;padding:12px 16px">${title}</td></tr>
+          <tr><td style="border:1px solid #555;padding:20px 16px;font-weight:bold;background:#f5f5f5;text-align:center">내 역</td><td style="border:1px solid #555;padding:12px 16px;white-space:pre-wrap;min-height:60px">${content}</td></tr>
+          <tr><td style="border:1px solid #555;padding:12px 16px;font-weight:bold;background:#f5f5f5;text-align:center">준 공 일</td><td style="border:1px solid #555;padding:12px 16px">${dateStr}</td></tr>
+        </table>
+        <div style="text-align:center;font-size:14px;margin-top:40px;margin-bottom:20px;line-height:2">${fixedText}</div>
+        <div style="text-align:center;font-size:14px">${submitDateStr}</div>
+      </div>
+      ${isTke ? '<div style="position:absolute;bottom:60px;right:60px">' + tkeSignHtml.replace('<img ', '<img style="width:280px;height:auto" ') + '</div>' : daeSolSignHtml}
+    `
+
+    // ── 3페이지~: 사진철 (부품별 1페이지씩) ──
+    const photoPages = jungongPhotoSets.map(set => {
+      const pg = document.createElement('div');
+      pg.style.cssText = pageBase + 'padding:44px;';
+      let html = `<div style="font-size:16px;font-weight:bold;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #333">${set.name}</div>`;
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px 16px;">';
+      for (let i = 0; i < 6; i++) {
+        const photo = set.photos[i];
+        const label = photo?.label || DEFAULT_PHOTO_LABELS[i];
+        html += `
+          <div>
+            <div style="border:1px solid #aaa;height:245px;display:flex;align-items:center;justify-content:center;background:#f9f9f9;overflow:hidden">
+              ${photo?.dataUrl ? `<img src="${photo.dataUrl}" style="max-width:100%;max-height:100%;object-fit:contain" />` : '<div style="color:#ccc;font-size:12px">사진 없음</div>'}
+            </div>
+            <div style="margin-top:5px;font-size:13px;display:flex;gap:4px">
+              <span style="font-weight:bold">작업명:</span><span>${label}</span>
+            </div>
+          </div>`;
+      }
+      html += '</div>';
+      pg.innerHTML = html;
+      return pg;
+    });
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;left:-9999px;top:0;z-index:-999;';
+    wrap.appendChild(page1);
+    wrap.appendChild(page2);
+    photoPages.forEach(p => wrap.appendChild(p));
+    document.body.appendChild(wrap);
+
+    const savedScrollY = window.scrollY || window.pageYOffset;
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;font-weight:700;font-family:inherit';
+    overlay.textContent = '⏳ PDF 생성 중...';
+    document.body.appendChild(overlay);
+
+    // 오버레이가 실제로 화면에 그려진 후 PDF 생성 시작
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+    try {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pages = [page1, page2, ...photoPages];
+      for (let i = 0; i < pages.length; i++) {
+        if (i > 0) pdf.addPage();
+        const canvas = await html2canvas(pages[i], {
+          scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff',
+          windowWidth: W, windowHeight: H, scrollX: 0, scrollY: 0
+        });
+        window.scrollTo(0, savedScrollY);
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
+      }
+      const filename = `준공계_${site}_${document.getElementById('jg-date').value || '날짜미정'}.pdf`;
+      pdf.save(filename);
+    } catch(e) {
+      alert('PDF 생성 오류: ' + e.message);
+    } finally {
+      document.body.removeChild(wrap);
+      document.body.removeChild(overlay);
+      window.scrollTo(0, savedScrollY);
+      if (btn) { btn.style.pointerEvents = ''; btn.style.opacity = ''; }
+      _pdfGenerating = false;
+    }
+  }
 </script>
 
 </body>
