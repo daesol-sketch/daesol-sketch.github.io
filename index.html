@@ -11,162 +11,153 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="대솔이엘" />
   <link rel="apple-touch-icon" href="./icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  <script>if(localStorage.getItem('daesol_autologin')){document.addEventListener('DOMContentLoaded',function(){var o=document.getElementById('welcome-overlay');if(o)o.style.display='none';});}</script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; overflow-anchor: none; }
-    body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background: #f0f4f8; color: #1a202c; min-height: 100vh; }
+    body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background: #0d0d0d; color: #e2e8f0; min-height: 100vh; }
 
-    header { background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%); color: white; padding: 0 24px; height: 64px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-    header .logo { font-size: 24px; }
-    header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
-    .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-    #header-date { font-size: 13px; opacity: 0.75; white-space: nowrap; }
-    .admin-login-btn { padding: 6px 14px; background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.4); border-radius: 20px; color: white; font-size: 13px; font-family: inherit; font-weight: 600; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
-    .admin-login-btn:hover { background: rgba(255,255,255,0.25); }
-    .admin-login-btn.logged-in { background: rgba(255,215,0,0.25); border-color: rgba(255,215,0,0.6); }
+    header { background: #111; color: white; padding: 0 16px; height: 56px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #222; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    #header-date { font-size: 12px; opacity: 0.5; white-space: nowrap; }
+    #hamburger-btn { background: none; border: none; color: white; font-size: 26px; cursor: pointer; padding: 4px 8px; line-height: 1; }
 
     .tabs { display: none; }
     .tab-btn .count-badge { background: #e53e3e; color: white; border-radius: 10px; padding: 1px 7px; font-size: 11px; margin-left: 6px; font-weight: 700; }
 
-    /* 햄버거 메뉴 */
-    #hamburger-btn { background: none; border: none; color: white; font-size: 26px; cursor: pointer; padding: 4px 8px; line-height: 1; }
-    #nav-menu { position: fixed; top: 64px; left: 0; right: 0; background: white; z-index: 200; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
-    #nav-menu.open { max-height: 400px; }
-    #nav-menu .nav-item { display: flex; align-items: center; padding: 16px 24px; font-size: 16px; font-family: inherit; color: #4a5568; cursor: pointer; border-bottom: 1px solid #e2e8f0; font-weight: 500; background: none; border-left: none; border-right: none; border-top: none; width: 100%; text-align: left; transition: background 0.15s; }
-    #nav-menu .nav-item:hover { background: #ebf8ff; color: #2b6cb0; }
-    #nav-menu .nav-item.active { color: #2b6cb0; font-weight: 700; background: #ebf8ff; border-left: 4px solid #2b6cb0; padding-left: 20px; }
-    #nav-menu-overlay { display: none; position: fixed; inset: 0; z-index: 199; }
-    #nav-menu-overlay.open { display: block; }
-    #current-tab-label { font-size: 14px; opacity: 0.85; margin-left: 8px; }
-    .sub-tabs { display: flex; background: #f7fafc; border-bottom: 1.5px solid #e2e8f0; padding: 0 16px; gap: 0; }
-    .sub-tab-btn { padding: 10px 20px; border: none; background: none; font-size: 14px; font-family: inherit; color: #718096; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
-    .sub-tab-btn:hover { color: #2b6cb0; }
-    .sub-tab-btn.active { color: #2b6cb0; border-bottom-color: #2b6cb0; font-weight: 700; }
+    #current-tab-label { font-size: 14px; opacity: 0.6; margin-left: 8px; }
+    .sub-tabs { display: flex; background: #111; border-bottom: 1px solid #222; padding: 0 16px; gap: 0; }
+    .sub-tab-btn { padding: 10px 20px; border: none; background: none; font-size: 14px; font-family: inherit; color: #666; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
+    .sub-tab-btn:hover { color: #e2e8f0; }
+    .sub-tab-btn.active { color: white; border-bottom-color: white; font-weight: 700; }
     .sub-tab-btn .count-badge { background: #e53e3e; color: white; border-radius: 10px; padding: 1px 7px; font-size: 11px; margin-left: 6px; font-weight: 700; }
     .sub-page { display: none; }
     .sub-page.active { display: block; }
 
     main { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+    main:has(#page-home.active) { max-width: 480px; padding: 0; }
     main:has(#page-mgmt.active) { max-width: 100%; padding: 32px 16px; }
     .page { display: none; }
     .page.active { display: block; }
 
-    .card { background: white; border-radius: 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); padding: 28px 32px; margin-bottom: 24px; }
-    .card h2 { font-size: 18px; font-weight: 700; color: #1a365d; margin-bottom: 24px; padding-bottom: 14px; border-bottom: 2px solid #ebf4ff; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.3); padding: 28px 32px; margin-bottom: 24px; }
+    .card h2 { font-size: 18px; font-weight: 700; color: #e2e8f0; margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group.full { grid-column: 1 / -1; }
-    .form-group label { font-size: 13px; font-weight: 600; color: #4a5568; }
+    .form-group label { font-size: 13px; font-weight: 600; color: #888; }
     .form-group label .required { color: #e53e3e; margin-left: 2px; }
-    .form-group input, .form-group select, .form-group textarea { padding: 10px 14px; border: 1.5px solid #cbd5e0; border-radius: 8px; font-size: 14px; font-family: inherit; color: #1a202c; transition: border-color 0.2s, box-shadow 0.2s; background: #fafafa; }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #2b6cb0; box-shadow: 0 0 0 3px rgba(43,108,176,0.12); background: white; }
+    .form-group input, .form-group select, .form-group textarea { padding: 10px 14px; border: 1.5px solid #333; border-radius: 8px; font-size: 14px; font-family: inherit; color: #e2e8f0; transition: border-color 0.2s, box-shadow 0.2s; background: #222; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #555; background: #2a2a2a; }
+    .form-group select option { background: #222; color: #e2e8f0; }
     .form-group textarea { resize: vertical; min-height: 100px; }
-    .btn-submit { margin-top: 10px; width: 100%; padding: 14px; background: linear-gradient(135deg, #2b6cb0, #1a365d); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; transition: opacity 0.2s; }
-    .btn-submit:hover { opacity: 0.92; }
-    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-submit { margin-top: 10px; width: 100%; padding: 14px; background: white; color: #000; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; transition: opacity 0.2s; }
+    .btn-submit:hover { opacity: 0.88; }
+    .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .autocomplete-wrapper { position: relative; display: flex; }
     .autocomplete-wrapper input { flex: 1; border-radius: 8px 0 0 8px !important; }
-    .ac-toggle-btn { padding: 0 12px; background: #edf2f7; border: 1.5px solid #cbd5e0; border-left: none; border-radius: 0 8px 8px 0; cursor: pointer; color: #4a5568; font-size: 12px; transition: background 0.15s; }
-    .ac-toggle-btn:hover { background: #e2e8f0; }
-    .ac-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1.5px solid #2b6cb0; border-top: none; border-radius: 0 0 8px 8px; max-height: 260px; overflow-y: auto; z-index: 200; box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
-    .ac-item { padding: 9px 14px; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f0f4f8; line-height: 1.4; transition: background 0.1s; }
+    .ac-toggle-btn { padding: 0 12px; background: #2a2a2a; border: 1.5px solid #333; border-left: none; border-radius: 0 8px 8px 0; cursor: pointer; color: #888; font-size: 12px; transition: background 0.15s; }
+    .ac-toggle-btn:hover { background: #333; }
+    .ac-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #1a1a1a; border: 1px solid #333; border-top: none; border-radius: 0 0 8px 8px; max-height: 260px; overflow-y: auto; z-index: 200; box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
+    .ac-item { padding: 9px 14px; font-size: 13px; cursor: pointer; border-bottom: 1px solid #222; line-height: 1.4; transition: background 0.1s; color: #e2e8f0; }
     .ac-item:last-child { border-bottom: none; }
-    .ac-item:hover, .ac-item.active { background: #ebf8ff; color: #2b6cb0; }
-    .ac-item mark { background: #bee3f8; color: #1a365d; font-weight: 700; border-radius: 2px; padding: 0 1px; }
-    .ac-count { font-size: 11px; color: #a0aec0; padding: 5px 14px; background: #f7fafc; border-top: 1px solid #e2e8f0; text-align: right; }
+    .ac-item:hover, .ac-item.active { background: #2a2a2a; color: white; }
+    .ac-item mark { background: #444; color: white; font-weight: 700; border-radius: 2px; padding: 0 1px; }
+    .ac-count { font-size: 11px; color: #555; padding: 5px 14px; background: #111; border-top: 1px solid #222; text-align: right; }
 
     .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
-    .stat-card { background: white; border-radius: 10px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); text-align: center; border-top: 4px solid #e2e8f0; }
+    .stat-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 18px 20px; text-align: center; border-top: 4px solid #333; }
     .stat-card.all { border-top-color: #4299e1; } .stat-card.new { border-top-color: #fc8181; }
     .stat-card.wip { border-top-color: #f6ad55; } .stat-card.done { border-top-color: #68d391; }
-    .stat-card .num { font-size: 32px; font-weight: 800; color: #1a202c; }
-    .stat-card .lbl { font-size: 12px; color: #718096; margin-top: 4px; font-weight: 600; }
+    .stat-card .num { font-size: 32px; font-weight: 800; color: #e2e8f0; }
+    .stat-card .lbl { font-size: 12px; color: #666; margin-top: 4px; font-weight: 600; }
 
     .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
-    .filter-btn { padding: 7px 18px; border: 1.5px solid #cbd5e0; background: white; border-radius: 20px; font-size: 13px; font-family: inherit; color: #718096; cursor: pointer; font-weight: 500; transition: all 0.2s; }
-    .filter-btn:hover { border-color: #2b6cb0; color: #2b6cb0; }
-    .filter-btn.active { background: #2b6cb0; border-color: #2b6cb0; color: white; font-weight: 700; }
-    .search-input { margin-left: auto; padding: 7px 14px; border: 1.5px solid #cbd5e0; border-radius: 20px; font-size: 13px; font-family: inherit; width: 220px; }
-    .search-input:focus { outline: none; border-color: #2b6cb0; }
+    .filter-btn { padding: 7px 18px; border: 1.5px solid #333; background: #1a1a1a; border-radius: 20px; font-size: 13px; font-family: inherit; color: #888; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+    .filter-btn:hover { border-color: #555; color: #e2e8f0; }
+    .filter-btn.active { background: white; border-color: white; color: #000; font-weight: 700; }
+    .search-input { margin-left: auto; padding: 7px 14px; border: 1.5px solid #333; border-radius: 20px; font-size: 13px; font-family: inherit; width: 220px; background: #1a1a1a; color: #e2e8f0; }
+    .search-input:focus { outline: none; border-color: #555; }
 
     .report-list { display: flex; flex-direction: column; gap: 12px; }
-    .empty-state { text-align: center; padding: 48px 0; color: #a0aec0; font-size: 15px; }
+    .empty-state { text-align: center; padding: 48px 0; color: #555; font-size: 15px; }
     .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
-    .loading-state { text-align: center; padding: 48px 0; color: #a0aec0; font-size: 15px; }
+    .loading-state { text-align: center; padding: 48px 0; color: #555; font-size: 15px; }
 
-    .report-item { background: white; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 18px 20px; display: grid; grid-template-columns: 1fr auto; gap: 12px; transition: box-shadow 0.2s, border-color 0.2s; }
-    .report-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.08); border-color: #bee3f8; }
+    .report-item { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 18px 20px; display: grid; grid-template-columns: 1fr auto; gap: 12px; transition: border-color 0.2s; }
+    .report-item:hover { border-color: #444; }
     .report-left { display: flex; flex-direction: column; gap: 6px; }
     .report-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .report-id { font-size: 12px; color: #a0aec0; font-weight: 600; }
-    .report-title { font-size: 16px; font-weight: 700; color: #1a202c; }
+    .report-id { font-size: 12px; color: #555; font-weight: 600; }
+    .report-title { font-size: 16px; font-weight: 700; color: #e2e8f0; }
     .report-meta { display: flex; gap: 16px; flex-wrap: wrap; }
-    .meta-item { font-size: 15px; color: #718096; display: flex; align-items: center; gap: 4px; }
-    .report-desc { font-size: 15px; color: #4a5568; line-height: 1.5; margin-top: 4px; background: #f7fafc; padding: 8px 12px; border-radius: 6px; border-left: 3px solid #bee3f8; }
+    .meta-item { font-size: 15px; color: #888; display: flex; align-items: center; gap: 4px; }
+    .report-desc { font-size: 15px; color: #aaa; line-height: 1.5; margin-top: 4px; background: #222; padding: 8px 12px; border-radius: 6px; border-left: 3px solid #444; }
     .report-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; min-width: 140px; }
-    .report-date { font-size: 12px; font-weight: 600; color: #4a5568; background: #edf2f7; border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
+    .report-date { font-size: 12px; font-weight: 600; color: #888; background: #222; border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
 
     .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-    .status-배치완료 { background: #ebf8ff; color: #2b6cb0; border: 1.5px solid #bee3f8; }
-    .status-처리중   { background: #fffaf0; color: #c05621; border: 1.5px solid #fbd38d; }
-    .status-완료     { background: #f0fff4; color: #276749; border: 1.5px solid #9ae6b4; }
-    .status-select { padding: 6px 10px; border: 1.5px solid #cbd5e0; border-radius: 6px; font-size: 13px; font-family: inherit; cursor: pointer; background: white; width: 100%; }
-    .status-select:focus { outline: none; border-color: #2b6cb0; }
-    .btn-delete { background: none; border: 1.5px solid #fed7d7; color: #c53030; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-family: inherit; cursor: pointer; font-weight: 600; transition: all 0.2s; width: 100%; }
-    .btn-delete:hover { background: #fff5f5; }
-    .priority-high { color: #c53030; font-weight: 700; }
-    .priority-mid  { color: #c05621; font-weight: 700; }
-    .priority-low  { color: #276749; font-weight: 700; }
-
+    .status-배치완료 { background: #1a2a3a; color: #63b3ed; border: 1.5px solid #2c4a6a; }
+    .status-처리중   { background: #2a1a0a; color: #f6ad55; border: 1.5px solid #4a2a0a; }
+    .status-완료     { background: #0a2a1a; color: #68d391; border: 1.5px solid #0a4a2a; }
+    .status-select { padding: 6px 10px; border: 1px solid #333; border-radius: 6px; font-size: 13px; font-family: inherit; cursor: pointer; background: #222; color: #e2e8f0; width: 100%; }
+    .status-select:focus { outline: none; border-color: #555; }
+    .btn-delete { background: none; border: 1px solid #3a1a1a; color: #fc8181; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-family: inherit; cursor: pointer; font-weight: 600; transition: all 0.2s; width: 100%; }
+    .btn-delete:hover { background: #2a0a0a; }
+    .priority-high { color: #fc8181; font-weight: 700; }
+    .priority-mid  { color: #f6ad55; font-weight: 700; }
+    .priority-low  { color: #68d391; font-weight: 700; }
 
     /* 현장 계정 관리 */
     .site-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    .site-table th { background: #f7fafc; padding: 10px 14px; text-align: left; font-size: 13px; color: #4a5568; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+    .site-table th { background: #111; padding: 10px 14px; text-align: left; font-size: 13px; color: #666; border-bottom: 1px solid #2a2a2a; white-space: nowrap; }
     .site-table td { white-space: nowrap; }
-    .site-table td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
-    .site-table tr:hover td { background: #f7fafc; }
+    .site-table td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #222; vertical-align: middle; color: #e2e8f0; }
+    .site-table tr:hover td { background: #222; }
     .btn-sm { padding: 4px 12px; border-radius: 6px; font-size: 12px; font-family: inherit; font-weight: 600; cursor: pointer; border: 1.5px solid; transition: all 0.2s; }
-    .btn-sm.del { border-color: #fed7d7; color: #c53030; background: none; }
-    .btn-sm.del:hover { background: #fff5f5; }
-    .btn-add-site { padding: 9px 20px; background: #2b6cb0; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; transition: opacity 0.2s; margin-left: auto; }
+    .btn-sm.del { border-color: #3a1a1a; color: #fc8181; background: none; }
+    .btn-sm.del:hover { background: #2a0a0a; }
+    .btn-add-site { padding: 9px 20px; background: white; color: #000; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; transition: opacity 0.2s; margin-left: auto; }
     .btn-add-site:hover { opacity: 0.88; }
-    .site-badge { display: inline-flex; align-items: center; gap: 6px; background: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 600; }
+    .site-badge { display: inline-flex; align-items: center; gap: 6px; background: #1a2a1a; color: #68d391; border: 1px solid #2a4a2a; border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 600; }
 
     /* 로그인 필요 화면 */
     .login-required { text-align: center; padding: 60px 20px; }
     .login-required .icon { font-size: 52px; margin-bottom: 16px; }
-    .login-required h3 { font-size: 18px; font-weight: 700; color: #1a365d; margin-bottom: 8px; }
-    .login-required p { font-size: 14px; color: #718096; margin-bottom: 24px; line-height: 1.6; }
+    .login-required h3 { font-size: 18px; font-weight: 700; color: #e2e8f0; margin-bottom: 8px; }
+    .login-required p { font-size: 14px; color: #666; margin-bottom: 24px; line-height: 1.6; }
     .login-btn-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
     .btn-login-big { padding: 12px 28px; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; transition: opacity 0.2s; }
-    .btn-login-big.site  { background: #2b6cb0; color: white; }
-    .btn-login-big.admin { background: #1a365d; color: white; }
+    .btn-login-big.site  { background: white; color: #000; }
+    .btn-login-big.admin { background: #333; color: white; }
     .btn-login-big:hover { opacity: 0.88; }
 
     /* 모달 */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .modal-box { background: white; border-radius: 14px; padding: 36px 32px 28px; width: 360px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); text-align: center; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-box { background: #1a1a1a; border: 1px solid #333; border-radius: 14px; padding: 36px 32px 28px; width: 360px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); text-align: center; }
     .modal-box .modal-icon { font-size: 36px; margin-bottom: 10px; }
-    .modal-box h3 { font-size: 18px; font-weight: 700; color: #1a365d; margin-bottom: 6px; }
-    .modal-box p { font-size: 13px; color: #718096; margin-bottom: 20px; }
-    .modal-input { width: 100%; padding: 11px 14px; border: 1.5px solid #cbd5e0; border-radius: 8px; font-size: 15px; font-family: inherit; text-align: center; letter-spacing: 3px; margin-bottom: 10px; }
+    .modal-box h3 { font-size: 18px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
+    .modal-box p { font-size: 13px; color: #888; margin-bottom: 20px; }
+    .modal-input { width: 100%; padding: 11px 14px; border: 1.5px solid #333; border-radius: 8px; font-size: 15px; font-family: inherit; text-align: center; letter-spacing: 3px; margin-bottom: 10px; background: #222; color: #e2e8f0; }
     .modal-input.normal { letter-spacing: 0; text-align: left; }
-    .modal-input:focus { outline: none; border-color: #2b6cb0; }
+    .modal-input:focus { outline: none; border-color: #555; }
     .modal-btn-row { display: flex; gap: 10px; margin-top: 4px; }
     .modal-btn { flex: 1; padding: 11px; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; transition: opacity 0.2s; }
-    .modal-btn.confirm { background: #2b6cb0; color: white; }
-    .modal-btn.cancel  { background: #e2e8f0; color: #4a5568; }
+    .modal-btn.confirm { background: white; color: #000; }
+    .modal-btn.cancel  { background: #2a2a2a; color: #888; }
     .modal-btn:hover { opacity: 0.88; }
-    .modal-error { color: #c53030; font-size: 12px; margin-bottom: 10px; }
-    .modal-divider { border: none; border-top: 1px solid #e2e8f0; margin: 16px 0; }
-    .modal-link { font-size: 13px; color: #2b6cb0; cursor: pointer; text-decoration: underline; }
+    .modal-error { color: #fc8181; font-size: 12px; margin-bottom: 10px; }
+    .modal-divider { border: none; border-top: 1px solid #2a2a2a; margin: 16px 0; }
+    .modal-link { font-size: 13px; color: #aaa; cursor: pointer; text-decoration: underline; }
 
-    #toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: #276749; color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.2); transition: transform 0.3s ease; z-index: 999; }
+    #toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1a3a2a; color: #68d391; border: 1px solid #2a5a3a; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.4); transition: transform 0.3s ease; z-index: 999; }
     #toast.show { transform: translateX(-50%) translateY(0); }
 
     @media (max-width: 600px) {
@@ -186,31 +177,95 @@
     .site-info-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px 16px; }
     @media (max-width: 600px) { .site-info-grid { grid-template-columns:1fr 1fr; } }
 
-    /* 로그인 페이지 */
-    .welcome-overlay { position: fixed; inset: 0; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 2000; }
-    .login-box { text-align: center; padding: 0 32px; width: 100%; max-width: 360px; }
-    .login-logo { margin-bottom: 10px; }
-    .login-title { font-size: 26px; font-weight: 800; color: #191F28; letter-spacing: -1px; }
-    .login-sub { font-size: 14px; color: #8B95A1; margin-top: 6px; margin-bottom: 36px; font-weight: 400; }
-    .login-label { font-size: 13px; font-weight: 600; color: #4E5968; text-align: left; display: block; margin-bottom: 6px; }
-    .login-input { width: 100%; padding: 15px 16px; border: 1.5px solid #E5E8EB; border-radius: 12px; font-size: 15px; font-family: inherit; text-align: left; letter-spacing: 0; margin-bottom: 12px; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s; background: #F9FAFB; box-sizing: border-box; }
-    .login-input:focus { outline: none; border-color: #3182F6; background: #fff; box-shadow: 0 0 0 3px rgba(49,130,246,0.1); }
-    .login-error-msg { color: #F04452; font-size: 13px; margin-bottom: 10px; min-height: 18px; text-align: left; }
-    .login-btn-main { width: 100%; padding: 16px; background: #3182F6; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; transition: background 0.2s; margin-top: 4px; }
-    .login-btn-main:hover { background: #1B6FEB; }
-    .login-btn-main:disabled { background: #C9D5E0; cursor: not-allowed; }
-    .login-divider { border: none; border-top: 1px solid #F2F4F6; margin: 24px 0 20px; }
-    .login-switch-link { font-size: 13px; color: #3182F6; cursor: pointer; font-weight: 600; }
-    .login-switch-link:hover { text-decoration: underline; }
-    @media (max-width: 480px) {
-      .login-box { margin: 20px; padding: 36px 24px 32px; }
-    }
+    /* ── 새 헤더 ── */
+    #daesol-home-btn { background: none; border: none; color: white; font-size: 30px; cursor: pointer; padding: 4px 8px 4px 32px; font-family: 'Bebas Neue', 'Arial Black', sans-serif; letter-spacing: 3px; }
+    #daesol-home-btn:hover { opacity: 0.8; }
+
+    /* ── 사이드 드로어 (마이페이지) ── */
+    #side-drawer-overlay { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.6); }
+    #side-drawer-overlay.open { display: block; }
+    #side-drawer { position: fixed; top: 0; right: -340px; width: 320px; max-width: 90vw; height: 100vh; background: #111; border-left: 1px solid #222; z-index: 301; box-shadow: -4px 0 24px rgba(0,0,0,0.5); transition: right 0.3s ease; display: flex; flex-direction: column; overflow-y: auto; }
+    #side-drawer.open { right: 0; }
+    .drawer-top { background: #000; color: white; padding: 36px 20px 24px; display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid #222; }
+    .drawer-profile-info { display: flex; flex-direction: column; gap: 4px; }
+    .drawer-name { font-size: 20px; font-weight: 800; }
+    .drawer-team { font-size: 13px; color: #666; margin-top: 2px; }
+    .drawer-close { background: none; border: none; color: #666; font-size: 22px; cursor: pointer; padding: 0 4px; line-height: 1; }
+    .drawer-close:hover { color: white; }
+    .drawer-mypage-btn { margin: 16px; padding: 12px; background: #1a1a1a; color: #e2e8f0; border: 1px solid #333; border-radius: 10px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; text-align: left; transition: background 0.15s; }
+    .drawer-mypage-btn:hover { background: #222; }
+    .drawer-section-title { font-size: 11px; font-weight: 700; color: #444; letter-spacing: 1px; padding: 8px 20px 4px; text-transform: uppercase; }
+    .drawer-menu-item { display: flex; align-items: center; gap: 14px; padding: 15px 20px; font-size: 15px; font-family: inherit; color: #aaa; cursor: pointer; border: none; background: none; width: 100%; text-align: left; border-bottom: 1px solid #1a1a1a; font-weight: 500; transition: background 0.15s, color 0.15s; }
+    .drawer-menu-item:hover { background: #1a1a1a; color: white; }
+    .drawer-menu-item .menu-icon { font-size: 20px; width: 28px; text-align: center; }
+    .drawer-logout { margin: 16px; padding: 12px; background: none; color: #fc8181; border: 1px solid #3a1a1a; border-radius: 10px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; transition: background 0.15s; margin-top: auto; }
+    .drawer-logout:hover { background: #2a0a0a; }
+
+    /* ── 대시보드 홈 ── */
+    #page-home { padding: 24px 16px; }
+    .home-profile-card { background: #1a1a1a; border: 1px solid #2a2a2a; color: white; border-radius: 16px; padding: 28px 24px 24px; margin-bottom: 24px; }
+    .home-greeting { font-size: 13px; color: #666; margin-bottom: 6px; }
+    .home-user-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; color: #e2e8f0; }
+    .home-daesol-title { font-family: 'Bebas Neue', 'Arial Black', sans-serif; font-size: 52px; letter-spacing: 6px; color: white; margin-bottom: 8px; }
+    .home-user-team { font-size: 14px; color: #666; margin-bottom: 24px; }
+    .home-stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .home-stat-box { background: #222; border: 1px solid #2a2a2a; border-radius: 10px; padding: 14px 16px; }
+    .home-stat-num { font-size: 28px; font-weight: 800; color: white; }
+    .home-stat-lbl { font-size: 12px; color: #666; margin-top: 2px; }
+    .home-section-title { font-size: 13px; font-weight: 700; color: #444; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
+    .home-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+    .home-grid-item { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 14px; padding: 20px 8px 16px; text-align: center; font-family: inherit; cursor: pointer; transition: background 0.2s, transform 0.15s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .home-grid-item:hover { background: #222; transform: translateY(-2px); }
+    .home-grid-item .gi-icon { font-size: 28px; }
+    .home-grid-item .gi-label { font-size: 12px; font-weight: 600; color: #4a5568; line-height: 1.3; }
+    @media (max-width: 480px) { .home-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    /* ── 내 정보 수정 모달 ── */
+    #mypage-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; }
+    #mypage-modal.open { display: flex; }
+    .mypage-box { background: #111; border: 1px solid #2a2a2a; border-radius: 16px; padding: 28px 24px; width: 360px; max-width: calc(100vw - 32px); box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+    .mypage-box h3 { font-size: 18px; font-weight: 800; color: #e2e8f0; margin-bottom: 20px; }
+    .mypage-field { margin-bottom: 14px; }
+    .mypage-field label { display: block; font-size: 12px; font-weight: 700; color: #666; margin-bottom: 6px; letter-spacing: 0.5px; }
+    .mypage-field input { width: 100%; padding: 10px 14px; border: 1px solid #333; border-radius: 8px; font-size: 14px; font-family: inherit; background: #1a1a1a; color: #e2e8f0; }
+    .mypage-field input:focus { outline: none; border-color: #555; }
+    .mypage-field input::placeholder { color: #444; }
+    .mypage-divider { border: none; border-top: 1px solid #2a2a2a; margin: 20px 0 16px; }
+    .mypage-btn-row { display: flex; gap: 10px; margin-top: 20px; }
+    .mypage-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .mypage-btn.save { background: white; color: #000; }
+    .mypage-btn.cancel { background: #2a2a2a; color: #888; }
+
+    /* ── 로그인 스플래시 ── */
+    .welcome-overlay { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; }
+    .splash-center { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .splash-logo { width: 72px; height: 72px; object-fit: contain; filter: brightness(0) invert(1); }
+    .splash-title { font-family: 'Bebas Neue', 'Arial Black', sans-serif; font-size: 80px; color: white; letter-spacing: 8px; line-height: 1; }
+    .splash-sub { font-size: 13px; color: #666; letter-spacing: 2px; text-transform: uppercase; }
+    .splash-btn-area { position: absolute; bottom: 120px; left: 0; right: 0; padding: 0 32px; }
+    .splash-login-btn { width: 100%; max-width: 400px; display: block; margin: 0 auto; padding: 18px; background: white; color: #000; border: none; border-radius: 14px; font-size: 17px; font-weight: 800; font-family: inherit; cursor: pointer; letter-spacing: 1px; transition: opacity 0.2s; }
+    .splash-login-btn:hover { opacity: 0.88; }
+
+    /* ── 로그인 폼 모달 (슬라이드업) ── */
+    #login-form-modal { position: fixed; inset: 0; z-index: 2100; display: none; align-items: flex-end; justify-content: center; background: rgba(0,0,0,0.6); }
+    #login-form-modal.open { display: flex; }
+    .login-form-box { background: #111; border-radius: 24px 24px 0 0; padding: 32px 28px 40px; width: 100%; max-width: 480px; animation: slideUp 0.3s ease; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .login-form-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: white; letter-spacing: 4px; margin-bottom: 28px; text-align: center; }
+    .login-label { font-size: 12px; font-weight: 700; color: #888; text-align: left; display: block; margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; }
+    .login-input { width: 100%; padding: 15px 16px; border: 1.5px solid #333; border-radius: 12px; font-size: 15px; font-family: inherit; color: white; background: #222; margin-bottom: 16px; box-sizing: border-box; transition: border-color 0.2s; }
+    .login-input:focus { outline: none; border-color: #555; background: #2a2a2a; }
+    .login-input::placeholder { color: #555; }
+    .login-error-msg { color: #ff6b6b; font-size: 13px; margin-bottom: 10px; min-height: 18px; }
+    .login-btn-main { width: 100%; padding: 16px; background: white; color: #000; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; font-family: inherit; cursor: pointer; transition: opacity 0.2s; margin-top: 4px; letter-spacing: 1px; }
+    .login-btn-main:hover { opacity: 0.88; }
+    .login-btn-main:disabled { opacity: 0.4; cursor: not-allowed; }
+    .login-auto-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .login-auto-row label { font-size: 13px; color: #888; cursor: pointer; user-select: none; }
   @media (max-width: 768px) {
     /* 헤더 */
-    header { height: auto; min-height: 52px; padding: 8px 12px; flex-wrap: nowrap; }
-    header .logo img { width: 28px !important; height: 28px !important; }
-    header h1 { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
-    .admin-login-btn { font-size: 11px; padding: 5px 8px; white-space: nowrap; }
+    header { height: 50px; padding: 0 12px; }
+    #daesol-home-btn { font-size: 18px; }
     #header-date { display: none; }
 
     /* 탭 */
@@ -246,23 +301,29 @@
 </head>
 <body>
 
-<!-- 로그인 페이지 -->
+<!-- 로그인 스플래시 -->
 <div class="welcome-overlay" id="welcome-overlay">
-  <div class="login-box">
-    <div class="login-logo"><img src="./logo.png" style="width:80px;height:80px;object-fit:contain" /></div>
-    <div class="login-title">대솔이엘</div>
-    <div class="login-sub">유지보수 관리 시스템</div>
+  <div class="splash-center">
+    <div class="splash-title">DAESOL</div>
+  </div>
+  <div class="splash-btn-area">
+    <button class="splash-login-btn" onclick="openLoginForm()">로그인</button>
+  </div>
+</div>
 
+<!-- 로그인 폼 모달 -->
+<div id="login-form-modal" onclick="if(event.target===this)closeLoginForm()">
+  <div class="login-form-box">
+    <div class="login-form-title">SIGN IN</div>
     <span class="login-label">아이디</span>
     <input type="text" class="login-input" id="login-username" placeholder="아이디 입력"
-      style="letter-spacing:0; text-align:left"
       onkeydown="if(event.key==='Enter') document.getElementById('login-pw').focus()" />
-    <span class="login-label" style="margin-top:12px">비밀번호</span>
+    <span class="login-label">비밀번호</span>
     <input type="password" class="login-input" id="login-pw" placeholder="비밀번호 입력"
       onkeydown="if(event.key==='Enter') loginFromPage()" />
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-      <input type="checkbox" id="auto-login-check" style="width:16px;height:16px;cursor:pointer;accent-color:#3182F6" />
-      <label for="auto-login-check" style="font-size:13px;color:#8B95A1;cursor:pointer;user-select:none">자동로그인</label>
+    <div class="login-auto-row">
+      <input type="checkbox" id="auto-login-check" style="width:16px;height:16px;cursor:pointer;accent-color:#fff" />
+      <label for="auto-login-check">자동로그인</label>
     </div>
     <div class="login-error-msg" id="login-error"></div>
     <button class="login-btn-main" id="login-site-btn" onclick="initAudioCtx();loginFromPage()">로그인</button>
@@ -270,34 +331,121 @@
 </div>
 
 <header>
-  <button id="hamburger-btn" onclick="toggleNavMenu()">☰</button>
-  <div class="logo"><img src="./logo.png" style="width:36px;height:36px;object-fit:contain" /></div>
-  <h1 style="font-size:17px">대솔이엘</h1>
-  <span id="current-tab-label"></span>
+  <button id="daesol-home-btn" onclick="goDashboard()">DAESOL</button>
   <div class="header-right">
     <span id="header-date"></span>
-    <button class="admin-login-btn" id="btn-change-pw" onclick="showChangePwModal()" style="display:none">🔒 비밀번호 변경</button>
-    <button class="admin-login-btn" id="admin-btn" onclick="handleAuthBtn()">🔑 로그인</button>
+    <button id="hamburger-btn" onclick="toggleNavMenu()">☰</button>
   </div>
 </header>
 
-<!-- 메뉴 오버레이 -->
-<div id="nav-menu-overlay" onclick="closeNavMenu()"></div>
+<!-- 사이드 드로어 오버레이 -->
+<div id="side-drawer-overlay" onclick="closeNavMenu()"></div>
 
-<!-- 슬라이드 메뉴 -->
-<div id="nav-menu">
-  <button class="nav-item tab-btn active" id="tab-fault-btn" onclick="switchTab('fault',event);closeNavMenu()">🔧 고장 관리 <span class="count-badge" id="pending-count" style="display:none"></span></button>
-  <button class="nav-item tab-btn" id="tab-duty-btn" onclick="switchTab('duty',event);closeNavMenu()" style="display:none">🕐 고장 담당자 현황</button>
-  <button class="nav-item tab-btn" id="tab-mgmt-btn" onclick="switchTab('mgmt',event);closeNavMenu()" style="display:none">🏢 관리현장 <span id="mgmt-expire-badge" class="count-badge" style="display:none"></span></button>
-  <button class="nav-item tab-btn" id="tab-sites-btn" onclick="switchTab('sites',event);closeNavMenu()" style="display:none">👤 관리</button>
-  <button class="nav-item tab-btn" id="tab-jungong-btn" onclick="switchTab('jungong',event);closeNavMenu()" style="display:none">📋 준공계</button>
+<!-- 사이드 드로어 (마이페이지) -->
+<div id="side-drawer">
+  <div class="drawer-top">
+    <div class="drawer-profile-info">
+      <div class="drawer-name" id="drawer-name">-</div>
+      <div class="drawer-team" id="drawer-team">-</div>
+    </div>
+    <button class="drawer-close" onclick="closeNavMenu()">✕</button>
+  </div>
+  <button class="drawer-mypage-btn" onclick="showMyPageModal();closeNavMenu()">✏️ 내 정보 수정하기</button>
+  <div class="drawer-section-title">메뉴</div>
+  <button class="drawer-menu-item" onclick="goDashboard();closeNavMenu()"><span class="menu-icon">🏠</span> 홈</button>
+  <button class="drawer-menu-item tab-btn" id="tab-duty-btn" onclick="switchTab('duty');closeNavMenu()" style="display:none"><span class="menu-icon">🕐</span> 고장 담당자 현황</button>
+  <button class="drawer-menu-item tab-btn" id="tab-fault-btn" onclick="switchTab('fault');closeNavMenu()"><span class="menu-icon">🔧</span> 고장 관리 <span class="count-badge" id="pending-count" style="display:none;margin-left:6px"></span></button>
+  <button class="drawer-menu-item tab-btn" id="tab-mgmt-btn" onclick="switchTab('mgmt');closeNavMenu()" style="display:none"><span class="menu-icon">🏢</span> 관리현장 <span id="mgmt-expire-badge" class="count-badge" style="display:none;margin-left:6px"></span></button>
+  <button class="drawer-menu-item tab-btn" id="tab-sites-btn" onclick="switchTab('sites');closeNavMenu()" style="display:none"><span class="menu-icon">👤</span> 관리</button>
+  <button class="drawer-menu-item tab-btn" id="tab-jungong-btn" onclick="switchTab('jungong');closeNavMenu()" style="display:none"><span class="menu-icon">📋</span> 준공계</button>
+  <div style="flex:1"></div>
+  <button class="drawer-logout" onclick="doLogout()">로그아웃</button>
+</div>
+
+<!-- 내 정보 수정 모달 -->
+<div id="mypage-modal">
+  <div class="mypage-box">
+    <h3>내 정보 수정</h3>
+    <div class="mypage-field">
+      <label>팀</label>
+      <input type="text" id="mp-team" placeholder="예: 영업1팀" />
+    </div>
+    <div class="mypage-field">
+      <label>조</label>
+      <input type="text" id="mp-group" placeholder="예: 1조" />
+    </div>
+    <div class="mypage-field">
+      <label>직급</label>
+      <input type="text" id="mp-position" placeholder="예: 과장" />
+    </div>
+    <div class="mypage-field">
+      <label>핸드폰번호</label>
+      <input type="tel" id="mp-phone" placeholder="예: 010-1234-5678" />
+    </div>
+    <hr class="mypage-divider" />
+    <div class="mypage-field">
+      <label>새 비밀번호 (변경 시에만 입력)</label>
+      <input type="password" id="mp-pw-new" placeholder="새 비밀번호" />
+    </div>
+    <div class="mypage-field">
+      <label>새 비밀번호 확인</label>
+      <input type="password" id="mp-pw-confirm" placeholder="비밀번호 재입력" />
+    </div>
+    <div class="modal-error" id="mp-error" style="display:none"></div>
+    <div class="mypage-btn-row">
+      <button class="mypage-btn cancel" onclick="closeMyPageModal()">취소</button>
+      <button class="mypage-btn save" onclick="saveMyPage()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 숨겨진 탭 ID 호환용 (기존 코드 참조) -->
+<div style="display:none">
+  <button class="tab-btn" id="btn-change-pw"></button>
+  <button class="tab-btn" id="admin-btn"></button>
+  <span id="current-tab-label"></span>
 </div>
 
 <div class="tabs"></div>
 
 <main>
+  <!-- 대시보드 홈 -->
+  <div class="page active" id="page-home">
+    <div class="home-profile-card">
+      <div class="home-greeting">안녕하세요 👋</div>
+      <div style="font-size:13px;color:#555;margin-bottom:16px">안전이 최우선, 오늘도 화이팅!</div>
+      <div class="home-user-name" id="home-user-name">-</div>
+      <div class="home-user-team" id="home-user-team">-</div>
+      <div class="home-stats-row">
+        <div class="home-stat-box">
+          <div class="home-stat-num" id="home-stat-fault">-</div>
+          <div class="home-stat-lbl">이번달 고장 접수</div>
+        </div>
+        <div class="home-stat-box">
+          <div class="home-stat-num" id="home-stat-pending">-</div>
+          <div class="home-stat-lbl">처리 대기</div>
+        </div>
+      </div>
+    </div>
+    <div class="home-section-title">빠른 메뉴</div>
+    <div class="home-grid" id="home-grid">
+      <button class="home-grid-item" onclick="switchTab('fault')">
+        <span class="gi-icon">🔧</span><span class="gi-label">고장 관리</span>
+      </button>
+      <button class="home-grid-item" onclick="switchTab('duty')" id="home-gi-duty" style="display:none">
+        <span class="gi-icon">🕐</span><span class="gi-label">담당자 현황</span>
+      </button>
+      <button class="home-grid-item" onclick="switchTab('mgmt')" id="home-gi-mgmt" style="display:none">
+        <span class="gi-icon">🏢</span><span class="gi-label">관리현장</span>
+      </button>
+      <button class="home-grid-item" onclick="switchTab('jungong')" id="home-gi-jungong" style="display:none">
+        <span class="gi-icon">📋</span><span class="gi-label">준공계</span>
+      </button>
+    </div>
+  </div>
+
   <!-- 고장 신고 접수 -->
-  <div class="page active" id="page-fault">
+  <div class="page" id="page-fault">
   <div class="sub-tabs">
     <button class="sub-tab-btn active" id="sub-tab-report-btn" onclick="switchSubTab('report',this)">📋 신고 접수</button>
     <button class="sub-tab-btn" id="sub-tab-list-btn" onclick="switchSubTab('list',this)">📂 신고 내역 <span class="count-badge" id="list-count-badge" style="display:none"></span></button>
@@ -745,22 +893,10 @@
       style="margin-bottom:8px" />
     <select class="modal-input normal" id="new-acc-role" style="margin-bottom:8px; letter-spacing:0" onchange="toggleSiteNameField()">
       <option value="">-- 계정 유형 선택 --</option>
-      <option value="관리주체">🏢 관리주체 (건물 관리소)</option>
       <option value="직원">👷 직원 (보수 직원)</option>
       <option value="관리자">👑 관리자 (전체 권한)</option>
     </select>
-    <div id="site-name-field" style="display:none">
-      <div class="autocomplete-wrapper">
-        <input type="text" class="modal-input normal" id="new-acc-site"
-          placeholder="담당 현장명 검색 또는 직접 입력"
-          style="margin-bottom:0; border-radius:8px 0 0 8px !important; flex:1"
-          autocomplete="off"
-          oninput="acInputSite(this)"
-          onblur="setTimeout(()=>document.getElementById('ac-site-dd').style.display='none',200)" />
-        <button type="button" class="ac-toggle-btn" onmousedown="event.preventDefault();acToggleAllSite()" title="전체 목록">▼</button>
-        <div class="ac-dropdown" id="ac-site-dd" style="display:none"></div>
-      </div>
-    </div>
+    <div id="site-name-field" style="display:none"></div>
     <div style="border-top:1.5px solid #e2e8f0;margin:12px 0 8px;padding-top:12px">
       <div style="font-size:11px;font-weight:700;color:#718096;letter-spacing:0.5px;margin-bottom:8px">직원 정보 (선택)</div>
       <input type="tel" class="modal-input normal" id="new-acc-phone" placeholder="핸드폰번호 (010-0000-0000)" style="margin-bottom:8px" oninput="autoFormatPhone(this)" />
@@ -805,23 +941,11 @@
       style="margin-bottom:8px" />
     <input type="password" class="modal-input normal" id="edit-acc-pw" placeholder="비밀번호"
       style="margin-bottom:8px" />
-    <select class="modal-input normal" id="edit-acc-role" style="margin-bottom:8px; letter-spacing:0" onchange="toggleEditSiteNameField()">
-      <option value="관리주체">🏢 관리주체 (건물 관리소)</option>
+    <select class="modal-input normal" id="edit-acc-role" style="margin-bottom:8px; letter-spacing:0">
       <option value="직원">👷 직원 (보수 직원)</option>
       <option value="관리자">👑 관리자 (전체 권한)</option>
     </select>
-    <div id="edit-site-name-field" style="display:none">
-      <div class="autocomplete-wrapper">
-        <input type="text" class="modal-input normal" id="edit-acc-site"
-          placeholder="담당 현장명 검색 또는 직접 입력"
-          style="margin-bottom:0; border-radius:8px 0 0 8px !important; flex:1"
-          autocomplete="off"
-          oninput="acInputEditSite(this)"
-          onblur="setTimeout(()=>document.getElementById('ac-edit-site-dd').style.display='none',200)" />
-        <button type="button" class="ac-toggle-btn" onmousedown="event.preventDefault();acToggleAllEditSite()" title="전체 목록">▼</button>
-        <div class="ac-dropdown" id="ac-edit-site-dd" style="display:none"></div>
-      </div>
-    </div>
+    <div id="edit-site-name-field" style="display:none"></div>
     <div style="border-top:1.5px solid #e2e8f0;margin:12px 0 8px;padding-top:12px">
       <div style="font-size:11px;font-weight:700;color:#718096;letter-spacing:0.5px;margin-bottom:8px">직원 정보 (선택)</div>
       <input type="tel" class="modal-input normal" id="edit-acc-phone" placeholder="핸드폰번호 (010-0000-0000)" style="margin-bottom:8px" oninput="autoFormatPhone(this)" />
@@ -1168,7 +1292,7 @@
   }
 
   async function toggleDutyShift(shiftType, teamOverride) {
-    if (!currentUser || currentRole === '관리주체') return showToast('❌ 직원 계정으로 로그인하세요.');
+    if (!currentUser || currentRole === '관리자') return showToast('❌ 직원 계정으로 로그인하세요.');
     const team = teamOverride || currentUser.team;
     const handler = currentUser.username;
     if (!team) return showToast('❌ 계정에 팀 정보가 없습니다. 관리자에게 문의하세요.');
@@ -1343,8 +1467,8 @@
   const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   /* ── STATE ── */
-  let currentRole = null;   // '관리주체' | '직원' | '관리자'
-  let currentSite = null;   // 관리주체일 때 현장명
+  let currentRole = null;   // '직원' | '관리자'
+  let currentSite = null;
   let currentUser = null;   // 로그인된 계정 객체
   let reports = [];
   let holidayDates = new Set();
@@ -1359,19 +1483,75 @@
   }
   updateClock(); setInterval(updateClock, 1000);
 
-  /* ── NAV MENU ── */
-  const TAB_LABELS = { fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계' };
+  /* ── NAV MENU (사이드 드로어) ── */
+  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계' };
   function toggleNavMenu() {
-    document.getElementById('nav-menu').classList.toggle('open');
-    document.getElementById('nav-menu-overlay').classList.toggle('open');
+    if (!currentUser) return;
+    document.getElementById('side-drawer').classList.toggle('open');
+    document.getElementById('side-drawer-overlay').classList.toggle('open');
   }
   function closeNavMenu() {
-    document.getElementById('nav-menu').classList.remove('open');
-    document.getElementById('nav-menu-overlay').classList.remove('open');
+    document.getElementById('side-drawer').classList.remove('open');
+    document.getElementById('side-drawer-overlay').classList.remove('open');
+  }
+  function updateDrawerProfile() {
+    if (!currentUser) return;
+    document.getElementById('drawer-name').textContent = currentUser.username || '-';
+    const parts = [];
+    if (currentUser.team) parts.push(currentUser.team);
+    if (currentUser.group) parts.push(currentUser.group);
+    if (currentUser.position) parts.push(currentUser.position);
+    document.getElementById('drawer-team').textContent = parts.join(' · ') || currentRole || '-';
+  }
+
+  /* ── 마이페이지 모달 ── */
+  function showMyPageModal() {
+    if (!currentUser) return;
+    document.getElementById('mp-team').value = currentUser.team || '';
+    document.getElementById('mp-group').value = currentUser.group || '';
+    document.getElementById('mp-position').value = currentUser.position || '';
+    document.getElementById('mp-phone').value = currentUser.phone || '';
+    document.getElementById('mp-pw-new').value = '';
+    document.getElementById('mp-pw-confirm').value = '';
+    document.getElementById('mp-error').style.display = 'none';
+    document.getElementById('mypage-modal').classList.add('open');
+  }
+  function closeMyPageModal() {
+    document.getElementById('mypage-modal').classList.remove('open');
+  }
+  async function saveMyPage() {
+    const team = document.getElementById('mp-team').value.trim();
+    const group = document.getElementById('mp-group').value.trim();
+    const position = document.getElementById('mp-position').value.trim();
+    const phone = document.getElementById('mp-phone').value.trim();
+    const pwNew = document.getElementById('mp-pw-new').value;
+    const pwConfirm = document.getElementById('mp-pw-confirm').value;
+    const errEl = document.getElementById('mp-error');
+    errEl.style.display = 'none';
+    if (pwNew && pwNew !== pwConfirm) {
+      errEl.textContent = '비밀번호가 일치하지 않습니다.'; errEl.style.display = 'block'; return;
+    }
+    if (pwNew && pwNew.length < 4) {
+      errEl.textContent = '비밀번호는 4자 이상이어야 합니다.'; errEl.style.display = 'block'; return;
+    }
+    const updateObj = { team, "group": group, position, phone };
+    if (pwNew) updateObj.password = pwNew;
+    const { error } = await db.from('accounts').update(updateObj).eq('id', currentUser.id);
+    if (error) { errEl.textContent = '저장 실패: ' + error.message; errEl.style.display = 'block'; return; }
+    currentUser.team = team; currentUser.group = group; currentUser.position = position; currentUser.phone = phone;
+    if (pwNew) currentUser.password = pwNew;
+    updateDrawerProfile();
+    updateHomeProfile();
+    if (localStorage.getItem('daesol_autologin') && pwNew) {
+      localStorage.setItem('daesol_autologin', JSON.stringify({ username: currentUser.username, password: pwNew }));
+    }
+    closeMyPageModal();
+    showToast('✅ 내 정보가 저장되었습니다.');
   }
 
   /* ── TABS ── */
   function switchTab(tab, e) {
+    if (tab === 'home') { goDashboard(); return; }
     // report/list/done은 fault 탭 안의 서브탭으로 처리
     if (tab === 'report' || tab === 'list' || tab === 'done') {
       switchTab('fault', null);
@@ -1385,7 +1565,7 @@
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-' + tab).classList.add('active');
     if (e) e.currentTarget.classList.add('active');
-    else document.getElementById('tab-' + tab + '-btn').classList.add('active');
+    else { const btn = document.getElementById('tab-' + tab + '-btn'); if (btn) btn.classList.add('active'); }
     if (tab === 'fault')   {} // 서브탭이 처리
     if (tab === 'sites')   { loadSites(); loadHolidayList(); }
     if (tab === 'duty')    loadDutyPage();
@@ -1393,6 +1573,36 @@
     if (tab === 'jungong') initJungong();
     const lbl = document.getElementById('current-tab-label');
     if (lbl) lbl.textContent = TAB_LABELS[tab] || '';
+  }
+
+  /* ── 대시보드 홈 ── */
+  function goDashboard() {
+    if (!currentUser) { goHome(); return; }
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-home').classList.add('active');
+    updateHomeProfile();
+    loadDashboardStats();
+  }
+  function updateHomeProfile() {
+    if (!currentUser) return;
+    document.getElementById('home-user-name').textContent = currentUser.username + ' 님';
+    const parts = [];
+    if (currentUser.team) parts.push(currentUser.team);
+    if (currentUser.group) parts.push(currentUser.group);
+    if (currentUser.position) parts.push(currentUser.position);
+    document.getElementById('home-user-team').textContent = parts.join(' · ') || currentRole || '';
+  }
+  async function loadDashboardStats() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const end   = new Date(now.getFullYear(), now.getMonth()+1, 1).toISOString();
+    const [{ count: faultCount }, { count: pendingCount }] = await Promise.all([
+      db.from('reports').select('*', { count:'exact', head:true }).gte('created_at', start).lt('created_at', end),
+      db.from('reports').select('*', { count:'exact', head:true }).neq('status', '완료'),
+    ]);
+    document.getElementById('home-stat-fault').textContent = faultCount ?? 0;
+    document.getElementById('home-stat-pending').textContent = pendingCount ?? 0;
   }
 
   function switchSubTab(subTab) {
@@ -1492,7 +1702,7 @@
 
       document.getElementById('rdm-status').value = r.status || '접수중';
       document.getElementById('rdm-status').disabled = currentRole !== '관리자';
-      document.getElementById('rdm-handler').value = r.completion_handler || (currentRole !== '관리주체' && currentUser ? (currentUser.username) : '');
+      document.getElementById('rdm-handler').value = r.completion_handler || (currentUser ? currentUser.username : '');
       if (r.completion_at) {
         const d = new Date(r.completion_at);
         document.getElementById('rdm-date').value = d.toISOString().slice(0,10);
@@ -1632,7 +1842,6 @@
     initDoneYearSelects();
     document.getElementById('done-list').innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
     let q = db.from('reports').select('*').eq('status', '완료').order('created_at', { ascending: false });
-    if (currentRole === '관리주체') q = q.eq('building', currentSite);
     const { data } = await q;
     doneReports = data || [];
     renderDoneList();
@@ -1726,7 +1935,7 @@
 
   async function renderRepeatPage() {
     const el = document.getElementById('repeat-content');
-    if (!currentRole || currentRole === '관리주체') { el.style.display = 'none'; return; }
+    if (!currentRole) { el.style.display = 'none'; return; }
     el.style.display = 'block';
 
     const days = parseInt(document.getElementById('repeat-period').value) || 30;
@@ -1852,55 +2061,47 @@
     return '🏢';
   }
 
-  function handleAuthBtn() {
-    if (currentRole) doLogout();
-    else goHome();
-  }
-
   function applyRoleUI() {
     const isAdmin = currentRole === '관리자';
-    const canExcel = currentRole === '관리자' || currentRole === '직원';
-    document.getElementById('tab-sites-btn').style.display = isAdmin ? 'inline-block' : 'none';
-    document.getElementById('tab-mgmt-btn').style.display = (isAdmin || currentRole === '직원') ? 'inline-block' : 'none';
-    document.getElementById('tab-duty-btn').style.display = (isAdmin || currentRole === '직원') ? 'inline-block' : 'none';
-    document.getElementById('tab-jungong-btn').style.display = (isAdmin || currentRole === '직원') ? 'inline-block' : 'none';
-    // 고장처리내역 서브탭: 관리주체는 숨김
-    document.getElementById('sub-tab-done-btn').style.display = currentRole !== '관리주체' ? 'inline-block' : 'none';
+    const isStaff = currentRole === '직원';
+    document.getElementById('tab-sites-btn').style.display = isAdmin ? 'flex' : 'none';
+    document.getElementById('tab-mgmt-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
+    document.getElementById('tab-duty-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
+    document.getElementById('tab-jungong-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
+    // 홈 그리드 아이콘 표시
+    const giDuty = document.getElementById('home-gi-duty');
+    const giMgmt = document.getElementById('home-gi-mgmt');
+    const giJungong = document.getElementById('home-gi-jungong');
+    if (giDuty) giDuty.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
+    if (giMgmt) giMgmt.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
+    if (giJungong) giJungong.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
+    document.getElementById('sub-tab-done-btn').style.display = 'inline-block';
     // 반복고장현황 서브탭: 직원/관리자만
-    document.getElementById('sub-tab-repeat-btn').style.display = (isAdmin || currentRole === '직원') ? 'inline-block' : 'none';
-    document.getElementById('btn-change-pw').style.display = 'inline-block';
-    const btn = document.getElementById('admin-btn');
-    btn.textContent = getRoleIcon(currentRole) + ' ' + currentUser.username + ' 로그아웃';
-    btn.classList.add('logged-in');
+    document.getElementById('sub-tab-repeat-btn').style.display = (isAdmin || isStaff) ? 'inline-block' : 'none';
+    updateDrawerProfile();
   }
 
   function doLogout() {
     if (!confirm('로그아웃 하시겠습니까?')) return;
-    // 로그아웃 시 브라우저 구독 해제 + DB 삭제
+    closeNavMenu();
     const logoutUserId = currentUser ? String(currentUser.id) : null;
     if (logoutUserId && 'serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then(reg => {
-        reg.pushManager.getSubscription().then(sub => {
-          if (sub) sub.unsubscribe();
-        });
+        reg.pushManager.getSubscription().then(sub => { if (sub) sub.unsubscribe(); });
       });
       db.from('push_subscriptions').delete().eq('account_id', logoutUserId).then(() => {});
     }
     currentRole = null; currentSite = null; currentUser = null;
     localStorage.removeItem('daesol_autologin');
-    const btn = document.getElementById('admin-btn');
-    btn.textContent = '🔑 로그인';
-    btn.classList.remove('logged-in');
-    document.getElementById('tab-sites-btn').style.display = 'none';
-    document.getElementById('tab-mgmt-btn').style.display = 'none';
-    document.getElementById('tab-duty-btn').style.display = 'none';
-    document.getElementById('tab-jungong-btn').style.display = 'none';
-    document.getElementById('btn-change-pw').style.display = 'none';
+    ['tab-sites-btn','tab-mgmt-btn','tab-duty-btn','tab-jungong-btn'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.style.display = 'none';
+    });
     updateSiteBadge();
     setBuildingField(); initReportTime();
     setReporterField();
     renderReportPage();
-    switchTab('fault', null);
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-fault').classList.add('active');
     switchSubTab('report');
     goHome();
   }
@@ -1911,9 +2112,8 @@
     const colors = {
       '관리자': 'background:#fffff0;color:#744210;border-color:#f6ad55',
       '직원':   'background:#f0fff4;color:#276749;border-color:#9ae6b4',
-      '관리주체':'background:#ebf8ff;color:#2b6cb0;border-color:#bee3f8',
     };
-    w.innerHTML = `<span class="site-badge" style="${colors[currentRole]}">${getRoleIcon(currentRole)} ${currentRole === '관리주체' ? currentSite : currentRole}</span>`;
+    w.innerHTML = `<span class="site-badge" style="${colors[currentRole]||''}">${getRoleIcon(currentRole)} ${currentRole}</span>`;
   }
 
   /* ── ID 생성 ── */
@@ -1996,7 +2196,6 @@
 
     async function loadReports() {
     let q = db.from('reports').select('*').neq('status', '완료').order('created_at', { ascending: false });
-    if (currentRole === '관리주체') q = q.eq('building', currentSite);
     const { data, error } = await q;
     if (error) { showToast('❌ 데이터 로드 실패'); return; }
     reports = data || [];
@@ -2119,7 +2318,7 @@
   }
 
   /* ── 계정 관리 ── */
-  const ROLE_LABEL = { '관리주체':'🏢 관리주체', '직원':'👷 직원', '관리자':'👑 관리자' };
+  const ROLE_LABEL = { '직원':'👷 직원', '관리자':'👑 관리자' };
 
   async function loadHolidayList() {
     const el = document.getElementById('holiday-list');
@@ -2173,14 +2372,13 @@
       return (a.username||'').localeCompare(b.username||'', 'ko');
     });
     el.innerHTML = `<table class="site-table">
-      <thead><tr><th>#</th><th>아이디</th><th>직급/직책</th><th>핸드폰</th><th>유형</th><th>담당 현장</th><th>비밀번호</th><th></th></tr></thead>
+      <thead><tr><th>#</th><th>아이디</th><th>직급/직책</th><th>핸드폰</th><th>유형</th><th>비밀번호</th><th></th></tr></thead>
       <tbody>${data.map((a,i) => `<tr>
         <td>${i+1}</td>
         <td><strong>${escHtml(a.username)}</strong></td>
         <td>${escHtml(a.position||'-')}</td>
         <td>${escHtml(a.phone||'-')}</td>
         <td>${ROLE_LABEL[a.role] || a.role}</td>
-        <td>${a.role==='관리주체' ? escHtml(a.site_name||'') : '<span style="color:#a0aec0">-</span>'}</td>
         <td><code>${escHtml(a.password)}</code></td>
         <td style="display:flex;gap:6px">
           <button class="btn-sm" style="border-color:#bee3f8;color:#2b6cb0" onclick="showEditAccountModal(${a.id})">수정</button>
@@ -2208,7 +2406,6 @@
 
   function toggleSiteNameField() {
     const role = document.getElementById('new-acc-role').value;
-    document.getElementById('site-name-field').style.display = role === '관리주체' ? 'block' : 'none';
     document.getElementById('new-acc-team-section').style.display = (role === '직원' || role === '관리자') ? 'block' : 'none';
   }
   function updateNewAccUnit() {
@@ -2222,15 +2419,13 @@
     const username = document.getElementById('new-acc-username').value.trim();
     const pw       = document.getElementById('new-acc-pw').value.trim();
     const role     = document.getElementById('new-acc-role').value;
-    const siteName = document.getElementById('new-acc-site').value.trim();
     const errEl    = document.getElementById('add-account-error');
     const phone    = document.getElementById('new-acc-phone').value.trim();
     const position = document.getElementById('new-acc-position').value.trim();
     if (!username || !pw || !role) { errEl.textContent='아이디, 비밀번호, 유형을 모두 입력하세요.'; errEl.style.display='block'; return; }
-    if (role === '관리주체' && !siteName) { errEl.textContent='관리주체 계정은 담당 현장명을 입력하세요.'; errEl.style.display='block'; return; }
     const team = document.getElementById('new-acc-team')?.value || null;
     const unit = document.getElementById('new-acc-unit')?.value || null;
-    const payload = { username, password: pw, role, site_name: role === '관리주체' ? siteName : null, name: null, phone: phone||null, position: position||null, team: team||null, unit: unit||null };
+    const payload = { username, password: pw, role, site_name: null, name: null, phone: phone||null, position: position||null, team: team||null, unit: unit||null };
     const { error } = await db.from('accounts').insert(payload);
     if (error) {
       errEl.textContent = error.code==='23505' ? '이미 존재하는 아이디입니다.' : '추가 실패: ' + error.message;
@@ -2250,7 +2445,6 @@
     document.getElementById('edit-acc-username').value = data.username;
     document.getElementById('edit-acc-pw').value = data.password;
     document.getElementById('edit-acc-role').value = data.role;
-    document.getElementById('edit-acc-site').value = data.site_name || '';
     document.getElementById('edit-acc-phone').value = data.phone || '';
     document.getElementById('edit-acc-position').value = data.position || '';
     // 팀/조 불러오기
@@ -2262,7 +2456,6 @@
       const sel = document.getElementById('edit-acc-unit');
       sel.innerHTML = '<option value="">-- 조 선택 --</option>' + (units[data.team]||[]).map(u=>'<option'+(u===data.unit?' selected':'')+'>'+u+'</option>').join('');
     }
-    document.getElementById('edit-site-name-field').style.display = data.role === '관리주체' ? 'block' : 'none';
     document.getElementById('edit-account-error').style.display = 'none';
     document.getElementById('edit-account-modal').style.display = 'flex';
     setTimeout(() => document.getElementById('edit-acc-username').focus(), 100);
@@ -2270,7 +2463,6 @@
 
   function toggleEditSiteNameField() {
     const role = document.getElementById('edit-acc-role').value;
-    document.getElementById('edit-site-name-field').style.display = role === '관리주체' ? 'block' : 'none';
     document.getElementById('edit-acc-team-section').style.display = (role === '직원' || role === '관리자') ? 'block' : 'none';
   }
   function updateEditAccUnit() {
@@ -2284,15 +2476,13 @@
     const username = document.getElementById('edit-acc-username').value.trim();
     const pw       = document.getElementById('edit-acc-pw').value.trim();
     const role     = document.getElementById('edit-acc-role').value;
-    const siteName = document.getElementById('edit-acc-site').value.trim();
     const phone    = document.getElementById('edit-acc-phone').value.trim();
     const position = document.getElementById('edit-acc-position').value.trim();
     const errEl    = document.getElementById('edit-account-error');
     if (!username || !pw || !role) { errEl.textContent='아이디, 비밀번호, 유형을 모두 입력하세요.'; errEl.style.display='block'; return; }
-    if (role === '관리주체' && !siteName) { errEl.textContent='관리주체 계정은 담당 현장명을 입력하세요.'; errEl.style.display='block'; return; }
     const teamE = document.getElementById('edit-acc-team')?.value || null;
     const unitE = document.getElementById('edit-acc-unit')?.value || null;
-    const payload = { username, password: pw, role, site_name: role === '관리주체' ? siteName : null, name: null, phone: phone||null, position: position||null, team: teamE||null, unit: unitE||null };
+    const payload = { username, password: pw, role, site_name: null, name: null, phone: phone||null, position: position||null, team: teamE||null, unit: unitE||null };
     const { error } = await db.from('accounts').update(payload).eq('id', editingAccountId);
     if (error) {
       errEl.textContent = error.code==='23505' ? '이미 존재하는 아이디입니다.' : '수정 실패: ' + error.message;
@@ -3148,7 +3338,7 @@
   }
 
   async function checkPendingAssignments() {
-    if (!currentUser || currentRole === '관리주체' || currentRole === '관리자') return;
+    if (!currentUser || currentRole === '관리자') return;
     const handler = currentUser.username;
     const { data: d1 } = await db.from('reports').select('*').eq('status', '배치완료').eq('completion_handler', handler);
     const { data: d2 } = await db.from('reports').select('*').eq('status', '처리중').eq('completion_handler', handler);
@@ -4271,7 +4461,22 @@
     document.getElementById('login-pw').value = '';
     document.getElementById('login-error').textContent = '';
     document.getElementById('welcome-overlay').style.display = 'flex';
+    closeLoginForm();
+  }
+  function openLoginForm() {
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-pw').value = '';
+    document.getElementById('login-error').textContent = '';
+    document.getElementById('login-form-modal').classList.add('open');
     setTimeout(() => document.getElementById('login-username').focus(), 100);
+  }
+  function closeLoginForm() {
+    document.getElementById('login-form-modal').classList.remove('open');
+  }
+
+  function handleAuthBtn() {
+    if (currentRole) doLogout();
+    else goHome();
   }
 
   async function loginFromPage() {
@@ -4290,7 +4495,7 @@
     }
     currentUser = data;
     currentRole = data.role;
-    currentSite = data.role === '관리주체' ? data.site_name : null;
+    currentSite = null;
     // 자동로그인 체크 여부에 따라 저장
     if (document.getElementById('auto-login-check')?.checked) {
       localStorage.setItem('daesol_autologin', JSON.stringify({ username, password: pw }));
@@ -4298,14 +4503,14 @@
       localStorage.removeItem('daesol_autologin');
     }
     document.getElementById('welcome-overlay').style.display = 'none';
+    closeLoginForm();
     applyRoleUI();
     updateSiteBadge();
     setBuildingField(); initReportTime();
     setReporterField();
     showToast(getRoleIcon(currentRole) + ' ' + username + '님으로 로그인되었습니다.');
     renderReportPage();
-    if (currentRole === '직원' || currentRole === '관리자') switchTab('duty', null);
-    else switchTab('fault', null);
+    goDashboard();
     setTimeout(() => checkPendingAssignments(), 500);
     subscribePush();
     startReportsRealtime();
@@ -4338,21 +4543,12 @@
   function setBuildingField() {
     const input = document.getElementById('f-building');
     const toggleBtn = document.querySelector('.ac-toggle-btn');
-    if (currentRole === '관리주체') {
-      input.value = currentSite;
-      input.readOnly = true;
-      input.style.background = '#edf2f7';
-      input.style.color = '#4a5568';
-      input.style.cursor = 'default';
-      if (toggleBtn) toggleBtn.style.display = 'none';
-    } else {
-      input.value = '';
-      input.readOnly = false;
-      input.style.background = '';
-      input.style.color = '';
-      input.style.cursor = '';
-      if (toggleBtn) toggleBtn.style.display = '';
-    }
+    input.value = '';
+    input.readOnly = false;
+    input.style.background = '';
+    input.style.color = '';
+    input.style.cursor = '';
+    if (toggleBtn) toggleBtn.style.display = '';
   }
 
   function setReporterField() {
@@ -4432,7 +4628,7 @@
         if (data) {
           currentUser = data;
           currentRole = data.role;
-          currentSite = data.role === '관리주체' ? data.site_name : null;
+          currentSite = null;
           document.getElementById('welcome-overlay').style.display = 'none';
           applyRoleUI();
           updateSiteBadge();
@@ -4442,8 +4638,7 @@
           subscribePush();
           startReportsRealtime();
           if (currentRole === '관리자') startAdminUnackCheck();
-          if (currentRole === '직원' || currentRole === '관리자') switchTab('duty', null);
-          else switchTab('fault', null);
+          goDashboard();
         } else {
           localStorage.removeItem('daesol_autologin');
         }
