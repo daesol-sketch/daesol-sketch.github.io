@@ -2381,7 +2381,7 @@
     el.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
     const [{ data, error }, { data: elevData }] = await Promise.all([
       db.from('managed_sites').select('*').order('site_name'),
-      db.from('site_elevators').select('site_id, inspection_due_date'),
+      db.from('site_elevators').select('site_id, inspection_due_date').limit(10000),
     ]);
     if (error || !data) { el.innerHTML = '<div class="loading-state">불러오기 실패</div>'; return; }
     const elevCounts = {};
