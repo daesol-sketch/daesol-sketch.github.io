@@ -170,6 +170,8 @@
       .card { padding: 20px 18px; }
       .modal-box { width: calc(100% - 40px); padding: 28px 20px; }
       #header-date { display: none; }
+      .mgmt-grid { grid-template-columns: 1fr !important; }
+      .mgmt-elevator-wrap { overflow-x: auto; }
     }
 
     /* 로그인 페이지 */
@@ -846,7 +848,7 @@
       <h3 id="mgmt-modal-title" style="text-align:center;font-size:18px;font-weight:700;color:#1a365d;margin-bottom:20px">현장 추가</h3>
     </div>
     <div style="overflow-y:auto;padding:0 28px;flex:1">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="mgmt-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div style="grid-column:1/-1">
         <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">현장명 <span style="color:#e53e3e">*</span></label>
         <input type="text" class="modal-input normal" id="mgmt-name" placeholder="현장명" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
@@ -931,7 +933,7 @@
           <span style="font-size:13px;font-weight:700;color:#1a365d">🛗 호기 목록</span>
           <button type="button" onclick="addElevatorRow()" style="padding:5px 14px;background:#2b6cb0;color:white;border:none;border-radius:7px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">+ 호기 추가</button>
         </div>
-        <div id="mgmt-elev-list"></div>
+        <div id="mgmt-elev-list" class="mgmt-elevator-wrap"></div>
       </div>
     </div>
     <div class="modal-error" id="mgmt-error" style="display:none;margin-top:10px"></div>
