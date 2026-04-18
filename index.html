@@ -2689,7 +2689,7 @@
   async function loadElevators() {
     const el = document.getElementById('elevator-list');
     el.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
-    const { data, error } = await db.from('site_elevators').select('*').eq('site_id', currentSiteForElevator.id).order('unit_name');
+    const { data, error } = await db.from('site_elevators').select('*').eq('site_id', currentSiteForElevator.id).order('id');
     if (error) { el.innerHTML = '<div class="loading-state">불러오기 실패</div>'; return; }
     if (!data || !data.length) {
       el.innerHTML = '<div class="empty-state" style="padding:24px 0"><div class="icon">🛗</div>등록된 호기가 없습니다.</div>';
@@ -2880,7 +2880,7 @@
     document.getElementById('mgmt-error').style.display = 'none';
     document.getElementById('mgmt-modal').style.display = 'flex';
     // 기존 호기 불러오기
-    const { data: elevData } = await db.from('site_elevators').select('*').eq('site_id', id).order('unit_name');
+    const { data: elevData } = await db.from('site_elevators').select('*').eq('site_id', id).order('id');
     pendingElevators = (elevData || []).map(e => ({ ...e, _deleted: false }));
     renderElevatorRows();
   }
@@ -4134,7 +4134,7 @@
     wrap.innerHTML = '<input type="text" id="f-elevator" placeholder="불러오는 중..." disabled style="color:#a0aec0" />';
     const { data: siteData } = await db.from('managed_sites').select('id').eq('site_name', siteName).single();
     if (!siteData) { resetElevatorInput(); return; }
-    const { data: elevData } = await db.from('site_elevators').select('unit_name,elevator_number').eq('site_id', siteData.id).order('unit_name');
+    const { data: elevData } = await db.from('site_elevators').select('unit_name,elevator_number').eq('site_id', siteData.id).order('id');
     if (!elevData || !elevData.length) { resetElevatorInput(); return; }
     document.getElementById('f-regno').value = '';
     wrap.innerHTML = `<select id="f-elevator" required onchange="fillRegno(this)" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit;color:#1a202c;background:#fafafa;width:100%">
