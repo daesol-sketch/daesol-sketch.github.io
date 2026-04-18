@@ -999,10 +999,12 @@
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
+      const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
       await db.from('push_subscriptions').upsert({
         account_id: String(currentUser.id),
         username: currentUser.username,
-        subscription: sub.toJSON()
+        subscription: sub.toJSON(),
+        is_mobile: isMobile
       }, { onConflict: 'account_id' });
     } catch(e) { console.warn('Push 구독 실패:', e); }
   }
