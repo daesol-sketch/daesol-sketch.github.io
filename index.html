@@ -811,30 +811,33 @@
 
 <!-- 호기 관리 모달 -->
 <div class="modal-overlay" id="elevator-modal" style="display:none">
-  <div class="modal-box" style="width:860px;max-width:calc(100vw - 40px);text-align:left;padding:28px 24px;max-height:92vh;overflow-y:auto;overflow-x:hidden;position:relative">
-    <!-- 우측 상단 X 버튼 -->
-    <button onclick="closeModal('elevator-modal')" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:#718096;line-height:1">✕</button>
-    <h3 id="elevator-modal-title" style="font-size:17px;font-weight:700;color:#1a365d;margin-bottom:16px;padding-right:30px"></h3>
-
-    <!-- 현장 상세정보 -->
-    <div id="elevator-modal-site-info" style="background:#f7fafc;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px">
+  <div class="modal-box" style="width:860px;max-width:calc(100vw - 40px);text-align:left;padding:0;max-height:92vh;display:flex;flex-direction:column;overflow:hidden">
+    <!-- 고정 헤더 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px 14px;border-bottom:1px solid #e2e8f0;flex-shrink:0">
+      <h3 id="elevator-modal-title" style="font-size:17px;font-weight:700;color:#1a365d;margin:0"></h3>
+      <button onclick="closeModal('elevator-modal')" style="background:none;border:none;font-size:22px;cursor:pointer;color:#718096;line-height:1;padding:0 4px">✕</button>
     </div>
+    <!-- 스크롤 영역 -->
+    <div style="overflow-y:auto;overflow-x:hidden;padding:20px 24px;flex:1">
+      <!-- 현장 상세정보 -->
+      <div id="elevator-modal-site-info" style="background:#f7fafc;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px"></div>
 
-    <!-- 호기 목록 -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <span style="font-size:14px;font-weight:700;color:#1a365d">🛗 호기 목록</span>
-      <div style="display:flex;gap:8px">
-        <button id="inspection-sync-btn" onclick="syncInspectionDates()"
-          style="padding:6px 14px;background:#38a169;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
-          🔄 만료일 갱신
-        </button>
-        <button id="elevator-modal-add-btn" onclick="showAddElevatorModal()"
-          style="padding:6px 14px;background:#2b6cb0;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
-          + 호기 추가
-        </button>
+      <!-- 호기 목록 -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:14px;font-weight:700;color:#1a365d">🛗 호기 목록</span>
+        <div style="display:flex;gap:8px">
+          <button id="inspection-sync-btn" onclick="syncInspectionDates()"
+            style="padding:6px 14px;background:#38a169;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
+            🔄 만료일 갱신
+          </button>
+          <button id="elevator-modal-add-btn" onclick="showAddElevatorModal()"
+            style="padding:6px 14px;background:#2b6cb0;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
+            + 호기 추가
+          </button>
+        </div>
       </div>
+      <div id="elevator-list" style="overflow-x:auto"></div>
     </div>
-    <div id="elevator-list" style="overflow-x:auto"></div>
   </div>
 </div>
 
