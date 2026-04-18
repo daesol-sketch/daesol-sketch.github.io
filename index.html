@@ -173,6 +173,8 @@
       .mgmt-grid { grid-template-columns: 1fr !important; }
     }
     .mgmt-elevator-wrap { overflow-x: auto; }
+    .site-info-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px 16px; }
+    @media (max-width: 600px) { .site-info-grid { grid-template-columns:1fr 1fr; } }
 
     /* 로그인 페이지 */
     .welcome-overlay { position: fixed; inset: 0; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 2000; }
@@ -779,7 +781,7 @@
 
 <!-- 호기 관리 모달 -->
 <div class="modal-overlay" id="elevator-modal" style="display:none">
-  <div class="modal-box" style="width:720px;max-width:calc(100vw - 40px);text-align:left;padding:28px 24px;max-height:90vh;overflow-y:auto">
+  <div class="modal-box" style="width:720px;max-width:calc(100vw - 40px);text-align:left;padding:28px 24px;max-height:90vh;overflow-y:auto;overflow-x:hidden">
     <h3 id="elevator-modal-title" style="font-size:17px;font-weight:700;color:#1a365d;margin-bottom:16px"></h3>
 
     <!-- 현장 상세정보 -->
@@ -2510,7 +2512,7 @@
       ['승강기 소재지', m.elevator_address], ['비고', m.notes],
     ].filter(([,v]) => v);
     document.getElementById('elevator-modal-site-info').innerHTML = fields.length
-      ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px">${fields.map(([k,v]) =>
+      ? `<div class="site-info-grid">${fields.map(([k,v]) =>
           `<div style="font-size:14px"><span style="color:#718096;font-weight:700;font-size:12px">${k}</span><br><span style="color:#1a202c;font-weight:500">${escHtml(String(v))}</span></div>`
         ).join('')}</div>`
       : '<span style="color:#a0aec0">등록된 상세정보가 없습니다.</span>';
@@ -2529,7 +2531,7 @@
       return;
     }
     const isAdmin = currentRole === '관리자';
-    el.innerHTML = `<table class="site-table" style="width:100%">
+    el.innerHTML = `<div style="overflow-x:auto"><table class="site-table" style="width:100%">
       <thead><tr>
         <th>#</th><th>호기명</th><th>승강기번호</th><th>엘리베이터 모델</th><th>검사만료일</th><th>비고</th>
         ${isAdmin ? '<th>관리</th>' : ''}
@@ -2555,7 +2557,7 @@
           <button class="btn-sm del" onclick="deleteElevator(${e.id})">삭제</button>
         </td>` : ''}
       </tr>`).join('')}</tbody>
-    </table>`;
+    </table></div>`;
   }
 
   let editingElevatorId = null;
