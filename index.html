@@ -202,7 +202,7 @@
     .drawer-logout:hover { background: #2a0a0a; }
 
     /* ── 대시보드 홈 ── */
-    #page-home { padding: 24px 16px; }
+    #page-home { padding: 54px 16px 24px; }
     .home-profile-card { background: #1a1a1a; border: 1px solid #2a2a2a; color: white; border-radius: 16px; padding: 28px 24px 24px; margin-bottom: 24px; }
     .home-greeting { font-size: 13px; color: #666; margin-bottom: 6px; }
     .home-user-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; color: #e2e8f0; }
@@ -737,7 +737,7 @@
           <button onclick="exportMgmtExcel()" style="padding:7px 14px;background:#1d6f42;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">📥 엑셀</button>
         </div>
       </div>
-      <div style="position:sticky;top:50px;z-index:90;background:#f0f4f8;padding:4px 0;margin-bottom:12px">
+      <div style="margin-bottom:12px">
         <input class="search-input" type="text" id="mgmt-search" placeholder="🔍 현장명·점검자 검색" oninput="renderMgmtList()" onkeyup="renderMgmtList()" onchange="renderMgmtList()" style="margin-left:0;width:100%" />
       </div>
       <div id="mgmt-action-bar" style="display:none;align-items:center;gap:10px;background:#ebf8ff;border:1.5px solid #bee3f8;border-radius:10px;padding:10px 16px;margin-bottom:12px;flex-wrap:wrap">
@@ -2911,7 +2911,7 @@
       <tbody>${list.map((m,i) => {
         const expired = isAlreadyExpired(m.contract_end);
         const expiresSoon = isExpireThisMonth(m.contract_end);
-        const rowStyle = expired ? 'cursor:pointer;background:#fff5f5' : expiresSoon ? 'cursor:pointer;background:#fffbeb' : 'cursor:pointer';
+        const rowStyle = expired ? 'cursor:pointer;background:#2a1a1a' : expiresSoon ? 'cursor:pointer;background:#2a2010' : 'cursor:pointer';
         const endStyle = expired ? 'font-size:12px;color:#c53030;font-weight:700' : expiresSoon ? 'font-size:12px;color:#c05621;font-weight:700' : 'font-size:12px';
         const endSuffix = expired ? ' ⚠️' : expiresSoon ? ' 🔔' : '';
         return `<tr style="${rowStyle}" onclick="showMgmtDetail(${m.id})">
