@@ -2511,9 +2511,10 @@
       ['비고', m.notes],
     ].filter(([,v]) => v);
     document.getElementById('elevator-modal-site-info').innerHTML = fields.length
-      ? `<div class="site-info-grid">${fields.map(([k,v]) =>
-          `<div style="font-size:14px"><span style="color:#718096;font-weight:700;font-size:12px">${k}</span><br><span style="color:#1a202c;font-weight:500">${escHtml(String(v))}</span></div>`
-        ).join('')}</div>`
+      ? `<div class="site-info-grid">${fields.map(([k,v]) => {
+          const extra = k === '비고' ? 'grid-column:1/-1' : k === '승강기 소재지' ? 'grid-column:span 2' : '';
+          return `<div style="font-size:14px${extra ? ';' + extra : ''}"><span style="color:#718096;font-weight:700;font-size:12px">${k}</span><br><span style="color:#1a202c;font-weight:500">${escHtml(String(v))}</span></div>`;
+        }).join('')}</div>`
       : '<span style="color:#a0aec0">등록된 상세정보가 없습니다.</span>';
 
     document.getElementById('elevator-modal').style.display = 'flex';
