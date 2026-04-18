@@ -1378,6 +1378,33 @@
       editSec.style.display = 'none';
       saveBtn.style.display = 'none';
       delBtn.style.display  = 'none';
+      // 완료된 항목이면 처리 정보 읽기 전용으로 표시
+      let roSec = document.getElementById('rdm-readonly-section');
+      if (!roSec) {
+        roSec = document.createElement('div');
+        roSec.id = 'rdm-readonly-section';
+        editSec.parentNode.insertBefore(roSec, editSec);
+      }
+      if (r.status === '완료' && (r.completion_handler || r.completion_at || r.completion_content)) {
+        const roRow = (label, value) =>
+          `<div style="display:flex;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid #edf2f7">` +
+          `<span style="color:#718096;font-size:11px;font-weight:700;min-width:72px;flex-shrink:0">${label}</span>` +
+          `<span style="font-size:13px;color:#2d3748;font-weight:500;word-break:break-all">${value}</span></div>`;
+        const completionAt = r.completion_at ? new Date(r.completion_at).toLocaleString('ko-KR') : '-';
+        roSec.innerHTML =
+          `<div style="margin-top:20px">` +
+          `<div style="font-size:14px;font-weight:700;color:#e53e3e;letter-spacing:0.5px;margin-bottom:14px">처리 정보</div>` +
+          `<div style="background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:16px">` +
+          roRow('처리담당자', escHtml(r.completion_handler || '-')) +
+          roRow('처리일시', completionAt) +
+          roRow('처리내용', escHtml(r.completion_content || '-')) +
+          roRow('부품교체', r.parts_replaced ? '있음' : '없음') +
+          (r.completion_detail ? roRow('상세내역', `<span style="white-space:pre-wrap">${escHtml(r.completion_detail)}</span>`) : '') +
+          `</div></div>`;
+        roSec.style.display = '';
+      } else {
+        roSec.style.display = 'none';
+      }
     }
     document.getElementById('report-detail-modal').style.display = 'flex';
   }
