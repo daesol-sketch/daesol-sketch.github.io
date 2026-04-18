@@ -1358,6 +1358,11 @@
       showToast('⚠️ 재배치 버튼을 눌러 처리를 시작하세요.');
       return;
     }
+    // 처리중 상태면 담당자 본인 + 관리자만 열 수 있음
+    if (r.status === '처리중' && currentRole === '직원' && currentUser.username !== r.completion_handler) {
+      showToast('⚠️ ' + (r.completion_handler || '담당자') + '님이 처리 중입니다.');
+      return;
+    }
     // 로컬 캐시도 최신으로 교체
     const idx = reports.findIndex(x => x.id === id);
     if (idx !== -1) reports[idx] = r;
