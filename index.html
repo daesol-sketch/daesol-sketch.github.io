@@ -283,6 +283,7 @@
     <button class="sub-tab-btn active" id="sub-tab-report-btn" onclick="switchSubTab('report',this)">📋 신고 접수</button>
     <button class="sub-tab-btn" id="sub-tab-list-btn" onclick="switchSubTab('list',this)">📂 신고 내역 <span class="count-badge" id="list-count-badge" style="display:none"></span></button>
     <button class="sub-tab-btn" id="sub-tab-done-btn" onclick="switchSubTab('done',this)">✅ 고장처리내역</button>
+    <button class="sub-tab-btn" id="sub-tab-repeat-btn" onclick="switchSubTab('repeat',this)" style="display:none">🔁 반복고장현황</button>
   </div>
   <div class="sub-page active" id="page-report">
     <div id="report-login-required" style="display:none">
@@ -486,6 +487,35 @@
           </div>
         </div>
         <div class="report-list" id="done-list"></div>
+      </div>
+    </div>
+  </div>
+  <!-- 반복고장현황 -->
+  <div class="sub-page" id="page-repeat">
+    <div id="repeat-content" style="display:none">
+      <div class="card">
+        <h2>🔁 반복고장현황</h2>
+        <div class="filters" style="flex-wrap:wrap;gap:8px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <label style="font-size:13px;color:#4a5568;white-space:nowrap">기간:</label>
+            <select id="repeat-period" onchange="renderRepeatPage()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit">
+              <option value="7">1주</option>
+              <option value="14">2주</option>
+              <option value="21">3주</option>
+              <option value="30" selected>1개월</option>
+              <option value="60">2개월</option>
+              <option value="90">3개월</option>
+            </select>
+            <label style="font-size:13px;color:#4a5568;white-space:nowrap;margin-left:8px">최소 횟수:</label>
+            <select id="repeat-min-count" onchange="renderRepeatPage()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit">
+              <option value="2">2회 이상</option>
+              <option value="3">3회 이상</option>
+              <option value="4">4회 이상</option>
+              <option value="5">5회 이상</option>
+            </select>
+          </div>
+        </div>
+        <div id="repeat-list"></div>
       </div>
     </div>
   </div>
@@ -1283,6 +1313,7 @@
     if (subTab === 'report') renderReportPage();
     if (subTab === 'list')   renderListPage();
     if (subTab === 'done')   renderDonePage();
+    if (subTab === 'repeat') renderRepeatPage();
   }
 
   function updateTeamSelectVisibility() {}
@@ -1593,6 +1624,75 @@
     }).join('');
   }
 
+  async function renderRepeatPage() {
+    const el = document.getElementById('repeat-content');
+    if (!currentRole || currentRole === '관리주체') { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+
+    const days = parseInt(document.getElementById('repeat-period').value) || 30;
+    const minCount = parseInt(document.getElementById('repeat-min-count').value) || 2;
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - days);
+    const fromStr = fromDate.toISOString().slice(0, 10);
+
+    document.getElementById('repeat-list').innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
+
+    const { data } = await db.from('reports')
+      .select('id, building, elevator, type, completion_at, created_at, completion_handler')
+      .eq('status', '완료')
+      .gte('completion_at', fromStr)
+      .order('completion_at', { ascending: false });
+
+    if (!data || !data.length) {
+      document.getElementById('repeat-list').innerHTML = '<div class="empty-state"><div class="icon">🔁</div>반복고장 없음</div>';
+      return;
+    }
+
+    // 건물명+호기 기준 그룹핑
+    const groups = {};
+    data.forEach(r => {
+      const key = (r.building || '') + '||' + (r.elevator || '');
+      if (!groups[key]) groups[key] = { building: r.building, elevator: r.elevator, items: [] };
+      groups[key].items.push(r);
+    });
+
+    const filtered = Object.values(groups)
+      .filter(g => g.items.length >= minCount)
+      .sort((a, b) => b.items.length - a.items.length);
+
+    if (!filtered.length) {
+      document.getElementById('repeat-list').innerHTML = '<div class="empty-state"><div class="icon">🔁</div>해당 기간 내 반복고장 없음</div>';
+      return;
+    }
+
+    document.getElementById('repeat-list').innerHTML = filtered.map(g => {
+      const types = g.items.map(r => r.type).filter(Boolean);
+      const typeCounts = {};
+      types.forEach(t => { typeCounts[t] = (typeCounts[t] || 0) + 1; });
+      const topType = Object.entries(typeCounts).sort((a,b) => b[1]-a[1])[0];
+      const lastDate = g.items[0].completion_at ? new Date(g.items[0].completion_at).toLocaleDateString('ko-KR') : '-';
+      return `<div class="report-item" style="cursor:default">
+        <div class="report-left">
+          <div class="report-header">
+            <span class="report-title">${escHtml(g.building||'')} · ${escHtml(g.elevator||'')}</span>
+            <span style="background:#fff5f5;color:#c53030;border:1.5px solid #feb2b2;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:700">${g.items.length}회</span>
+          </div>
+          <div class="report-meta">
+            <span class="meta-item">🔧 주요유형: ${escHtml(topType ? topType[0] : '-')}</span>
+            <span class="meta-item">🕐 최근처리: ${lastDate}</span>
+          </div>
+          <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">
+            ${g.items.map(r => {
+              const d = r.completion_at ? new Date(r.completion_at) : null;
+              const dt = d ? `${d.getMonth()+1}/${d.getDate()}` : '-';
+              return `<span style="background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;padding:3px 8px;font-size:11px;color:#4a5568">${dt} ${escHtml(r.type||'')} ${r.completion_handler ? '('+escHtml(r.completion_handler)+')' : ''}</span>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
   function clearDoneFilter() {
     document.getElementById('done-date-from').value = '';
     document.getElementById('done-date-to').value   = '';
@@ -1665,6 +1765,8 @@
     document.getElementById('tab-duty-btn').style.display = (isAdmin || currentRole === '직원') ? 'inline-block' : 'none';
     // 고장처리내역 서브탭: 관리주체는 숨김
     document.getElementById('sub-tab-done-btn').style.display = currentRole !== '관리주체' ? 'inline-block' : 'none';
+    // 반복고장현황 서브탭: 직원/관리자만
+    document.getElementById('sub-tab-repeat-btn').style.display = (isAdmin || currentRole === '직원') ? 'inline-block' : 'none';
     document.getElementById('btn-change-pw').style.display = 'inline-block';
     const btn = document.getElementById('admin-btn');
     btn.textContent = getRoleIcon(currentRole) + ' ' + currentUser.username + ' 로그아웃';
