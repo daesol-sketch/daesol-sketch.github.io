@@ -207,7 +207,7 @@
 
     /* 탭 */
     .tabs { padding: 0 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
-    .tab-btn { padding: 12px 12px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+    .tab-btn { padding: 14px 14px; font-size: 14px; white-space: nowrap; flex-shrink: 0; }
     .sub-tabs { padding: 0 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .sub-tab-btn { padding: 9px 14px; font-size: 12px; flex-shrink: 0; }
 
@@ -572,9 +572,9 @@
           <button id="btn-sync-all-inspection" onclick="syncAllInspectionDates()" style="display:none;padding:7px 14px;background:#38a169;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">🔄 검사만료일 갱신</button>
           <button onclick="exportMgmtExcel()" style="padding:7px 14px;background:#1d6f42;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">📥 엑셀</button>
         </div>
-        <div style="width:100%;margin-top:8px">
-          <input class="search-input" type="text" id="mgmt-search" placeholder="🔍 현장명·점검자 검색" oninput="renderMgmtList()" onkeyup="renderMgmtList()" onchange="renderMgmtList()" style="margin-left:0;width:100%" />
-        </div>
+      </div>
+      <div style="position:sticky;top:50px;z-index:90;background:#f0f4f8;padding:4px 0;margin-bottom:12px">
+        <input class="search-input" type="text" id="mgmt-search" placeholder="🔍 현장명·점검자 검색" oninput="renderMgmtList()" onkeyup="renderMgmtList()" onchange="renderMgmtList()" style="margin-left:0;width:100%" />
       </div>
       <div id="mgmt-action-bar" style="display:none;align-items:center;gap:10px;background:#ebf8ff;border:1.5px solid #bee3f8;border-radius:10px;padding:10px 16px;margin-bottom:12px;flex-wrap:wrap">
         <span id="mgmt-action-count" style="font-size:13px;font-weight:700;color:#1a365d"></span>
