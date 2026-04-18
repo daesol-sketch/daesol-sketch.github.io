@@ -2691,6 +2691,10 @@
     el.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
     const { data, error } = await db.from('site_elevators').select('*').eq('site_id', currentSiteForElevator.id).order('id');
     if (error) { el.innerHTML = '<div class="loading-state">불러오기 실패</div>'; return; }
+    if (data) data.sort((a, b) => {
+      const nat = (s) => (s||'').replace(/(\d+)/g, n => n.padStart(10, '0'));
+      return nat(a.unit_name).localeCompare(nat(b.unit_name));
+    });
     if (!data || !data.length) {
       el.innerHTML = '<div class="empty-state" style="padding:24px 0"><div class="icon">🛗</div>등록된 호기가 없습니다.</div>';
       return;
