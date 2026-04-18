@@ -2541,6 +2541,10 @@
       selectedMgmtIds.clear();
       document.getElementById('mgmt-action-bar').style.display = 'none';
     }
+    if (type === 'all') {
+      const searchEl = document.getElementById('mgmt-search');
+      if (searchEl) searchEl.value = '';
+    }
     document.querySelectorAll('#mgmt-filter-all,#mgmt-filter-expire,#mgmt-filter-insp-expire').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     renderMgmtList();
