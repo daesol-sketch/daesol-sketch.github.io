@@ -1033,11 +1033,22 @@
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
+      const subJson = sub.toJSON();
+      const endpoint = subJson.endpoint;
+      // 같은 엔드포인트로 된 다른 계정 구독 삭제 (PC 공유 시 중복 방지)
+      const { data: existing } = await db.from('push_subscriptions').select('account_id, subscription');
+      if (existing) {
+        for (const row of existing) {
+          if (row.subscription?.endpoint === endpoint && row.account_id !== String(currentUser.id)) {
+            await db.from('push_subscriptions').delete().eq('account_id', row.account_id);
+          }
+        }
+      }
       const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
       await db.from('push_subscriptions').upsert({
         account_id: String(currentUser.id),
         username: currentUser.username,
-        subscription: sub.toJSON(),
+        subscription: subJson,
         is_mobile: isMobile
       }, { onConflict: 'account_id' });
     } catch(e) { console.warn('Push 구독 실패:', e); }
