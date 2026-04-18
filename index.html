@@ -1785,6 +1785,16 @@
 
   function doLogout() {
     if (!confirm('로그아웃 하시겠습니까?')) return;
+    // 로그아웃 시 브라우저 구독 해제 + DB 삭제
+    const logoutUserId = currentUser ? String(currentUser.id) : null;
+    if (logoutUserId && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(reg => {
+        reg.pushManager.getSubscription().then(sub => {
+          if (sub) sub.unsubscribe();
+        });
+      });
+      db.from('push_subscriptions').delete().eq('account_id', logoutUserId).then(() => {});
+    }
     currentRole = null; currentSite = null; currentUser = null;
     localStorage.removeItem('daesol_autologin');
     const btn = document.getElementById('admin-btn');
