@@ -1353,6 +1353,11 @@
     // 항상 DB에서 최신 데이터 가져옴 (다른 사용자 변경사항 반영)
     const { data: r, error } = await db.from('reports').select('*').eq('id', id).maybeSingle();
     if (!r || error) return;
+    // 배치완료 상태면 재배치 버튼 안내만 표시
+    if (r.status === '배치완료' && (currentRole === '직원' || currentRole === '관리자')) {
+      showToast('⚠️ 재배치 버튼을 눌러 처리를 시작하세요.');
+      return;
+    }
     // 로컬 캐시도 최신으로 교체
     const idx = reports.findIndex(x => x.id === id);
     if (idx !== -1) reports[idx] = r;
