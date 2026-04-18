@@ -1987,7 +1987,6 @@
         '<span class=report-id>' + r.id + '</span>' +
         '<span class=report-title>' + escHtml(r.building||'') + ' · ' + escHtml(r.elevator||'') + '</span>' +
         '<span class=status-badge status-PLACEHOLDER>' + r.status + '</span>'.replace('status-PLACEHOLDER', 'status-'+r.status) +
-        (r.status === '배치완료' && (currentRole==='직원'||currentRole==='관리자') ? '<button style=background:#2b6cb0;color:white;border:2px_solid_#2b6cb0;border-radius:8px;padding:9px_28px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1.4;white-space:nowrap;display:inline-flex;align-items:center;gap:4px onclick=event.stopPropagation();confirmDispatch(' + JSON.stringify(r.id) + ')>🔄 재배치</button>'.replace(/_/g,' ') : '') +
         (r.parts_replaced ? '<span style=background:#fffbeb;color:#744210;border:1px_solid_#fbd38d;border-radius:12px;padding:2px_8px;font-size:11px;font-weight:700>부품교체</span>'.replace(/_/g,' ') : '') +
         '</div>' +
         '<div class=report-meta>' +
@@ -2001,7 +2000,8 @@
         (hc ? '<div style=margin-top:4px;font-size:12px;color:#276749;background:#f0fff4;border-radius:6px;padding:4px_8px;display:inline-block>' .replace(/_/g,' ') + '처리: ' + escHtml(r.completion_handler||'') + (r.completion_content ? ' · ' + escHtml(r.completion_content) : '') + '</div>' : '') +
         '</div>' +
         '<div class=report-right onclick=event.stopPropagation()>' +
-        (currentRole==='관리자' ? '<button class=btn-delete onclick=deleteReport(' + JSON.stringify(r.id) + ')>삭제</button>' : '') +
+        (r.status === '배치완료' && (currentRole==='직원'||currentRole==='관리자') ? '<button style=background:#2b6cb0;color:white;border:none;border-radius:10px;padding:12px_20px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;width:100% onclick=confirmDispatch(' + JSON.stringify(r.id) + ')>🔄 재배치</button>'.replace(/_/g,' ') : '') +
+        (currentRole==='관리자' ? '<button class=btn-delete style=margin-top:6px;width:100% onclick=deleteReport(' + JSON.stringify(r.id) + ')>삭제</button>' : '') +
         '</div></div>';
     }).join('');
   }
