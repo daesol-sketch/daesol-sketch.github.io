@@ -1599,10 +1599,14 @@
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const end   = new Date(now.getFullYear(), now.getMonth()+1, 1).toISOString();
-    const [{ count: faultCount }, { count: pendingCount }] = await Promise.all([
-      db.from('reports').select('*', { count:'exact', head:true }).gte('created_at', start).lt('created_at', end),
-      db.from('reports').select('*', { count:'exact', head:true }).neq('status', '완료'),
-    ]);
+    const isStaff = currentRole === '직원';
+    let q1 = db.from('reports').select('*', { count:'exact', head:true }).gte('created_at', start).lt('created_at', end);
+    let q2 = db.from('reports').select('*', { count:'exact', head:true }).neq('status', '완료');
+    if (isStaff) {
+      q1 = q1.eq('handler_name', currentUser.username);
+      q2 = q2.eq('handler_name', currentUser.username);
+    }
+    const [{ count: faultCount }, { count: pendingCount }] = await Promise.all([q1, q2]);
     document.getElementById('home-stat-fault').textContent = faultCount ?? 0;
     document.getElementById('home-stat-pending').textContent = pendingCount ?? 0;
   }
