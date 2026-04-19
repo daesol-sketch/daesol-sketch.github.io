@@ -32,20 +32,24 @@ self.addEventListener('push', event => {
 
   const isCall = data.type === 'call';
 
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
       icon: './icon-192.png',
       badge: './icon-192.png',
       vibrate: [300, 150, 300, 150, 300],
-      requireInteraction: false,
+      requireInteraction: isMobile,
       data: { reportId: data.reportId || null, type: data.type || null }
     }).then(() => {
-      return new Promise(resolve => setTimeout(resolve, 10000)).then(() =>
-        self.registration.getNotifications().then(notifications =>
-          notifications.forEach(n => n.close())
-        )
-      );
+      if (!isMobile) {
+        return new Promise(resolve => setTimeout(resolve, 10000)).then(() =>
+          self.registration.getNotifications().then(notifications =>
+            notifications.forEach(n => n.close())
+          )
+        );
+      }
     })
   );
 });
