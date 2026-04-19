@@ -3376,9 +3376,10 @@
         const notif = new Notification('⚠️ 담당자 신고접수 미확인 알림', {
           body: handler + '담당자가 배치받은 알림을 확인하지 않았습니다. 전화로 신고내용을 전달해주세요.',
           icon: './icon-192.png',
-          requireInteraction: true
+          requireInteraction: false
         });
         notif.onclick = function() { notif.close(); closeAdminUnackModal(); };
+        setTimeout(() => notif.close(), 10000);
       });
     }
     // 탭이 보이면 모달도 표시 + 경고음

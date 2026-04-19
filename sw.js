@@ -38,16 +38,14 @@ self.addEventListener('push', event => {
       icon: './icon-192.png',
       badge: './icon-192.png',
       vibrate: [300, 150, 300, 150, 300],
-      requireInteraction: !isCall,
+      requireInteraction: false,
       data: { reportId: data.reportId || null, type: data.type || null }
     }).then(() => {
-      if (isCall) {
-        return new Promise(resolve => setTimeout(resolve, 15000)).then(() =>
-          self.registration.getNotifications().then(notifications =>
-            notifications.forEach(n => { if (n.data?.type === 'call') n.close(); })
-          )
-        );
-      }
+      return new Promise(resolve => setTimeout(resolve, 10000)).then(() =>
+        self.registration.getNotifications().then(notifications =>
+          notifications.forEach(n => n.close())
+        )
+      );
     })
   );
 });
