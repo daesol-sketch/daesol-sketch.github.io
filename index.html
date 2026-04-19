@@ -1226,17 +1226,14 @@
   </div>
 </div>
 
-<!-- 미처리 배치 알림 모달 -->
+<!-- 피드백 미처리 알림 모달 -->
 <div id="pending-alert-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2100;align-items:center;justify-content:center">
   <div style="background:white;border-radius:16px;padding:28px 28px 22px;width:360px;max-width:calc(100vw - 32px);box-shadow:0 8px 32px rgba(0,0,0,0.2)">
-    <div style="font-size:32px;text-align:center;margin-bottom:10px">⚠️</div>
-    <h3 style="font-size:17px;font-weight:800;color:#c53030;text-align:center;margin-bottom:6px">미처리 배치 건 알림</h3>
-    <p style="font-size:13px;color:#718096;text-align:center;margin-bottom:16px">담당자로 배치됐지만 아직 완료 처리되지 않은 건이 있어요.</p>
+    <div style="font-size:32px;text-align:center;margin-bottom:10px">🚨</div>
+    <h3 style="font-size:17px;font-weight:800;color:#c53030;text-align:center;margin-bottom:6px">🚨 피드백 미처리 알림</h3>
+    <p style="font-size:13px;color:#718096;text-align:center;margin-bottom:16px">피드백을 입력하고 완료처리 해주세요.</p>
     <div id="pending-alert-list" style="max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:18px"></div>
-    <div style="display:flex;gap:10px">
-      <button onclick="closePendingAlert()" style="flex:1;padding:11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;background:white;color:#4a5568">나중에</button>
-      <button onclick="goPendingList()" style="flex:1;padding:11px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;background:#c53030;color:white">목록 보기</button>
-    </div>
+    <button onclick="closePendingAlert()" style="width:100%;padding:11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;background:white;color:#4a5568">닫기</button>
   </div>
 </div>
 
@@ -3408,32 +3405,36 @@
     if (!document.hidden && currentRole === '관리자') checkUnacknowledgedAssignments();
   }
 
+  let _pendingFeedbackInterval = null;
+
   async function checkPendingAssignments() {
     if (!currentUser || currentRole === '관리자') return;
     const handler = currentUser.username;
-    const { data: d1 } = await db.from('reports').select('*').eq('status', '배치완료').eq('completion_handler', handler);
-    const { data: d2 } = await db.from('reports').select('*').eq('status', '처리중').eq('completion_handler', handler);
-    const data = [...(d1||[]), ...(d2||[])];
-    if (!data.length) return;
-    const thresholdAgo = new Date(Date.now() - 2 * 60 * 1000);
+    const thresholdAgo = new Date(Date.now() - 3 * 60 * 1000);
+    const { data } = await db.from('reports').select('*').eq('status', '처리중').eq('completion_handler', handler);
+    if (!data || !data.length) return;
     const overdue = data.filter(r => {
-      // 처리중은 confirmed_at 기준, 배치완료는 created_at 기준
-      const ref = r.status === '처리중' && r.confirmed_at ? new Date(r.confirmed_at) : new Date(r.created_at);
+      const ref = r.confirmed_at ? new Date(r.confirmed_at) : new Date(r.created_at);
       return ref < thresholdAgo;
     });
     if (!overdue.length) return;
 
     const listEl = document.getElementById('pending-alert-list');
     listEl.innerHTML = overdue.map(r => {
-      const elapsed = Math.floor((Date.now() - new Date(r.created_at)) / (1000 * 60 * 60));
-      return '<div style="background:#fff5f5;border:1.5px solid #fed7d7;border-radius:8px;padding:10px 14px">' +
+      const mins = Math.floor((Date.now() - new Date(r.confirmed_at || r.created_at)) / (1000 * 60));
+      return '<div onclick="closePendingAlert();showReportDetail(\'' + r.id + '\')" style="background:#fff5f5;border:1.5px solid #fed7d7;border-radius:8px;padding:10px 14px;cursor:pointer">' +
         '<div style="font-size:14px;font-weight:700;color:#1a202c">' + escHtml(r.building||'') + ' · ' + escHtml(r.elevator||'') + '</div>' +
-        '<div style="font-size:12px;color:#c53030;margin-top:3px">⏰ ' + elapsed + '시간째 미처리 · ' + escHtml(r.type||'') + '</div>' +
+        '<div style="font-size:12px;color:#c53030;margin-top:3px">⏰ ' + mins + '분째 미처리 · ' + escHtml(r.type||'') + ' · 탭하여 이동 →</div>' +
         '</div>';
     }).join('');
 
     document.getElementById('pending-alert-modal').style.display = 'flex';
     playAlertSound();
+  }
+
+  function startPendingFeedbackCheck() {
+    if (_pendingFeedbackInterval) clearInterval(_pendingFeedbackInterval);
+    _pendingFeedbackInterval = setInterval(checkPendingAssignments, 3 * 60 * 1000); // 3분마다
   }
 
   let alertAudio = null;
@@ -3498,7 +3499,7 @@
       if (searchEl) {
         const handler = currentUser.username;
         searchEl.value = handler;
-        setFilter('배치완료', document.querySelector('.filter-btn[onclick*="배치완료"]'));
+        setFilter('처리중', document.querySelector('.filter-btn[onclick*="처리중"]'));
       }
     }, 100);
   }
@@ -4582,10 +4583,10 @@
     showToast(getRoleIcon(currentRole) + ' ' + username + '님으로 로그인되었습니다.');
     renderReportPage();
     goDashboard();
-    setTimeout(() => checkPendingAssignments(), 500);
     subscribePush();
     startReportsRealtime();
     if (currentRole === '관리자') startAdminUnackCheck();
+    if (currentRole !== '관리자') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
   }
 
   let _realtimeChannel = null;
@@ -4714,17 +4715,21 @@
 
   /* ── INIT ── */
   buildTimeSelects();
-  // SW 메시지 수신 (알림 클릭 → 신고내역 탭 이동)
+  // SW 메시지 수신
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', e => {
       if (e.data?.action === 'switchTab') switchTab(e.data.tab, null);
+      if (e.data?.action === 'openReport' && e.data.reportId) {
+        switchTab('list', null);
+        setTimeout(() => showReportDetail(e.data.reportId), 400);
+      }
     });
   }
-  const _tabParam = new URLSearchParams(location.search).get('tab');
-  if (_tabParam) {
-    setTimeout(() => switchTab(_tabParam, null), 800);
-    history.replaceState(null, '', location.pathname);
-  }
+  const _urlParams = new URLSearchParams(location.search);
+  const _tabParam = _urlParams.get('tab');
+  const _openReportParam = _urlParams.get('openReport');
+  if (_tabParam) { setTimeout(() => switchTab(_tabParam, null), 800); history.replaceState(null, '', location.pathname); }
+  if (_openReportParam) { setTimeout(() => { switchTab('list', null); setTimeout(() => showReportDetail(_openReportParam), 400); }, 800); history.replaceState(null, '', location.pathname); }
 
   // 자동로그인 시도 → 완료 후 페이지 초기화
   (async () => {
@@ -4742,10 +4747,10 @@
           updateSiteBadge();
           setBuildingField(); initReportTime();
           setReporterField();
-          setTimeout(() => checkPendingAssignments(), 500);
           subscribePush();
           startReportsRealtime();
           if (currentRole === '관리자') startAdminUnackCheck();
+          if (currentRole !== '관리자') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
           goDashboard();
         } else {
           localStorage.removeItem('daesol_autologin');

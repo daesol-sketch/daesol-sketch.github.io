@@ -52,15 +52,17 @@ self.addEventListener('push', event => {
   );
 });
 
-// 알림 클릭 시 처리중으로 상태 변경 + 신고 내역 탭으로 이동
+// 알림 클릭 시 처리
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const reportId = event.notification.data?.reportId;
+  const type = event.notification.data?.type;
+  const isFeedback = type === 'feedback';
 
   event.waitUntil(
     Promise.all([
-      // 처리중으로 상태 변경 (reportId 있을 때만)
-      reportId ? fetch(SUPABASE_URL + '/rest/v1/reports?id=eq.' + encodeURIComponent(reportId), {
+      // feedback 타입은 상태 변경 안 함, 그 외 reportId 있으면 처리중으로 변경
+      (!isFeedback && reportId) ? fetch(SUPABASE_URL + '/rest/v1/reports?id=eq.' + encodeURIComponent(reportId), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -71,13 +73,18 @@ self.addEventListener('notificationclick', event => {
         body: JSON.stringify({ status: '처리중', confirmed_at: new Date().toISOString() })
       }).catch(() => {}) : Promise.resolve(),
 
-      // 앱 열기 + 탭 전환
+      // 앱 열기 + 메시지 전달
       clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-        if (list.length) {
-          list[0].postMessage({ action: 'switchTab', tab: 'list' });
-          return list[0].focus();
+        if (isFeedback && reportId) {
+          // 피드백 미처리: 해당 건 상세 모달로 이동
+          const msg = { action: 'openReport', reportId };
+          if (list.length) { list[0].postMessage(msg); return list[0].focus(); }
+          return clients.openWindow('./?openReport=' + reportId);
+        } else {
+          // 그 외: 신고내역 탭으로 이동
+          if (list.length) { list[0].postMessage({ action: 'switchTab', tab: 'list' }); return list[0].focus(); }
+          return clients.openWindow('./?tab=list');
         }
-        return clients.openWindow('./?tab=list');
       })
     ])
   );
