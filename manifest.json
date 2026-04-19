@@ -4,8 +4,8 @@
   "description": "승강기 유지보수 관리 시스템",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "background_color": "#000000",
+  "theme_color": "#111111",
   "orientation": "portrait-primary",
   "icons": [
     {
