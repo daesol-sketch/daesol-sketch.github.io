@@ -803,18 +803,18 @@
   <div class="page" id="page-duty">
     <div class="card">
       <h2>🕐 고장 담당자 현황</h2>
-      <div id="duty-current-shift" style="background:#ebf8ff;border:1.5px solid #bee3f8;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:14px;color:#2b6cb0;font-weight:600"></div>
+      <div id="duty-current-shift" style="background:#1a1a1a;border:1.5px solid #2a2a2a;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:14px;color:#63b3ed;font-weight:600"></div>
       <div id="duty-register-section" style="margin-bottom:24px">
-        <div style="font-size:15px;font-weight:700;color:#1a365d;margin-bottom:12px">내 당직 등록</div>
-        <div id="duty-my-info" style="background:#f7fafc;border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:#4a5568"></div>
-        <div style="font-size:13px;color:#718096;margin-bottom:10px">아래 버튼을 눌러 등록/해제를 하세요</div>
+        <div style="font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:12px">내 당직 등록</div>
+        <div id="duty-my-info" style="background:#1a1a1a;border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:#e2e8f0;border:1px solid #2a2a2a"></div>
+        <div style="font-size:13px;color:#888;margin-bottom:10px">아래 버튼을 눌러 등록/해제를 하세요</div>
         <div id="duty-weekday-section">
           <div style="margin-bottom:10px">
-            <div style="font-size:12px;font-weight:600;color:#4a5568;margin-bottom:6px">☀️ 주간</div>
+            <div style="font-size:12px;font-weight:600;color:#aaa;margin-bottom:6px">☀️ 주간</div>
             <button id="duty-btn-주간" onclick="toggleDutyShift('주간',null)" style="width:100%;padding:14px;border:none;border-radius:8px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">☀️ 주간 등록</button>
           </div>
           <div>
-            <div style="font-size:12px;font-weight:600;color:#4a5568;margin-bottom:6px">🌙 평일숙직</div>
+            <div style="font-size:12px;font-weight:600;color:#aaa;margin-bottom:6px">🌙 평일숙직</div>
             <div style="display:flex;gap:10px">
               <button id="duty-btn-평일-풍동" onclick="toggleDutyShift('평일당직','풍동숙직')" style="flex:1;padding:14px;border:none;border-radius:8px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">🌙 풍동숙직</button>
               <button id="duty-btn-평일-파주" onclick="toggleDutyShift('평일당직','파주대기')" style="flex:1;padding:14px;border:none;border-radius:8px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">🌙 파주대기</button>
@@ -822,14 +822,14 @@
           </div>
         </div>
         <div id="duty-weekend-section">
-          <div style="font-size:12px;font-weight:600;color:#4a5568;margin-bottom:6px">📅 주말/휴일</div>
+          <div style="font-size:12px;font-weight:600;color:#aaa;margin-bottom:6px">📅 주말/휴일</div>
           <div style="display:flex;gap:10px">
             <button id="duty-btn-주말-풍동" onclick="toggleDutyShift('주말당직','풍동숙직')" style="flex:1;padding:14px;border:none;border-radius:8px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">📅 풍동숙직</button>
             <button id="duty-btn-주말-파주" onclick="toggleDutyShift('주말당직','파주숙직')" style="flex:1;padding:14px;border:none;border-radius:8px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">📅 파주숙직</button>
           </div>
         </div>
       </div>
-      <div style="font-size:15px;font-weight:700;color:#1a365d;margin-bottom:12px">오늘 당직 현황</div>
+      <div style="font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:12px">오늘 당직 현황</div>
       <div id="duty-today-list"><div class="loading-state">불러오는 중...</div></div>
     </div>
   </div>
@@ -1377,9 +1377,9 @@
 
     const el = document.getElementById('duty-today-list');
     if (!el) return;
-    const shiftColor  = { '주간':'#2b6cb0', '평일당직':'#c05621', '주말당직':'#276749' };
-    const shiftBg     = { '주간':'#ebf8ff', '평일당직':'#fffaf0', '주말당직':'#f0fff4' };
-    const shiftBorder = { '주간':'#bee3f8', '평일당직':'#fbd38d', '주말당직':'#9ae6b4' };
+    const shiftColor  = { '주간':'#63b3ed', '평일당직':'#f6ad55', '주말당직':'#68d391' };
+    const shiftBg     = { '주간':'#0d1a2a', '평일당직':'#1a120a', '주말당직':'#0a1a10' };
+    const shiftBorder = { '주간':'#1e3a5f', '평일당직':'#3a2010', '주말당직':'#0a3020' };
     const rows = [
       { shift:'주간',     label:'☀️ 주간',      time:'08:30~17:30',
         cols:[ {key:'1팀',label:'1팀(2명)'}, {key:'2팀',label:'2팀(2명)'}, {key:'3팀',label:'3팀 파주(2명)'} ] },
@@ -1395,12 +1395,12 @@
         const nameHtml = found.length
           ? found.map(r => '<span style="font-size:15px;font-weight:700;color:'+color+'">'+r.handler_name+'</span>').join(' · ')
           : '<span style="font-size:13px;color:#a0aec0">미등록</span>';
-        return '<div style="flex:1;background:white;border-radius:8px;padding:10px 12px;border:1px solid '+border+'">'
-          + '<div style="font-size:11px;color:#718096;font-weight:600;margin-bottom:4px">'+col.label+'</div>'
+        return '<div style="flex:1;background:#ffffff;border-radius:8px;padding:10px 12px;border:1px solid '+border+'">'
+          + '<div style="font-size:11px;color:#888;font-weight:600;margin-bottom:4px">'+col.label+'</div>'
           + '<div>'+nameHtml+'</div></div>';
       }).join('');
       return '<div style="background:'+bg+';border:1.5px solid '+border+';border-radius:10px;padding:14px;margin-bottom:12px">'
-        + '<div style="font-size:14px;font-weight:700;color:'+color+';margin-bottom:10px">'+row.label+' <span style="font-size:11px;font-weight:400;color:#718096">'+row.time+'</span></div>'
+        + '<div style="font-size:14px;font-weight:700;color:'+color+';margin-bottom:10px">'+row.label+' <span style="font-size:11px;font-weight:400;color:#666">'+row.time+'</span></div>'
         + '<div style="display:flex;gap:8px;flex-wrap:wrap">'+colHtml+'</div></div>';
     }).join('');
   }
@@ -1599,13 +1599,8 @@
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const end   = new Date(now.getFullYear(), now.getMonth()+1, 1).toISOString();
-    const isStaff = currentRole === '직원';
-    let q1 = db.from('reports').select('*', { count:'exact', head:true }).gte('created_at', start).lt('created_at', end);
-    let q2 = db.from('reports').select('*', { count:'exact', head:true }).neq('status', '완료');
-    if (isStaff) {
-      q1 = q1.eq('handler_name', currentUser.username);
-      q2 = q2.eq('handler_name', currentUser.username);
-    }
+    let q1 = db.from('reports').select('*', { count:'exact', head:true }).gte('created_at', start).lt('created_at', end).eq('handler_name', currentUser.username);
+    let q2 = db.from('reports').select('*', { count:'exact', head:true }).neq('status', '완료').eq('handler_name', currentUser.username);
     const [{ count: faultCount }, { count: pendingCount }] = await Promise.all([q1, q2]);
     document.getElementById('home-stat-fault').textContent = faultCount ?? 0;
     document.getElementById('home-stat-pending').textContent = pendingCount ?? 0;
