@@ -54,18 +54,20 @@
     .form-group.full { grid-column: 1 / -1; }
     .form-group label { font-size: 13px; font-weight: 600; color: #888; }
     .form-group label .required { color: #e53e3e; margin-left: 2px; }
-    .form-group input, .form-group select, .form-group textarea { padding: 10px 14px; border: 1.5px solid #333; border-radius: 8px; font-size: 14px; font-family: inherit; color: #e2e8f0; transition: border-color 0.2s, box-shadow 0.2s; background: #222; }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #555; background: #2a2a2a; }
+    .form-group input, .form-group select, .form-group textarea { padding: 10px 14px; border: 1.5px solid #333; border-radius: 8px; font-size: 14px; font-family: inherit; color: #e2e8f0; transition: border-color 0.2s, box-shadow 0.2s; background: #1a1a1a; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #555; background: #1a1a1a; }
+    .form-group select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Ctext x='0' y='10' font-size='10' fill='%23888888'%3E%E2%96%BC%3C/text%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 12px; padding-right: 36px; }
     .form-group select option { background: #222; color: #e2e8f0; }
     .form-group textarea { resize: vertical; min-height: 100px; }
+    .form-group input::placeholder, .form-group textarea::placeholder { color: #e2e8f0; }
     .btn-submit { margin-top: 10px; width: 100%; padding: 14px; background: white; color: #000; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; transition: opacity 0.2s; }
     .btn-submit:hover { opacity: 0.88; }
     .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .autocomplete-wrapper { position: relative; display: flex; }
-    .autocomplete-wrapper input { flex: 1; border-radius: 8px 0 0 8px !important; }
-    .ac-toggle-btn { padding: 0 12px; background: #2a2a2a; border: 1.5px solid #333; border-left: none; border-radius: 0 8px 8px 0; cursor: pointer; color: #888; font-size: 12px; transition: background 0.15s; }
-    .ac-toggle-btn:hover { background: #333; }
+    .autocomplete-wrapper { position: relative; display: block; }
+    .autocomplete-wrapper input { width: 100%; box-sizing: border-box; border-radius: 8px !important; }
+    .ac-toggle-btn { position: absolute; right: 0; top: 0; bottom: 0; width: 36px; background: transparent; border: none; cursor: pointer; color: #888; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+    .ac-toggle-btn:hover { color: #e2e8f0; }
     .ac-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #1a1a1a; border: 1px solid #333; border-top: none; border-radius: 0 0 8px 8px; max-height: 260px; overflow-y: auto; z-index: 200; box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
     .ac-item { padding: 9px 14px; font-size: 13px; cursor: pointer; border-bottom: 1px solid #222; line-height: 1.4; transition: background 0.1s; color: #e2e8f0; }
     .ac-item:last-child { border-bottom: none; }
@@ -490,23 +492,23 @@
             <label>접수 일시</label>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <div style="position:relative;display:flex;flex-shrink:0;">
-                <input type="text" id="f-report-date" placeholder="2026-04-15" maxlength="10" oninput="autoFormatDate(this);if(this.value.length===10)clampReportDateTime()" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:14px;font-family:inherit;width:200px" />
-                <button type="button" onclick="document.getElementById('f-report-date-picker').showPicker()" style="width:40px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center" title="달력">📅</button>
+                <input type="text" id="f-report-date" placeholder="2026-04-15" maxlength="10" oninput="autoFormatDate(this);if(this.value.length===10)clampReportDateTime()" style="padding:10px 14px;border:1.5px solid #333;border-right:none;border-radius:8px 0 0 8px;font-size:14px;font-family:inherit;width:200px;background:#1a1a1a;color:#e2e8f0" />
+                <button type="button" onclick="document.getElementById('f-report-date-picker').showPicker()" style="width:40px;border:1.5px solid #333;border-left:none;border-radius:0 8px 8px 0;background:#1a1a1a;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center" title="달력">📅</button>
                 <input type="date" id="f-report-date-picker" style="position:absolute;left:0;top:30px;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('f-report-date').value=this.value;clampReportDateTime()" />
               </div>
               <div class="time-select-wrapper" style="gap:4px;align-items:center;flex:1">
-                <select id="f-report-hour" onchange="syncTimeSelect('f-report-time','f-report-hour','f-report-min');clampReportDateTime()" style="flex:1;padding:10px 6px;border:1.5px solid #444;border-radius:8px;font-size:14px;font-family:inherit;background:#1a1a1a;color:#e2e8f0"></select>
+                <select id="f-report-hour" onchange="syncTimeSelect('f-report-time','f-report-hour','f-report-min');clampReportDateTime()" style="flex:1;padding:10px 6px;border:1.5px solid #333;border-radius:8px;font-size:14px;font-family:inherit;background:#1a1a1a;color:#e2e8f0"></select>
                 <span style="color:#e2e8f0;font-weight:700;font-size:16px">:</span>
-                <select id="f-report-min" onchange="syncTimeSelect('f-report-time','f-report-hour','f-report-min');clampReportDateTime()" style="flex:1;padding:10px 6px;border:1.5px solid #444;border-radius:8px;font-size:14px;font-family:inherit;background:#1a1a1a;color:#e2e8f0"></select>
+                <select id="f-report-min" onchange="syncTimeSelect('f-report-time','f-report-hour','f-report-min');clampReportDateTime()" style="flex:1;padding:10px 6px;border:1.5px solid #333;border-radius:8px;font-size:14px;font-family:inherit;background:#1a1a1a;color:#e2e8f0"></select>
               </div>
-              <input type="time" id="f-report-time" class="time-input-pc" oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3)){this.blur();clampReportDateTime();}this._v=this.value;" style="padding:10px 14px;border:1.5px solid #444;border-radius:8px;font-size:14px;font-family:inherit;width:200px;flex-shrink:0;background:#1a1a1a;color:#e2e8f0" />
-              <button type="button" onclick="setReportTimeNow()" style="padding:9px 14px;background:#2a2a2a;border:1.5px solid #444;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;color:#e2e8f0;cursor:pointer;white-space:nowrap;transition:background 0.15s" onmouseover="this.style.background='#333'" onmouseout="this.style.background='#2a2a2a'">🕐 현재 시간</button>
+              <input type="time" id="f-report-time" class="time-input-pc" oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3)){this.blur();clampReportDateTime();}this._v=this.value;" style="padding:10px 14px;border:1.5px solid #444;border-radius:8px;font-size:14px;font-family:inherit;width:200px;flex-shrink:0;background:#1a1a1a;color:#e2e8f0;border-color:#333" />
+              <button type="button" onclick="setReportTimeNow()" style="padding:9px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;color:#e2e8f0;cursor:pointer;white-space:nowrap;transition:background 0.15s" onmouseover="this.style.background='#2a2a2a'" onmouseout="this.style.background='#1a1a1a'">🕐 현재 시간</button>
             </div>
           </div>
           <div class="form-group">
             <label>건물명 <span class="required">*</span></label>
             <div class="autocomplete-wrapper">
-              <input type="text" id="f-building" placeholder="건물명 입력 후 목록에서 선택" required autocomplete="off"
+              <input type="text" id="f-building" placeholder="건물명 입력 후 목록에서 선택" required autocomplete="off" style="padding-right:36px;width:100%"
                 oninput="acInput(this)" onkeydown="acKeydown(event)" onblur="setTimeout(acClose,200)" />
               <button type="button" class="ac-toggle-btn" onmousedown="event.preventDefault();acToggleAll()" title="전체 목록">▼</button>
               <div class="ac-dropdown" id="ac-dropdown" style="display:none"></div>
@@ -533,13 +535,13 @@
           <input type="hidden" id="f-priority" value="" />
           <div class="form-group" id="team-select-group">
             <label>담당팀 선택</label>
-            <select id="f-team" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit" onchange="loadDutyHandlers()">
+            <select id="f-team" style="padding:10px 14px;padding-right:36px;border:1.5px solid #333;border-radius:8px;font-size:14px;font-family:inherit;background:#1a1a1a url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 12 12%27%3E%3Ctext x=%270%27 y=%2710%27 font-size=%2710%27 fill=%27%23888888%27%3E%E2%96%BC%3C/text%3E%3C/svg%3E') no-repeat right 12px center / 12px;-webkit-appearance:none;appearance:none;color:#e2e8f0" onchange="loadDutyHandlers()">
               <option value="">-- 팀 선택 --</option>
             </select>
           </div>
           <div class="form-group" id="handler-select-group">
             <label>담당자 선택</label>
-            <select id="f-handler" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit">
+            <select id="f-handler" style="padding:10px 14px;padding-right:36px;border:1.5px solid #333;border-radius:8px;font-size:14px;font-family:inherit;background:#1a1a1a url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 12 12%27%3E%3Ctext x=%270%27 y=%2710%27 font-size=%2710%27 fill=%27%23888888%27%3E%E2%96%BC%3C/text%3E%3C/svg%3E') no-repeat right 12px center / 12px;-webkit-appearance:none;appearance:none;color:#e2e8f0">
               <option value="">-- 담당자 선택 --</option>
             </select>
             <span id="handler-no-duty" style="display:none;font-size:12px;color:#c53030;margin-top:4px">⚠️ 현재 등록된 당직자가 없습니다.</span>
@@ -1214,7 +1216,7 @@
 <div id="admin-unack-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2100;align-items:center;justify-content:center">
   <div style="background:white;border-radius:16px;padding:28px 28px 22px;width:380px;max-width:calc(100vw - 32px);box-shadow:0 8px 32px rgba(0,0,0,0.2)">
     <div style="font-size:32px;text-align:center;margin-bottom:10px">📵</div>
-    <h3 style="font-size:17px;font-weight:800;color:#c05621;text-align:center;margin-bottom:6px">담당자 미확인 알림</h3>
+    <h3 style="font-size:17px;font-weight:800;color:#c05621;text-align:center;margin-bottom:6px">⚠️ 담당자 신고접수 미확인 알림</h3>
     <p style="font-size:13px;color:#718096;text-align:center;margin-bottom:16px">배치 후 3분이 지났지만 담당자가 아직 확인하지 않은 건이 있습니다.</p>
     <div id="admin-unack-list" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:18px"></div>
     <div style="display:flex;gap:10px">
@@ -3370,10 +3372,17 @@
         '<div style="font-size:12px;color:#c05621;margin-top:3px">⏰ ' + mins + '분째 미확인 · 담당: ' + escHtml(r.completion_handler||'미배치') + '</div>' +
         '</div>';
     }).join('');
-    // 항상 OS 알림 발송 (권한 있으면)
+    // 항상 OS 알림 발송 (권한 있으면) — 담당자별로 각각
     if (Notification.permission === 'granted') {
-      const names = data.map(r => (r.building||'') + (r.completion_handler ? ' ('+r.completion_handler+')' : '')).join(', ');
-      new Notification('⚠️ 담당자 미확인 알림', { body: names + '\n확인 후 처리해주세요.', icon: './icon-192.png', requireInteraction: true });
+      const handlers = [...new Set(data.map(r => r.completion_handler).filter(Boolean))];
+      handlers.forEach(handler => {
+        const notif = new Notification('⚠️ 담당자 신고접수 미확인 알림', {
+          body: handler + '담당자가 배치받은 알림을 확인하지 않았습니다. 전화로 신고내용을 전달해주세요.',
+          icon: './icon-192.png',
+          requireInteraction: true
+        });
+        notif.onclick = function() { notif.close(); closeAdminUnackModal(); };
+      });
     }
     // 탭이 보이면 모달도 표시 + 경고음
     if (!document.hidden) {
@@ -3388,7 +3397,7 @@
 
   function startAdminUnackCheck() {
     if (_adminUnackInterval) clearInterval(_adminUnackInterval);
-    _adminUnackInterval = setInterval(checkUnacknowledgedAssignments, 60 * 1000); // 60초마다
+    _adminUnackInterval = setInterval(checkUnacknowledgedAssignments, 2 * 60 * 1000); // 2분마다
     setTimeout(checkUnacknowledgedAssignments, 2000); // 로그인 후 2초 뒤 첫 체크
     // 탭이 다시 활성화될 때도 체크
     document.removeEventListener('visibilitychange', _onAdminVisibility);
@@ -4478,7 +4487,7 @@
     const { data: elevData } = await db.from('site_elevators').select('unit_name,elevator_number').eq('site_id', siteData.id).order('id');
     if (!elevData || !elevData.length) { resetElevatorInput(); return; }
     document.getElementById('f-regno').value = '';
-    wrap.innerHTML = `<select id="f-elevator" required onchange="fillRegno(this)" style="padding:10px 14px;border:1.5px solid #333;border-radius:8px;font-size:14px;font-family:inherit;color:#e2e8f0;background:#222;width:100%">
+    wrap.innerHTML = `<select id="f-elevator" required onchange="fillRegno(this)" style="padding:10px 14px;padding-right:36px;border:1.5px solid #333;border-radius:8px;font-size:14px;font-family:inherit;color:#e2e8f0;background:#1a1a1a url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 12 12%27%3E%3Ctext x=%270%27 y=%2710%27 font-size=%2710%27 fill=%27%23888888%27%3E%E2%96%BC%3C/text%3E%3C/svg%3E') no-repeat right 12px center / 12px;-webkit-appearance:none;appearance:none;width:100%">
       <option value="" data-regno="">-- 호기 선택 --</option>
       ${elevData.map(e => `<option value="${escHtml(e.unit_name)}" data-regno="${escHtml(e.elevator_number||'')}">${escHtml(e.unit_name)}${e.elevator_number ? ' (' + escHtml(e.elevator_number) + ')' : ''}</option>`).join('')}
     </select>`;
