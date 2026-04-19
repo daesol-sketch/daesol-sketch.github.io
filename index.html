@@ -1640,8 +1640,8 @@
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const end   = new Date(now.getFullYear(), now.getMonth()+1, 1).toISOString();
-    let q1 = db.from('reports').select('*', { count:'exact', head:true }).gte('created_at', start).lt('created_at', end).eq('handler_name', currentUser.username);
-    let q2 = db.from('reports').select('*', { count:'exact', head:true }).neq('status', '완료').eq('handler_name', currentUser.username);
+    let q1 = db.from('reports').select('*', { count:'exact', head:true }).gte('created_at', start).lt('created_at', end).eq('completion_handler', currentUser.username);
+    let q2 = db.from('reports').select('*', { count:'exact', head:true }).neq('status', '완료').eq('completion_handler', currentUser.username);
     let q3 = db.from('reports').select('*', { count:'exact', head:true }).in('status', ['배치완료', '접수중']);
     const [{ count: faultCount }, { count: pendingCount }, { count: unhandledCount }] = await Promise.all([q1, q2, q3]);
     document.getElementById('home-stat-fault').textContent = faultCount ?? 0;
