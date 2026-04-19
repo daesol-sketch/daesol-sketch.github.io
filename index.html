@@ -23,7 +23,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; overflow-anchor: none; }
     body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background: #0d0d0d; color: #e2e8f0; min-height: 100vh; }
 
-    header { background: #111; color: white; padding: 0 16px; height: 56px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #222; }
+    header { position: fixed; top: 0; left: 0; right: 0; z-index: 200; background: #111; color: white; padding: 0 16px; height: 56px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #222; }
     .header-right { display: flex; align-items: center; gap: 8px; }
     #header-date { font-size: 12px; opacity: 0.5; white-space: nowrap; }
     #hamburger-btn { background: none; border: none; color: white; font-size: 26px; cursor: pointer; padding: 4px 8px; line-height: 1; }
@@ -40,7 +40,7 @@
     .sub-page { display: none; }
     .sub-page.active { display: block; }
 
-    main { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+    main { max-width: 960px; margin: 0 auto; padding: 32px 24px; padding-top: 88px; }
     main:has(#page-home.active) { max-width: 480px; padding: 0; }
     main:has(#page-mgmt.active) { max-width: 100%; padding: 32px 16px; }
     .page { display: none; }
@@ -96,7 +96,7 @@
     .report-item:hover { border-color: #444; }
     .report-left { display: flex; flex-direction: column; gap: 6px; }
     .report-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .report-id { font-size: 12px; color: #555; font-weight: 600; }
+    .report-id { font-size: 12px; color: #999; font-weight: 600; }
     .report-title { font-size: 16px; font-weight: 700; color: #e2e8f0; }
     .report-meta { display: flex; gap: 16px; flex-wrap: wrap; }
     .meta-item { font-size: 15px; color: #888; display: flex; align-items: center; gap: 4px; }
@@ -110,7 +110,7 @@
     .status-완료     { background: #0a2a1a; color: #68d391; border: 1.5px solid #0a4a2a; }
     .status-select { padding: 6px 10px; border: 1px solid #333; border-radius: 6px; font-size: 13px; font-family: inherit; cursor: pointer; background: #222; color: #e2e8f0; width: 100%; }
     .status-select:focus { outline: none; border-color: #555; }
-    .btn-delete { background: none; border: 1px solid #3a1a1a; color: #fc8181; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-family: inherit; cursor: pointer; font-weight: 600; transition: all 0.2s; width: 100%; }
+    .btn-delete { background: none; border: 1px solid #c53030; color: #fc8181; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-family: inherit; cursor: pointer; font-weight: 600; transition: all 0.2s; width: 100%; }
     .btn-delete:hover { background: #2a0a0a; }
     .priority-high { color: #fc8181; font-weight: 700; }
     .priority-mid  { color: #f6ad55; font-weight: 700; }
@@ -142,6 +142,18 @@
 
     /* 모달 */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    @media (min-width: 769px) { .time-select-wrapper { display: none !important; } .time-input-pc { display: block !important; } }
+    @media (max-width: 768px) {
+      .time-select-wrapper { display: flex !important; }
+      .time-input-pc { display: none !important; }
+      .rdm-datetime-row { flex-wrap: wrap !important; }
+      .rdm-date-wrap { flex: 1 !important; min-width: 0 !important; flex-shrink: 1 !important; }
+      .rdm-date-wrap input[type=text] { width: 100% !important; box-sizing: border-box; }
+      .rdm-info-grid { grid-template-columns: 1fr 1fr !important; }
+      .rdm-edit-grid { grid-template-columns: 1fr !important; }
+    }
+    #f-report-time::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.7; cursor: pointer; }
+    #rdm-time::-webkit-calendar-picker-indicator { filter: none; opacity: 0.5; cursor: pointer; }
     .modal-box { background: #1a1a1a; border: 1px solid #333; border-radius: 14px; padding: 36px 32px 28px; width: 360px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); text-align: center; }
     .modal-box .modal-icon { font-size: 36px; margin-bottom: 10px; }
     .modal-box h3 { font-size: 18px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
@@ -158,7 +170,7 @@
     .modal-divider { border: none; border-top: 1px solid #2a2a2a; margin: 16px 0; }
     .modal-link { font-size: 13px; color: #aaa; cursor: pointer; text-decoration: underline; }
 
-    #toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1a3a2a; color: #68d391; border: 1px solid #2a5a3a; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.4); transition: transform 0.3s ease; z-index: 999; }
+    #toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: #2a1e00; color: #f6ad55; border: 1px solid #b7791f; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.5); transition: transform 0.3s ease; z-index: 999; }
     #toast.show { transform: translateX(-50%) translateY(0); }
 
     @media (max-width: 600px) {
@@ -168,7 +180,7 @@
       .report-item { grid-template-columns: 1fr; }
       .report-right { flex-direction: row; flex-wrap: wrap; align-items: center; min-width: unset; }
       .search-input { width: 100%; margin-left: 0; }
-      main { padding: 20px 14px; }
+      main { padding: 20px 14px; padding-top: 76px; }
       .card { padding: 20px 18px; }
       .modal-box { width: calc(100% - 40px); padding: 28px 20px; }
       #header-date { display: none; }
@@ -277,7 +289,7 @@
     .sub-tab-btn { padding: 9px 14px; font-size: 12px; flex-shrink: 0; }
 
     /* 본문 */
-    main { padding: 16px 10px; }
+    main { padding: 16px 10px; padding-top: 70px; }
     main:has(#page-mgmt.active) { padding: 16px 6px; }
     .card { padding: 16px 14px; }
 
@@ -287,7 +299,7 @@
     /* 필터/검색 줄바꿈 */
     .filters { flex-wrap: wrap; gap: 8px; }
     #mgmt-search { width: 100% !important; }
-    #mgmt-contract-filter { width: 100%; }
+    #mgmt-team-filter { width: 100%; }
 
     /* 통계 */
     #mgmt-total-stats { font-size: 12px; }
@@ -356,10 +368,11 @@
   <div class="drawer-section-title">메뉴</div>
   <button class="drawer-menu-item" onclick="goDashboard();closeNavMenu()"><span class="menu-icon">🏠</span> 홈</button>
   <button class="drawer-menu-item tab-btn" id="tab-duty-btn" onclick="switchTab('duty');closeNavMenu()" style="display:none"><span class="menu-icon">🕐</span> 고장 담당자 현황</button>
-  <button class="drawer-menu-item tab-btn" id="tab-fault-btn" onclick="switchTab('fault');closeNavMenu()"><span class="menu-icon">🔧</span> 고장 관리 <span class="count-badge" id="pending-count" style="display:none;margin-left:6px"></span></button>
-  <button class="drawer-menu-item tab-btn" id="tab-mgmt-btn" onclick="switchTab('mgmt');closeNavMenu()" style="display:none"><span class="menu-icon">🏢</span> 관리현장 <span id="mgmt-expire-badge" class="count-badge" style="display:none;margin-left:6px"></span></button>
-  <button class="drawer-menu-item tab-btn" id="tab-sites-btn" onclick="switchTab('sites');closeNavMenu()" style="display:none"><span class="menu-icon">👤</span> 관리</button>
+  <button class="drawer-menu-item tab-btn" id="tab-fault-btn" onclick="switchTab('fault');closeNavMenu()"><span class="menu-icon">🔧</span> 고장 관리</button>
+  <button class="drawer-menu-item tab-btn" id="tab-mgmt-btn" onclick="switchTab('mgmt');closeNavMenu()" style="display:none"><span class="menu-icon">🏢</span> 관리현장</button>
   <button class="drawer-menu-item tab-btn" id="tab-jungong-btn" onclick="switchTab('jungong');closeNavMenu()" style="display:none"><span class="menu-icon">📋</span> 준공계</button>
+  <button class="drawer-menu-item tab-btn" id="tab-sites-btn" onclick="switchTab('sites');closeNavMenu()" style="display:none"><span class="menu-icon">👤</span> 인사 관리</button>
+  <button class="drawer-menu-item tab-btn" id="tab-holiday-btn" onclick="switchTab('holiday');closeNavMenu()" style="display:none"><span class="menu-icon">📅</span> 휴일 관리</button>
   <div style="flex:1"></div>
   <button class="drawer-logout" onclick="doLogout()">로그아웃</button>
 </div>
@@ -414,7 +427,7 @@
   <!-- 대시보드 홈 -->
   <div class="page active" id="page-home">
     <div class="home-profile-card">
-      <div class="home-greeting">안녕하세요 👋</div>
+      <div class="home-greeting">안녕하세요 <span id="home-greeting-name"></span>님 👋</div>
       <div style="font-size:13px;color:#f6ad55;margin-bottom:16px">안전이 최우선, 오늘도 화이팅!</div>
       <div class="home-user-name" id="home-user-name">-</div>
       <div class="home-user-team" id="home-user-team">-</div>
@@ -431,8 +444,9 @@
     </div>
     <div class="home-section-title">빠른 메뉴</div>
     <div class="home-grid" id="home-grid">
-      <button class="home-grid-item" onclick="switchTab('fault')">
+      <button class="home-grid-item" onclick="switchTab('fault')" style="position:relative">
         <span class="gi-icon">🔧</span><span class="gi-label">고장 관리</span>
+        <span id="home-fault-badge" style="display:none;position:absolute;top:6px;right:8px;background:#e53e3e;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700"></span>
       </button>
       <button class="home-grid-item" onclick="switchTab('duty')" id="home-gi-duty" style="display:none">
         <span class="gi-icon">🕐</span><span class="gi-label">담당자 현황</span>
@@ -475,13 +489,18 @@
           <div class="form-group full">
             <label>접수 일시</label>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <div style="position:relative;display:flex;flex:1;min-width:130px">
-                <input type="text" id="f-report-date" placeholder="2026-04-15" maxlength="10" oninput="autoFormatDate(this);if(this.value.length===10)clampReportDateTime()" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:14px;font-family:inherit;width:100%" />
+              <div style="position:relative;display:flex;flex-shrink:0;">
+                <input type="text" id="f-report-date" placeholder="2026-04-15" maxlength="10" oninput="autoFormatDate(this);if(this.value.length===10)clampReportDateTime()" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:14px;font-family:inherit;width:200px" />
                 <button type="button" onclick="document.getElementById('f-report-date-picker').showPicker()" style="width:40px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center" title="달력">📅</button>
-                <input type="date" id="f-report-date-picker" style="position:absolute;right:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('f-report-date').value=this.value;clampReportDateTime()" />
+                <input type="date" id="f-report-date-picker" style="position:absolute;left:0;top:30px;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('f-report-date').value=this.value;clampReportDateTime()" />
               </div>
-              <input type="time" id="f-report-time" oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3)){this.blur();clampReportDateTime();}this._v=this.value;" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit;flex:1;min-width:110px" />
-              <button type="button" onclick="setReportTimeNow()" style="padding:9px 14px;background:#edf2f7;border:1.5px solid #cbd5e0;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;color:#4a5568;cursor:pointer;white-space:nowrap;transition:background 0.15s" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#edf2f7'">🕐 현재 시간</button>
+              <div class="time-select-wrapper" style="gap:4px;align-items:center;flex:1">
+                <select id="f-report-hour" onchange="syncTimeSelect('f-report-time','f-report-hour','f-report-min');clampReportDateTime()" style="flex:1;padding:10px 6px;border:1.5px solid #444;border-radius:8px;font-size:14px;font-family:inherit;background:#1a1a1a;color:#e2e8f0"></select>
+                <span style="color:#e2e8f0;font-weight:700;font-size:16px">:</span>
+                <select id="f-report-min" onchange="syncTimeSelect('f-report-time','f-report-hour','f-report-min');clampReportDateTime()" style="flex:1;padding:10px 6px;border:1.5px solid #444;border-radius:8px;font-size:14px;font-family:inherit;background:#1a1a1a;color:#e2e8f0"></select>
+              </div>
+              <input type="time" id="f-report-time" class="time-input-pc" oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3)){this.blur();clampReportDateTime();}this._v=this.value;" style="padding:10px 14px;border:1.5px solid #444;border-radius:8px;font-size:14px;font-family:inherit;width:200px;flex-shrink:0;background:#1a1a1a;color:#e2e8f0" />
+              <button type="button" onclick="setReportTimeNow()" style="padding:9px 14px;background:#2a2a2a;border:1.5px solid #444;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;color:#e2e8f0;cursor:pointer;white-space:nowrap;transition:background 0.15s" onmouseover="this.style.background='#333'" onmouseout="this.style.background='#2a2a2a'">🕐 현재 시간</button>
             </div>
           </div>
           <div class="form-group">
@@ -696,8 +715,31 @@
       <h2>👤 계정 관리
         <button class="btn-add-site" onclick="showAddAccountModal()">+ 계정 추가</button>
       </h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <select id="acc-filter-team" onchange="renderAccountList()" style="padding:7px 12px;border:1.5px solid #333;border-radius:20px;font-size:13px;font-family:inherit;color:#e2e8f0;background:#1a1a1a;cursor:pointer">
+          <option value="">팀 전체</option>
+          <option value="1팀">1팀</option>
+          <option value="2팀">2팀</option>
+          <option value="3팀">3팀</option>
+          <option value="상주">상주</option>
+          <option value="관리팀">관리팀</option>
+        </select>
+        <select id="acc-filter-position" onchange="renderAccountList()" style="padding:7px 12px;border:1.5px solid #333;border-radius:20px;font-size:13px;font-family:inherit;color:#e2e8f0;background:#1a1a1a;cursor:pointer">
+          <option value="">직급 전체</option>
+          <option>대표</option><option>전무</option><option>이사</option><option>부장</option>
+          <option>차장</option><option>과장</option><option>대리</option><option>사원</option>
+        </select>
+        <select id="acc-filter-role" onchange="renderAccountList()" style="padding:7px 12px;border:1.5px solid #333;border-radius:20px;font-size:13px;font-family:inherit;color:#e2e8f0;background:#1a1a1a;cursor:pointer">
+          <option value="">유형 전체</option>
+          <option value="직원">직원</option>
+          <option value="관리자">관리자</option>
+        </select>
+      </div>
       <div class="site-table-wrap"><div id="sites-list"><div class="loading-state">불러오는 중...</div></div></div>
     </div>
+  </div>
+  <!-- 휴일 관리 -->
+  <div class="page" id="page-holiday">
     <div class="card">
       <h2>📅 휴일 관리</h2>
       <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
@@ -724,23 +766,19 @@
         <button class="filter-btn" id="mgmt-filter-insp-expire" onclick="setMgmtFilter('insp_expire',this)">🔍 검사만료 <span id="mgmt-insp-expire-badge" style="background:#e53e3e;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;display:none"></span></button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span id="mgmt-total-stats" style="font-size:13px;color:#4a5568;white-space:nowrap"></span>
-          <select id="mgmt-contract-filter" onchange="renderMgmtList()" style="padding:7px 12px;border:1.5px solid #cbd5e0;border-radius:20px;font-size:13px;font-family:inherit;color:#4a5568;background:white;cursor:pointer">
-            <option value="">계약구분 전체</option>
-            <option>TK-POG</option>
-            <option>TK-POG MAX</option>
-            <option>TK-POG MAX PLUS</option>
-            <option>TK-FM</option>
-            <option>TK-FM MAX</option>
-            <option>TK-FM MAX PLUS</option>
-            <option>대솔POG</option>
-            <option>대솔FM</option>
+          <select id="mgmt-team-filter" onchange="renderMgmtList()" style="padding:7px 12px;border:1.5px solid #333;border-radius:20px;font-size:13px;font-family:inherit;color:#e2e8f0;background:#1a1a1a;cursor:pointer">
+            <option value="">팀 전체</option>
+            <option value="1팀">1팀</option>
+            <option value="2팀">2팀</option>
+            <option value="3팀">3팀</option>
+            <option value="상주">상주</option>
           </select>
           <button id="btn-sync-all-inspection" onclick="syncAllInspectionDates()" style="display:none;padding:7px 14px;background:#38a169;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">🔄 검사만료일 갱신</button>
           <button onclick="exportMgmtExcel()" style="padding:7px 14px;background:#1d6f42;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">📥 엑셀</button>
         </div>
       </div>
       <div style="margin-bottom:12px">
-        <input class="search-input" type="text" id="mgmt-search" placeholder="🔍 현장명·점검자 검색" oninput="renderMgmtList()" onkeyup="renderMgmtList()" onchange="renderMgmtList()" style="margin-left:0;width:100%" />
+        <input class="search-input" type="text" id="mgmt-search" placeholder="🔍 현장명·점검자·승강기번호 검색" oninput="renderMgmtList()" onkeyup="renderMgmtList()" onchange="renderMgmtList()" style="margin-left:0;width:100%" />
       </div>
       <div id="mgmt-action-bar" style="display:none;align-items:center;gap:10px;background:#ebf8ff;border:1.5px solid #bee3f8;border-radius:10px;padding:10px 16px;margin-bottom:12px;flex-wrap:wrap">
         <span id="mgmt-action-count" style="font-size:13px;font-weight:700;color:#1a365d"></span>
@@ -806,7 +844,6 @@
       <div id="duty-current-shift" style="background:#1a1a1a;border:1.5px solid #2a2a2a;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:14px;color:#63b3ed;font-weight:600"></div>
       <div id="duty-register-section" style="margin-bottom:24px">
         <div style="font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:12px">내 당직 등록</div>
-        <div id="duty-my-info" style="background:#1a1a1a;border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:#e2e8f0;border:1px solid #2a2a2a"></div>
         <div style="font-size:13px;color:#888;margin-bottom:10px">아래 버튼을 눌러 등록/해제를 하세요</div>
         <div id="duty-weekday-section">
           <div style="margin-bottom:10px">
@@ -850,19 +887,24 @@
       </div>
       <div id=rdm-edit-section style=margin-top:24px>
         <div style=font-size:14px;font-weight:700;color:#e53e3e;letter-spacing:0.5px;margin-bottom:14px>처리 정보</div>
-        <div style=display:grid;grid-template-columns:1fr 1fr;gap:12px 16px>
+        <div class="rdm-edit-grid" style=display:grid;grid-template-columns:1fr 1fr;gap:12px 16px>
           <div><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리 상태</label>
             <select id=rdm-status style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit><option>배치완료</option><option>처리중</option><option>완료</option></select></div>
           <div><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리담당자</label>
             <input type=text id=rdm-handler placeholder=담당자 이름 style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit /></div>
           <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리일시</label>
-            <div style=display:flex;gap:8px>
-            <div style="position:relative;display:flex;flex:1">
-            <input type=text id=rdm-date placeholder="2026-04-15" maxlength=10 oninput="autoFormatDate(this)" style=padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:100% />
-            <button type=button onclick="document.getElementById('rdm-date-picker').showPicker()" style=width:36px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center>📅</button>
-            <input type=date id=rdm-date-picker style=position:absolute;right:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none oninput="document.getElementById('rdm-date').value=this.value" />
+            <div class="rdm-datetime-row" style=display:flex;gap:8px>
+            <div class="rdm-date-wrap" style="position:relative;display:flex;flex-shrink:0;">
+            <input type=text id=rdm-date placeholder="2026-04-15" maxlength=10 oninput="autoFormatDate(this)" style="padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:140px;background:#fff;color:#1a202c" />
+            <button type=button onclick="document.getElementById('rdm-date-picker').showPicker()" style="width:36px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">📅</button>
+            <input type=date id=rdm-date-picker style="position:absolute;left:0;top:30px;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('rdm-date').value=this.value" />
             </div>
-            <input type=time id=rdm-time oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3))this.blur();this._v=this.value;" style=flex:1;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit />
+            <div class="time-select-wrapper" style="gap:4px;align-items:center;flex:1">
+              <select id="rdm-hour" onchange="syncTimeSelect('rdm-time','rdm-hour','rdm-min')" style="flex:1;padding:8px 6px;border:1.5px solid #444;border-radius:8px;font-size:13px;font-family:inherit;background:#1a1a1a;color:#e2e8f0"></select>
+              <span style="color:#e2e8f0;font-weight:700">:</span>
+              <select id="rdm-min" onchange="syncTimeSelect('rdm-time','rdm-hour','rdm-min')" style="flex:1;padding:8px 6px;border:1.5px solid #444;border-radius:8px;font-size:13px;font-family:inherit;background:#1a1a1a;color:#e2e8f0"></select>
+            </div>
+            <input type="time" id="rdm-time" class="time-input-pc" oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3))this.blur();this._v=this.value;" style="width:140px;flex-shrink:0;margin-left:24px;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a202c" />
             </div></div>
           <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리내용</label>
             <input type=text id=rdm-content placeholder="처리한 내용을 적어주세요. 부품교체를 하셨으면 아래 체크해주세요." style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit /></div>
@@ -914,14 +956,13 @@
         <option>사원</option>
       </select>
       <div id="new-acc-team-section" style="display:none;margin-top:8px">
-        <select class="modal-input normal" id="new-acc-team" style="margin-bottom:8px;letter-spacing:0" onchange="updateNewAccUnit()">
+        <select class="modal-input normal" id="new-acc-team" style="margin-bottom:0;letter-spacing:0">
           <option value="">-- 팀 선택 --</option>
           <option value="1팀">1팀</option>
           <option value="2팀">2팀</option>
           <option value="3팀">3팀 (파주)</option>
-        </select>
-        <select class="modal-input normal" id="new-acc-unit" style="margin-bottom:0;letter-spacing:0">
-          <option value="">-- 조 선택 --</option>
+          <option value="상주">상주</option>
+          <option value="관리팀">관리팀</option>
         </select>
       </div>
     </div>
@@ -940,8 +981,6 @@
     <h3>계정 수정</h3>
     <p>수정할 항목을 변경하세요.</p>
     <input type="text" class="modal-input normal" id="edit-acc-username" placeholder="아이디"
-      style="margin-bottom:8px" />
-    <input type="password" class="modal-input normal" id="edit-acc-pw" placeholder="비밀번호"
       style="margin-bottom:8px" />
     <select class="modal-input normal" id="edit-acc-role" style="margin-bottom:8px; letter-spacing:0">
       <option value="직원">👷 직원 (보수 직원)</option>
@@ -963,19 +1002,19 @@
         <option>사원</option>
       </select>
       <div id="edit-acc-team-section" style="display:none;margin-top:8px">
-        <select class="modal-input normal" id="edit-acc-team" style="margin-bottom:8px;letter-spacing:0" onchange="updateEditAccUnit()">
+        <select class="modal-input normal" id="edit-acc-team" style="margin-bottom:0;letter-spacing:0">
           <option value="">-- 팀 선택 --</option>
           <option value="1팀">1팀</option>
           <option value="2팀">2팀</option>
           <option value="3팀">3팀 (파주)</option>
-        </select>
-        <select class="modal-input normal" id="edit-acc-unit" style="margin-bottom:0;letter-spacing:0">
-          <option value="">-- 조 선택 --</option>
+          <option value="상주">상주</option>
+          <option value="관리팀">관리팀</option>
         </select>
       </div>
     </div>
     <div class="modal-error" id="edit-account-error" style="display:none; margin-top:8px"></div>
-    <div class="modal-btn-row" style="margin-top:16px">
+    <button type="button" onclick="resetAccountPassword()" style="width:100%;margin-top:12px;padding:10px;background:none;border:1.5px solid #b7791f;color:#f6ad55;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">🔑 비밀번호 초기화 (0000)</button>
+    <div class="modal-btn-row" style="margin-top:12px">
       <button class="modal-btn cancel" onclick="closeModal('edit-account-modal')">취소</button>
       <button class="modal-btn confirm" onclick="editAccountConfirm()">저장</button>
     </div>
@@ -1349,9 +1388,8 @@
     const myEl = document.getElementById('duty-my-info');
     if (myEl && currentUser) {
       const team = currentUser.team || '미설정';
-      const unit = currentUser.unit || '미설정';
       const name = currentUser.username;
-      myEl.innerHTML = '👷 <b>' + name + '</b> · ' + team + ' ' + unit;
+      myEl.innerHTML = '👷 <b>' + name + '</b> · ' + team;
     }
 
     const date = getShiftDate();
@@ -1377,9 +1415,9 @@
 
     const el = document.getElementById('duty-today-list');
     if (!el) return;
-    const shiftColor  = { '주간':'#63b3ed', '평일당직':'#f6ad55', '주말당직':'#68d391' };
-    const shiftBg     = { '주간':'#0d1a2a', '평일당직':'#1a120a', '주말당직':'#0a1a10' };
-    const shiftBorder = { '주간':'#1e3a5f', '평일당직':'#3a2010', '주말당직':'#0a3020' };
+    const shiftColor  = { '주간':'#2b6cb0', '평일당직':'#c05621', '주말당직':'#276749' };
+    const shiftBg     = { '주간':'#ebf8ff', '평일당직':'#fffaf0', '주말당직':'#f0fff4' };
+    const shiftBorder = { '주간':'#bee3f8', '평일당직':'#fbd38d', '주말당직':'#9ae6b4' };
     const rows = [
       { shift:'주간',     label:'☀️ 주간',      time:'08:30~17:30',
         cols:[ {key:'1팀',label:'1팀(2명)'}, {key:'2팀',label:'2팀(2명)'}, {key:'3팀',label:'3팀 파주(2명)'} ] },
@@ -1395,12 +1433,12 @@
         const nameHtml = found.length
           ? found.map(r => '<span style="font-size:15px;font-weight:700;color:'+color+'">'+r.handler_name+'</span>').join(' · ')
           : '<span style="font-size:13px;color:#a0aec0">미등록</span>';
-        return '<div style="flex:1;background:#ffffff;border-radius:8px;padding:10px 12px;border:1px solid '+border+'">'
-          + '<div style="font-size:11px;color:#888;font-weight:600;margin-bottom:4px">'+col.label+'</div>'
+        return '<div style="flex:1;background:white;border-radius:8px;padding:10px 12px;border:1px solid '+border+'">'
+          + '<div style="font-size:11px;color:#718096;font-weight:600;margin-bottom:4px">'+col.label+'</div>'
           + '<div>'+nameHtml+'</div></div>';
       }).join('');
       return '<div style="background:'+bg+';border:1.5px solid '+border+';border-radius:10px;padding:14px;margin-bottom:12px">'
-        + '<div style="font-size:14px;font-weight:700;color:'+color+';margin-bottom:10px">'+row.label+' <span style="font-size:11px;font-weight:400;color:#666">'+row.time+'</span></div>'
+        + '<div style="font-size:14px;font-weight:700;color:'+color+';margin-bottom:10px">'+row.label+' <span style="font-size:11px;font-weight:400;color:#718096">'+row.time+'</span></div>'
         + '<div style="display:flex;gap:8px;flex-wrap:wrap">'+colHtml+'</div></div>';
     }).join('');
   }
@@ -1486,7 +1524,7 @@
   updateClock(); setInterval(updateClock, 1000);
 
   /* ── NAV MENU (사이드 드로어) ── */
-  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계' };
+  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', holiday:'📅 휴일 관리' };
   function toggleNavMenu() {
     if (!currentUser) return;
     document.getElementById('side-drawer').classList.toggle('open');
@@ -1561,6 +1599,7 @@
       return;
     }
     if (tab === 'sites' && currentRole !== '관리자') return;
+    if (tab === 'holiday' && currentRole !== '관리자') return;
     if (tab === 'mgmt' && !currentRole) return;
     if (tab === 'jungong' && !currentRole) return;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1569,7 +1608,8 @@
     if (e) e.currentTarget.classList.add('active');
     else { const btn = document.getElementById('tab-' + tab + '-btn'); if (btn) btn.classList.add('active'); }
     if (tab === 'fault')   {} // 서브탭이 처리
-    if (tab === 'sites')   { loadSites(); loadHolidayList(); }
+    if (tab === 'sites')   { loadSites(); }
+    if (tab === 'holiday') { loadHolidayList(); }
     if (tab === 'duty')    loadDutyPage();
     if (tab === 'mgmt')    loadMgmt();
     if (tab === 'jungong') initJungong();
@@ -1589,6 +1629,8 @@
   function updateHomeProfile() {
     if (!currentUser) return;
     document.getElementById('home-user-name').textContent = currentUser.username + ' 님';
+    const greetEl = document.getElementById('home-greeting-name');
+    if (greetEl) greetEl.textContent = currentUser.username;
     const parts = [];
     if (currentUser.team) parts.push(currentUser.team);
     if (currentUser.group) parts.push(currentUser.group);
@@ -1601,9 +1643,15 @@
     const end   = new Date(now.getFullYear(), now.getMonth()+1, 1).toISOString();
     let q1 = db.from('reports').select('*', { count:'exact', head:true }).gte('created_at', start).lt('created_at', end).eq('handler_name', currentUser.username);
     let q2 = db.from('reports').select('*', { count:'exact', head:true }).neq('status', '완료').eq('handler_name', currentUser.username);
-    const [{ count: faultCount }, { count: pendingCount }] = await Promise.all([q1, q2]);
+    let q3 = db.from('reports').select('*', { count:'exact', head:true }).in('status', ['배치완료', '접수중']);
+    const [{ count: faultCount }, { count: pendingCount }, { count: unhandledCount }] = await Promise.all([q1, q2, q3]);
     document.getElementById('home-stat-fault').textContent = faultCount ?? 0;
     document.getElementById('home-stat-pending').textContent = pendingCount ?? 0;
+    const badge = document.getElementById('home-fault-badge');
+    if (badge) {
+      if (unhandledCount > 0) { badge.textContent = unhandledCount; badge.style.display = ''; }
+      else badge.style.display = 'none';
+    }
   }
 
   function switchSubTab(subTab) {
@@ -1654,9 +1702,9 @@
     // 항상 DB에서 최신 데이터 가져옴 (다른 사용자 변경사항 반영)
     const { data: r, error } = await db.from('reports').select('*').eq('id', id).maybeSingle();
     if (!r || error) return;
-    // 배치완료 상태면 재배치 버튼 안내만 표시
-    if (r.status === '배치완료' && (currentRole === '직원' || currentRole === '관리자')) {
-      showToast('⚠️ 재배치 버튼을 눌러 처리를 시작하세요.');
+    // 배치완료/접수중 상태면 배치 버튼 안내만 표시
+    if ((r.status === '배치완료' || r.status === '접수중') && (currentRole === '직원' || currentRole === '관리자')) {
+      showToast('⚠️ 배치 버튼을 눌러 처리를 시작하세요.');
       return;
     }
     // 처리중 상태면 담당자 본인 + 관리자만 열 수 있음
@@ -1680,7 +1728,7 @@
       '<span style="font-size:13px;color:#2d3748;font-weight:500;word-break:break-all">' + value + '</span>' +
       '</div>';
     document.getElementById('rdm-report-info').innerHTML =
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">' +
+      '<div class="rdm-info-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">' +
       infoRow('접수번호', '<strong>' + escHtml(r.id) + '</strong>') +
       infoRow('접수일시', dt) +
       infoRow('고장유형', escHtml(r.type||'-')) +
@@ -1713,6 +1761,7 @@
         document.getElementById('rdm-date').value = now.toISOString().slice(0,10);
         document.getElementById('rdm-time').value = now.toTimeString().slice(0,5);
       }
+      syncSelectFromTime('rdm-time', 'rdm-hour', 'rdm-min');
       document.getElementById('rdm-content').value  = r.completion_content || '';
       document.getElementById('rdm-parts').checked  = r.parts_replaced || false;
       document.getElementById('rdm-detail').value   = r.completion_detail || '';
@@ -2066,6 +2115,7 @@
     const isAdmin = currentRole === '관리자';
     const isStaff = currentRole === '직원';
     document.getElementById('tab-sites-btn').style.display = isAdmin ? 'flex' : 'none';
+    document.getElementById('tab-holiday-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-mgmt-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-duty-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-jungong-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
@@ -2169,7 +2219,7 @@
         name:        document.getElementById('f-name').value.trim(),
         phone:       document.getElementById('f-phone').value.trim(),
         description: document.getElementById('f-desc').value.trim(),
-        status:      (assignedHandler || selectedTeam === '기타') ? '배치완료' : '접수중',
+        status:      assignedHandler ? '배치완료' : '접수중',
         completion_handler: assignedHandler || null,
         assigned_team: selectedTeam || null,
         ...(reportedAt ? { created_at: reportedAt } : {}),
@@ -2234,8 +2284,7 @@
   async function updatePendingBadge() {
     const { count } = await db.from('reports').select('*', { count:'exact', head:true }).neq('status','완료');
     const badge = document.getElementById('pending-count');
-    badge.textContent = count || 0;
-    badge.style.display = (count > 0) ? 'inline' : 'none';
+    if (badge) { badge.textContent = count || 0; badge.style.display = (count > 0) ? 'inline' : 'none'; }
     const listBadge = document.getElementById('list-count-badge');
     if (listBadge) { listBadge.textContent = count || 0; listBadge.style.display = (count > 0) ? 'inline' : 'none'; }
   }
@@ -2312,7 +2361,7 @@
         (hc ? '<div style=margin-top:4px;font-size:12px;color:#276749;background:#f0fff4;border-radius:6px;padding:4px_8px;display:inline-block>' .replace(/_/g,' ') + '처리: ' + escHtml(r.completion_handler||'') + (r.completion_content ? ' · ' + escHtml(r.completion_content) : '') + '</div>' : '') +
         '</div>' +
         '<div class=report-right onclick=event.stopPropagation()>' +
-        ((r.status === '배치완료' || r.status === '처리중') && (currentRole==='직원'||currentRole==='관리자') ? '<button style=background:#2b6cb0;color:white;border:none;border-radius:10px;padding:12px_20px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;width:100% onclick=confirmDispatch(' + JSON.stringify(r.id) + ')>' + (r.completion_handler ? '🔄 재배치' : '✅ 배치') + '</button>'.replace(/_/g,' ') : '') +
+        ((r.status === '배치완료' || r.status === '처리중' || r.status === '접수중') && (currentRole==='직원'||currentRole==='관리자') ? '<button style=background:#2b6cb0;color:white;border:none;border-radius:10px;padding:12px_20px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;width:100% onclick=confirmDispatch(' + JSON.stringify(r.id) + ')>' + (r.completion_handler ? '🔄 재배치' : '✅ 배치') + '</button>'.replace(/_/g,' ') : '') +
         (currentRole==='관리자' ? '<button class=btn-delete style=margin-top:6px;width:100% onclick=deleteReport(' + JSON.stringify(r.id) + ')>삭제</button>' : '') +
         '</div></div>';
     }).join('');
@@ -2359,12 +2408,12 @@
     loadHolidayList();
   }
 
+  let accountsData = [];
   async function loadSites() {
     const el = document.getElementById('sites-list');
     el.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
     const { data, error } = await db.from('accounts').select('*');
     if (error || !data) { el.innerHTML = '<div class="loading-state">불러오기 실패</div>'; return; }
-    if (!data.length) { el.innerHTML = '<div class="empty-state"><div class="icon">👤</div>등록된 계정이 없습니다.<br>계정 추가 버튼을 눌러 추가하세요.</div>'; return; }
     const POSITION_ORDER = ['대표','전무','이사','부장','차장','과장','대리','사원'];
     data.sort((a, b) => {
       const ai = POSITION_ORDER.indexOf(a.position||''), bi = POSITION_ORDER.indexOf(b.position||'');
@@ -2372,15 +2421,31 @@
       if (av !== bv) return av - bv;
       return (a.username||'').localeCompare(b.username||'', 'ko');
     });
+    accountsData = data;
+    renderAccountList();
+  }
+
+  function renderAccountList() {
+    const el = document.getElementById('sites-list');
+    const teamF = document.getElementById('acc-filter-team')?.value || '';
+    const posF  = document.getElementById('acc-filter-position')?.value || '';
+    const roleF = document.getElementById('acc-filter-role')?.value || '';
+    let list = accountsData.filter(a => {
+      if (teamF && (a.team||'') !== teamF) return false;
+      if (posF  && (a.position||'') !== posF) return false;
+      if (roleF && (a.role||'') !== roleF) return false;
+      return true;
+    });
+    if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="icon">👤</div>해당 조건의 계정이 없습니다.</div>'; return; }
     el.innerHTML = `<table class="site-table">
-      <thead><tr><th>#</th><th>아이디</th><th>직급/직책</th><th>핸드폰</th><th>유형</th><th>비밀번호</th><th></th></tr></thead>
-      <tbody>${data.map((a,i) => `<tr>
+      <thead><tr><th>#</th><th>아이디</th><th>직급/직책</th><th>핸드폰</th><th>유형</th><th>팀</th><th></th></tr></thead>
+      <tbody>${list.map((a,i) => `<tr>
         <td>${i+1}</td>
         <td><strong>${escHtml(a.username)}</strong></td>
         <td>${escHtml(a.position||'-')}</td>
         <td>${escHtml(a.phone||'-')}</td>
         <td>${ROLE_LABEL[a.role] || a.role}</td>
-        <td><code>${escHtml(a.password)}</code></td>
+        <td>${escHtml(a.team || '-')}</td>
         <td style="display:flex;gap:6px">
           <button class="btn-sm" style="border-color:#bee3f8;color:#2b6cb0" onclick="showEditAccountModal(${a.id})">수정</button>
           <button class="btn-sm del" onclick="deleteAccount(${a.id},'${a.username.replace(/'/g,"\\'")}')">삭제</button>
@@ -2393,7 +2458,6 @@
     document.getElementById('new-acc-username').value = '';
     document.getElementById('new-acc-pw').value = '';
     document.getElementById('new-acc-role').value = '';
-    document.getElementById('new-acc-site').value = '';
     document.getElementById('new-acc-phone').value = '';
     document.getElementById('new-acc-position').value = '';
     document.getElementById('site-name-field').style.display = 'none';
@@ -2408,12 +2472,6 @@
   function toggleSiteNameField() {
     const role = document.getElementById('new-acc-role').value;
     document.getElementById('new-acc-team-section').style.display = (role === '직원' || role === '관리자') ? 'block' : 'none';
-  }
-  function updateNewAccUnit() {
-    const team = document.getElementById('new-acc-team').value;
-    const units = { '1팀': ['1조','2조','3조'], '2팀': ['1조','2조','3조'], '3팀': ['1조','2조'] };
-    const sel = document.getElementById('new-acc-unit');
-    sel.innerHTML = '<option value="">-- 조 선택 --</option>' + (units[team]||[]).map(u=>'<option>'+u+'</option>').join('');
   }
 
   async function addAccountConfirm() {
@@ -2444,19 +2502,13 @@
     if (error || !data) { showToast('❌ 계정 정보를 불러오지 못했습니다.'); return; }
     editingAccountId = id;
     document.getElementById('edit-acc-username').value = data.username;
-    document.getElementById('edit-acc-pw').value = data.password;
     document.getElementById('edit-acc-role').value = data.role;
     document.getElementById('edit-acc-phone').value = data.phone || '';
     document.getElementById('edit-acc-position').value = data.position || '';
-    // 팀/조 불러오기
+    // 팀 불러오기
     const editTeamSec = document.getElementById('edit-acc-team-section');
     editTeamSec.style.display = (data.role === '직원' || data.role === '관리자') ? 'block' : 'none';
     document.getElementById('edit-acc-team').value = data.team || '';
-    if (data.team) {
-      const units = { '1팀': ['1조','2조','3조'], '2팀': ['1조','2조','3조'], '3팀': ['1조','2조'] };
-      const sel = document.getElementById('edit-acc-unit');
-      sel.innerHTML = '<option value="">-- 조 선택 --</option>' + (units[data.team]||[]).map(u=>'<option'+(u===data.unit?' selected':'')+'>'+u+'</option>').join('');
-    }
     document.getElementById('edit-account-error').style.display = 'none';
     document.getElementById('edit-account-modal').style.display = 'flex';
     setTimeout(() => document.getElementById('edit-acc-username').focus(), 100);
@@ -2466,24 +2518,16 @@
     const role = document.getElementById('edit-acc-role').value;
     document.getElementById('edit-acc-team-section').style.display = (role === '직원' || role === '관리자') ? 'block' : 'none';
   }
-  function updateEditAccUnit() {
-    const team = document.getElementById('edit-acc-team').value;
-    const units = { '1팀': ['1조','2조','3조'], '2팀': ['1조','2조','3조'], '3팀': ['1조','2조'] };
-    const sel = document.getElementById('edit-acc-unit');
-    sel.innerHTML = '<option value="">-- 조 선택 --</option>' + (units[team]||[]).map(u=>'<option>'+u+'</option>').join('');
-  }
 
   async function editAccountConfirm() {
     const username = document.getElementById('edit-acc-username').value.trim();
-    const pw       = document.getElementById('edit-acc-pw').value.trim();
     const role     = document.getElementById('edit-acc-role').value;
     const phone    = document.getElementById('edit-acc-phone').value.trim();
     const position = document.getElementById('edit-acc-position').value.trim();
     const errEl    = document.getElementById('edit-account-error');
-    if (!username || !pw || !role) { errEl.textContent='아이디, 비밀번호, 유형을 모두 입력하세요.'; errEl.style.display='block'; return; }
+    if (!username || !role) { errEl.textContent='아이디와 유형을 입력하세요.'; errEl.style.display='block'; return; }
     const teamE = document.getElementById('edit-acc-team')?.value || null;
-    const unitE = document.getElementById('edit-acc-unit')?.value || null;
-    const payload = { username, password: pw, role, site_name: null, name: null, phone: phone||null, position: position||null, team: teamE||null, unit: unitE||null };
+    const payload = { username, role, site_name: null, name: null, phone: phone||null, position: position||null, team: teamE||null };
     const { error } = await db.from('accounts').update(payload).eq('id', editingAccountId);
     if (error) {
       errEl.textContent = error.code==='23505' ? '이미 존재하는 아이디입니다.' : '수정 실패: ' + error.message;
@@ -2492,6 +2536,14 @@
     closeModal('edit-account-modal');
     showToast('✅ 계정이 수정되었습니다.');
     loadSites();
+  }
+
+  async function resetAccountPassword() {
+    if (!editingAccountId) return;
+    const { error } = await db.from('accounts').update({ password: '0000' }).eq('id', editingAccountId);
+    if (error) { showToast('❌ 초기화 실패: ' + error.message); return; }
+    showToast('✅ 비밀번호가 0000으로 초기화되었습니다.');
+    closeModal('edit-account-modal');
   }
 
   /* 수정 모달 현장 자동완성 */
@@ -2653,10 +2705,14 @@
     el.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
     const { data, error } = await db.from('managed_sites').select('*').order('site_name');
     if (error || !data) { el.innerHTML = '<div class="loading-state">불러오기 실패</div>'; return; }
+    // accounts 팀 정보 로드
+    const { data: accData } = await db.from('accounts').select('username, team');
+    const teamMap = {};
+    (accData || []).forEach(a => { if (a.username && a.team) teamMap[a.username] = a.team; });
     // site_elevators 전체 페이지네이션 fetch
     let elevData = [], elevOffset = 0;
     while (true) {
-      const { data: batch } = await db.from('site_elevators').select('site_id, inspection_due_date').range(elevOffset, elevOffset + 999);
+      const { data: batch } = await db.from('site_elevators').select('site_id, inspection_due_date, elevator_number').range(elevOffset, elevOffset + 999);
       if (!batch || batch.length === 0) break;
       elevData = elevData.concat(batch);
       if (batch.length < 1000) break;
@@ -2665,9 +2721,14 @@
     const elevCounts = {};
     const inspExpired = {};
     const inspSoon = {};
+    const elevNumbers = {};
     const today = new Date(); today.setHours(0,0,0,0);
     elevData.forEach(e => {
       elevCounts[e.site_id] = (elevCounts[e.site_id] || 0) + 1;
+      if (e.elevator_number) {
+        if (!elevNumbers[e.site_id]) elevNumbers[e.site_id] = [];
+        elevNumbers[e.site_id].push(e.elevator_number);
+      }
       if (e.inspection_due_date) {
         const due = new Date(e.inspection_due_date);
         const diff = Math.ceil((due - today) / (1000*60*60*24));
@@ -2675,7 +2736,7 @@
         else if (diff <= 30) inspSoon[e.site_id] = (inspSoon[e.site_id] || 0) + 1;
       }
     });
-    mgmtData = data.map(m => ({ ...m, elev_count: elevCounts[m.id] || 0, insp_expired: inspExpired[m.id] || 0, insp_soon: inspSoon[m.id] || 0 }));
+    mgmtData = data.map(m => ({ ...m, elev_count: elevCounts[m.id] || 0, insp_expired: inspExpired[m.id] || 0, insp_soon: inspSoon[m.id] || 0, elev_numbers: elevNumbers[m.id] || [], inspector_team: teamMap[m.main_inspector] || null }));
     const isAdmin = currentRole === '관리자';
     document.getElementById('btn-add-mgmt').style.display = isAdmin ? 'inline-flex' : 'none';
     document.getElementById('btn-sync-all-inspection').style.display = isAdmin ? 'inline-block' : 'none';
@@ -2732,13 +2793,14 @@
 
   function exportMgmtExcel() {
     const q = (document.getElementById('mgmt-search')?.value || '').trim().toLowerCase();
-    const contractFilter = (document.getElementById('mgmt-contract-filter')?.value || '');
+    const teamFilter = (document.getElementById('mgmt-team-filter')?.value || '');
     let list = mgmtData.filter(m => {
-      if (contractFilter && (m.contract_type||'') !== contractFilter) return false;
+      if (teamFilter && (m.inspector_team||'') !== teamFilter) return false;
       if (!q) return true;
       return (m.site_name||'').toLowerCase().includes(q) ||
              (m.main_inspector||'').toLowerCase().includes(q) ||
-             (m.sub_inspector||'').toLowerCase().includes(q);
+             (m.sub_inspector||'').toLowerCase().includes(q) ||
+             (m.elev_numbers||[]).some(n => n.toLowerCase().includes(q));
     });
     if (mgmtFilter === 'expire') {
       list = list.filter(m => isAlreadyExpired(m.contract_end) || isExpireThisMonth(m.contract_end));
@@ -2775,7 +2837,7 @@
     const wb = XLSX.utils.book_new();
     const today = new Date();
     const dateStr = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
-    const sheetName = mgmtFilter === 'expire' ? '계약만료현장' : (q || contractFilter ? '검색결과' : '전체현장');
+    const sheetName = mgmtFilter === 'expire' ? '계약만료현장' : (q || teamFilter ? '검색결과' : '전체현장');
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
     XLSX.writeFile(wb, `대솔이엘_관리현장_${dateStr}.xlsx`);
     showToast(`📥 ${list.length}개 현장 엑셀 다운로드 완료`);
@@ -2840,26 +2902,25 @@
 
   function renderMgmtList() {
     const q = (document.getElementById('mgmt-search')?.value || '').trim().toLowerCase();
-    const contractFilter = (document.getElementById('mgmt-contract-filter')?.value || '');
+    const teamFilter = (document.getElementById('mgmt-team-filter')?.value || '');
     let list = mgmtData.filter(m => {
-      if (contractFilter && (m.contract_type||'') !== contractFilter) return false;
+      if (teamFilter && (m.inspector_team||'') !== teamFilter) return false;
       if (!q) return true;
       return (m.site_name||'').toLowerCase().includes(q) ||
              (m.main_inspector||'').toLowerCase().includes(q) ||
-             (m.sub_inspector||'').toLowerCase().includes(q);
+             (m.sub_inspector||'').toLowerCase().includes(q) ||
+             (m.elev_numbers||[]).some(n => n.toLowerCase().includes(q));
     });
 
     // 이번 달 만료 건수 업데이트 (전체 기준)
 
     // 계약만료 건수 업데이트 (만료됨 + 이번달 만료)
     const expireCount = mgmtData.filter(m => isAlreadyExpired(m.contract_end) || isExpireThisMonth(m.contract_end)).length;
-    const badge1 = document.getElementById('mgmt-expire-badge');
     const badge2 = document.getElementById('mgmt-expire-badge2');
     if (expireCount > 0) {
-      badge1.textContent = expireCount; badge1.style.display = '';
-      badge2.textContent = expireCount; badge2.style.display = '';
+      if (badge2) { badge2.textContent = expireCount; badge2.style.display = ''; }
     } else {
-      badge1.style.display = 'none'; badge2.style.display = 'none';
+      if (badge2) badge2.style.display = 'none';
     }
 
     if (mgmtFilter === 'expire') {
@@ -2882,7 +2943,7 @@
     if (statsEl) {
       const totalSites = list.length;
       const totalElev = list.reduce((s, m) => s + (m.elev_count || 0), 0);
-      const isFiltered = q || contractFilter || mgmtFilter !== 'all';
+      const isFiltered = q || teamFilter || mgmtFilter !== 'all';
       statsEl.innerHTML = isFiltered
         ? `검색결과 <strong>${totalSites}</strong>개 현장 · <strong>${totalElev}</strong>대 / 전체 <strong>${mgmtData.length}</strong>개 현장`
         : `총 <strong>${totalSites}</strong>개 현장 · <strong>${totalElev}</strong>대 관리 중`;
@@ -4417,7 +4478,7 @@
     const { data: elevData } = await db.from('site_elevators').select('unit_name,elevator_number').eq('site_id', siteData.id).order('id');
     if (!elevData || !elevData.length) { resetElevatorInput(); return; }
     document.getElementById('f-regno').value = '';
-    wrap.innerHTML = `<select id="f-elevator" required onchange="fillRegno(this)" style="padding:10px 14px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit;color:#1a202c;background:#fafafa;width:100%">
+    wrap.innerHTML = `<select id="f-elevator" required onchange="fillRegno(this)" style="padding:10px 14px;border:1.5px solid #333;border-radius:8px;font-size:14px;font-family:inherit;color:#e2e8f0;background:#222;width:100%">
       <option value="" data-regno="">-- 호기 선택 --</option>
       ${elevData.map(e => `<option value="${escHtml(e.unit_name)}" data-regno="${escHtml(e.elevator_number||'')}">${escHtml(e.unit_name)}${e.elevator_number ? ' (' + escHtml(e.elevator_number) + ')' : ''}</option>`).join('')}
     </select>`;
@@ -4534,11 +4595,15 @@
 
   /* ── 건물명 필드 제어 ── */
   function initReportTime() {
+    buildTimeSelects();
     const now = new Date();
     const dateEl = document.getElementById('f-report-date');
     const timeEl = document.getElementById('f-report-time');
     if (dateEl) dateEl.value = now.toISOString().slice(0, 10);
-    if (timeEl) timeEl.value = now.toTimeString().slice(0, 5);
+    if (timeEl) {
+      timeEl.value = now.toTimeString().slice(0, 5);
+      syncSelectFromTime('f-report-time', 'f-report-hour', 'f-report-min');
+    }
   }
 
   function setBuildingField() {
@@ -4559,8 +4624,8 @@
     if (currentRole === '직원' || currentRole === '관리자') {
       nameInput.value = currentUser ? (currentUser.username) : '';
       nameInput.readOnly = true;
-      nameInput.style.background = '#edf2f7';
-      nameInput.style.color = '#4a5568';
+      nameInput.style.background = '#1a1a1a';
+      nameInput.style.color = '#e2e8f0';
       nameInput.style.cursor = 'default';
       if (phoneInput) {
         phoneInput.value = '';
@@ -4589,6 +4654,37 @@
     const now = new Date();
     document.getElementById('f-report-date').value = now.toISOString().slice(0, 10);
     document.getElementById('f-report-time').value = now.toTimeString().slice(0, 5);
+    syncSelectFromTime('f-report-time', 'f-report-hour', 'f-report-min');
+  }
+
+  function buildTimeSelects() {
+    const pairs = [
+      { h: 'f-report-hour', m: 'f-report-min' },
+      { h: 'rdm-hour',      m: 'rdm-min'      }
+    ];
+    pairs.forEach(({ h, m }) => {
+      const hEl = document.getElementById(h);
+      const mEl = document.getElementById(m);
+      if (!hEl || !mEl) return;
+      hEl.innerHTML = Array.from({length:24}, (_,i) => `<option value="${String(i).padStart(2,'0')}">${String(i).padStart(2,'0')}시</option>`).join('');
+      mEl.innerHTML = Array.from({length:60}, (_,i) => `<option value="${String(i).padStart(2,'0')}">${String(i).padStart(2,'0')}분</option>`).join('');
+    });
+  }
+
+  function syncTimeSelect(timeId, hourId, minId) {
+    const h = document.getElementById(hourId).value;
+    const m = document.getElementById(minId).value;
+    document.getElementById(timeId).value = h + ':' + m;
+  }
+
+  function syncSelectFromTime(timeId, hourId, minId) {
+    const val = document.getElementById(timeId)?.value;
+    if (!val) return;
+    const [h, m] = val.split(':');
+    const hEl = document.getElementById(hourId);
+    const mEl = document.getElementById(minId);
+    if (hEl) hEl.value = h;
+    if (mEl) mEl.value = m;
   }
 
   function clampReportDateTime() {
@@ -4602,11 +4698,13 @@
     if (entered > now) {
       dateEl.value = now.toLocaleDateString('sv');
       timeEl.value = now.toTimeString().slice(0, 5);
+      syncSelectFromTime('f-report-time', 'f-report-hour', 'f-report-min');
       showToast('⚠️ 접수일시는 현재 시간 이후로 설정할 수 없습니다.');
     }
   }
 
   /* ── INIT ── */
+  buildTimeSelects();
   // SW 메시지 수신 (알림 클릭 → 신고내역 탭 이동)
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', e => {
