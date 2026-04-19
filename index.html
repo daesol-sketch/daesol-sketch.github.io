@@ -4607,9 +4607,12 @@
   function initReportTime() {
     buildTimeSelects();
     const now = new Date();
+    const todayVal = todayStr();
     const dateEl = document.getElementById('f-report-date');
+    const pickerEl = document.getElementById('f-report-date-picker');
     const timeEl = document.getElementById('f-report-time');
-    if (dateEl) dateEl.value = now.toISOString().slice(0, 10);
+    if (dateEl) dateEl.value = todayVal;
+    if (pickerEl) pickerEl.max = todayVal;
     if (timeEl) {
       timeEl.value = now.toTimeString().slice(0, 5);
       syncSelectFromTime('f-report-time', 'f-report-hour', 'f-report-min');
