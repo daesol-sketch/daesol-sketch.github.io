@@ -165,6 +165,11 @@
       .report-date-filter { width: 100%; margin-left: 0 !important; }
       .report-date-filter input[type=text] { width: 88px !important; }
       .report-date-filter .filter-reset-btn { white-space: nowrap !important; }
+      .report-datetime-wrap { flex-direction: column !important; align-items: stretch !important; }
+      .report-datetime-wrap > div:first-child { width: 100% !important; }
+      .report-datetime-wrap > div:first-child input[type=text] { width: 100% !important; box-sizing: border-box; }
+      .report-time-row { width: 100% !important; }
+      .report-timenow-btn { margin-left: auto; }
     }
     #f-report-time::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.7; cursor: pointer; }
     #rdm-time::-webkit-calendar-picker-indicator { filter: none; opacity: 0.5; cursor: pointer; }
@@ -502,25 +507,26 @@
         <div class="form-grid">
           <div class="form-group full">
             <label>접수 일시</label>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <div class="report-datetime-wrap" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <div style="position:relative;display:flex;flex-shrink:0;">
                 <input type="text" id="f-report-date" placeholder="2026-04-15" maxlength="10" oninput="autoFormatDate(this);if(this.value.length===10)clampReportDateTime()" style="padding:10px 14px;border:1.5px solid #333;border-right:none;border-radius:8px 0 0 8px;font-size:14px;font-family:inherit;width:200px;background:#1a1a1a;color:#e2e8f0" />
                 <button type="button" onclick="document.getElementById('f-report-date-picker').showPicker()" style="width:40px;border:1.5px solid #333;border-left:none;border-radius:0 8px 8px 0;background:#1a1a1a;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center" title="달력">📅</button>
                 <input type="date" id="f-report-date-picker" style="position:absolute;left:0;top:30px;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('f-report-date').value=this.value;clampReportDateTime()" />
               </div>
-              <div class="time-select-wrapper" style="gap:4px;align-items:center;flex:1">
+              <div class="report-time-row time-select-wrapper" style="gap:4px;align-items:center;flex:1">
                 <div class="csel">
-                  <button type="button" class="csel-btn" style="padding:10px 8px;font-size:14px;background:#1a1a1a;color:#e2e8f0;border:1.5px solid #333" onclick="openCsel('f-report-hour')"><span>00시</span></button>
+                  <button type="button" class="csel-btn" style="padding:10px 8px;font-size:14px;background:#1a1a1a;color:#e2e8f0;border:1.5px solid #333;white-space:nowrap" onclick="openCsel('f-report-hour')"><span>00시</span></button>
                   <select id="f-report-hour" onchange="syncTimeSelect('f-report-time','f-report-hour','f-report-min');clampReportDateTime();refreshCselBtn('f-report-hour')" style="display:none"></select>
                 </div>
                 <span style="color:#e2e8f0;font-weight:700;font-size:16px">:</span>
                 <div class="csel">
-                  <button type="button" class="csel-btn" style="padding:10px 8px;font-size:14px;background:#1a1a1a;color:#e2e8f0;border:1.5px solid #333" onclick="openCsel('f-report-min')"><span>00분</span></button>
+                  <button type="button" class="csel-btn" style="padding:10px 8px;font-size:14px;background:#1a1a1a;color:#e2e8f0;border:1.5px solid #333;white-space:nowrap" onclick="openCsel('f-report-min')"><span>00분</span></button>
                   <select id="f-report-min" onchange="syncTimeSelect('f-report-time','f-report-hour','f-report-min');clampReportDateTime();refreshCselBtn('f-report-min')" style="display:none"></select>
                 </div>
+                <button type="button" class="report-timenow-btn" onclick="setReportTimeNow()" style="padding:9px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;color:#e2e8f0;cursor:pointer;white-space:nowrap;transition:background 0.15s" onmouseover="this.style.background='#2a2a2a'" onmouseout="this.style.background='#1a1a1a'">🕐 현재 시간</button>
               </div>
               <input type="time" id="f-report-time" class="time-input-pc" oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3)){this.blur();clampReportDateTime();}this._v=this.value;" style="padding:10px 14px;border:1.5px solid #444;border-radius:8px;font-size:14px;font-family:inherit;width:200px;flex-shrink:0;background:#1a1a1a;color:#e2e8f0;border-color:#333" />
-              <button type="button" onclick="setReportTimeNow()" style="padding:9px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;color:#e2e8f0;cursor:pointer;white-space:nowrap;transition:background 0.15s" onmouseover="this.style.background='#2a2a2a'" onmouseout="this.style.background='#1a1a1a'">🕐 현재 시간</button>
+              <button type="button" class="time-input-pc" onclick="setReportTimeNow()" style="padding:9px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;color:#e2e8f0;cursor:pointer;white-space:nowrap;transition:background 0.15s" onmouseover="this.style.background='#2a2a2a'" onmouseout="this.style.background='#1a1a1a'">🕐 현재 시간</button>
             </div>
           </div>
           <div class="form-group">
@@ -4711,13 +4717,10 @@
     const wrap = sel.closest('.csel');
     const btn = wrap.querySelector('.csel-btn');
 
-    const overlay = document.createElement('div');
-    overlay.className = 'csel-overlay';
-    overlay.onclick = closeCsel;
-
     const panel = document.createElement('div');
     panel.className = 'csel-panel';
     panel.id = '__csel__';
+    panel.dataset.selId = selectId;
 
     const rect = btn.getBoundingClientRect();
     const panelH = Math.min(260, sel.options.length * 47);
@@ -4742,15 +4745,25 @@
       panel.appendChild(item);
     });
 
-    document.body.appendChild(overlay);
     document.body.appendChild(panel);
     const active = panel.querySelector('.csel-sel');
     if (active) setTimeout(() => active.scrollIntoView({ block: 'center' }), 10);
+
+    setTimeout(() => {
+      document.addEventListener('pointerdown', _cselOutside);
+    }, 0);
+  }
+
+  function _cselOutside(e) {
+    const panel = document.getElementById('__csel__');
+    if (panel && !panel.contains(e.target)) {
+      closeCsel();
+    }
   }
 
   function closeCsel() {
     document.getElementById('__csel__')?.remove();
-    document.querySelector('.csel-overlay')?.remove();
+    document.removeEventListener('pointerdown', _cselOutside);
   }
 
   function refreshCselBtn(selectId) {
