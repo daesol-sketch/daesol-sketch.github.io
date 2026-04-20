@@ -170,6 +170,7 @@
       .report-datetime-wrap > div:first-child input[type=text] { width: 100% !important; box-sizing: border-box; }
       .report-time-row { width: 100% !important; }
       .report-timenow-btn { margin-left: auto; }
+      #auto-login-check { accent-color: #000 !important; }
     }
     #f-report-time::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.7; cursor: pointer; }
     #rdm-time::-webkit-calendar-picker-indicator { filter: none; opacity: 0.5; cursor: pointer; }
@@ -4736,8 +4737,7 @@
       const item = document.createElement('div');
       item.className = 'csel-panel-item' + (opt.value === sel.value ? ' csel-sel' : '');
       item.textContent = opt.text;
-      item.addEventListener('pointerdown', e => {
-        e.preventDefault();
+      item.addEventListener('click', () => {
         sel.value = opt.value;
         sel.dispatchEvent(new Event('change'));
         closeCsel();
