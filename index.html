@@ -142,6 +142,15 @@
     .btn-login-big.admin { background: #333; color: white; }
     .btn-login-big:hover { opacity: 0.88; }
 
+    /* 커스텀 셀렉트 */
+    .csel { position: relative; flex: 1; }
+    .csel-btn { width: 100%; border-radius: 8px; font-family: inherit; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+    .csel-btn::after { content: '▾'; font-size: 11px; color: #888; flex-shrink: 0; }
+    .csel-overlay { position: fixed; inset: 0; z-index: 9998; }
+    .csel-panel { position: fixed; background: #1e1e1e; border: 1.5px solid #444; border-radius: 10px; z-index: 9999; max-height: 260px; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.7); }
+    .csel-panel-item { padding: 13px 18px; color: #e2e8f0; font-size: 15px; cursor: pointer; }
+    .csel-panel-item:active { background: #2a2a2a; }
+    .csel-panel-item.csel-sel { color: #63b3ed; font-weight: 700; }
     /* 모달 */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     @media (min-width: 769px) { .time-select-wrapper { display: none !important; } .time-input-pc { display: block !important; } }
@@ -153,6 +162,9 @@
       .rdm-date-wrap input[type=text] { width: 100% !important; box-sizing: border-box; }
       .rdm-info-grid { grid-template-columns: 1fr 1fr !important; }
       .rdm-edit-grid { grid-template-columns: 1fr !important; }
+      .report-date-filter { width: 100%; margin-left: 0 !important; }
+      .report-date-filter input[type=text] { width: 88px !important; }
+      .report-date-filter .filter-reset-btn { white-space: nowrap !important; }
     }
     #f-report-time::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.7; cursor: pointer; }
     #rdm-time::-webkit-calendar-picker-indicator { filter: none; opacity: 0.5; cursor: pointer; }
@@ -172,8 +184,8 @@
     .modal-divider { border: none; border-top: 1px solid #2a2a2a; margin: 16px 0; }
     .modal-link { font-size: 13px; color: #aaa; cursor: pointer; text-decoration: underline; }
 
-    #toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: #2a1e00; color: #f6ad55; border: 1px solid #b7791f; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.5); transition: transform 0.3s ease; z-index: 999; }
-    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(calc(100% + 40px)); opacity: 0; visibility: hidden; background: #2a1e00; color: #f6ad55; border: 1px solid #b7791f; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.5); transition: transform 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s; z-index: 9999; max-width: 90vw; text-align: center; }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; transition: transform 0.3s ease, opacity 0.3s ease, visibility 0s linear 0s; }
 
     @media (max-width: 600px) {
       .form-grid { grid-template-columns: 1fr; }
@@ -497,9 +509,15 @@
                 <input type="date" id="f-report-date-picker" style="position:absolute;left:0;top:30px;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('f-report-date').value=this.value;clampReportDateTime()" />
               </div>
               <div class="time-select-wrapper" style="gap:4px;align-items:center;flex:1">
-                <select id="f-report-hour" onchange="syncTimeSelect('f-report-time','f-report-hour','f-report-min');clampReportDateTime()" style="flex:1;padding:10px 6px;border:1.5px solid #333;border-radius:8px;font-size:14px;font-family:inherit;background:#1a1a1a;color:#e2e8f0"></select>
+                <div class="csel">
+                  <button type="button" class="csel-btn" style="padding:10px 8px;font-size:14px;background:#1a1a1a;color:#e2e8f0;border:1.5px solid #333" onclick="openCsel('f-report-hour')"><span>00시</span></button>
+                  <select id="f-report-hour" onchange="syncTimeSelect('f-report-time','f-report-hour','f-report-min');clampReportDateTime();refreshCselBtn('f-report-hour')" style="display:none"></select>
+                </div>
                 <span style="color:#e2e8f0;font-weight:700;font-size:16px">:</span>
-                <select id="f-report-min" onchange="syncTimeSelect('f-report-time','f-report-hour','f-report-min');clampReportDateTime()" style="flex:1;padding:10px 6px;border:1.5px solid #333;border-radius:8px;font-size:14px;font-family:inherit;background:#1a1a1a;color:#e2e8f0"></select>
+                <div class="csel">
+                  <button type="button" class="csel-btn" style="padding:10px 8px;font-size:14px;background:#1a1a1a;color:#e2e8f0;border:1.5px solid #333" onclick="openCsel('f-report-min')"><span>00분</span></button>
+                  <select id="f-report-min" onchange="syncTimeSelect('f-report-time','f-report-hour','f-report-min');clampReportDateTime();refreshCselBtn('f-report-min')" style="display:none"></select>
+                </div>
               </div>
               <input type="time" id="f-report-time" class="time-input-pc" oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3)){this.blur();clampReportDateTime();}this._v=this.value;" style="padding:10px 14px;border:1.5px solid #444;border-radius:8px;font-size:14px;font-family:inherit;width:200px;flex-shrink:0;background:#1a1a1a;color:#e2e8f0;border-color:#333" />
               <button type="button" onclick="setReportTimeNow()" style="padding:9px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;color:#e2e8f0;cursor:pointer;white-space:nowrap;transition:background 0.15s" onmouseover="this.style.background='#2a2a2a'" onmouseout="this.style.background='#1a1a1a'">🕐 현재 시간</button>
@@ -598,8 +616,8 @@
           <button class="filter-btn active" onclick="setFilter('전체',this)">전체</button>
           <button class="filter-btn" onclick="setFilter('배치완료',this)">배치완료</button>
           <button class="filter-btn" onclick="setFilter('처리중',this)">처리중</button>
-          <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
-            <label style="font-size:13px;color:#4a5568">날짜:</label>
+          <div class="report-date-filter" style="display:flex;align-items:center;gap:6px;margin-left:auto">
+            <label style="font-size:13px;color:#4a5568;white-space:nowrap">날짜:</label>
             <div style="position:relative;display:flex">
               <input type="text" id="report-month-from" placeholder="2026-04-01" maxlength="10" oninput="autoFormatDate(this);renderList()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:110px" />
               <button type="button" onclick="document.getElementById('report-month-from-picker').showPicker()" style="width:32px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">📅</button>
@@ -611,7 +629,7 @@
               <button type="button" onclick="document.getElementById('report-month-to-picker').showPicker()" style="width:32px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">📅</button>
               <input type="date" id="report-month-to-picker" style="position:absolute;right:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('report-month-to').value=this.value;renderList()" />
             </div>
-            <button onclick="clearReportFilter()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:12px;font-family:inherit;background:white;cursor:pointer;color:#718096">초기화</button>
+            <button onclick="clearReportFilter()" class="filter-reset-btn" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:12px;font-family:inherit;background:white;cursor:pointer;color:#718096;white-space:nowrap">초기화</button>
           </div>
         </div>
         <div class="filters" style="margin-top:6px">
@@ -902,9 +920,15 @@
             <input type=date id=rdm-date-picker style="position:absolute;left:0;top:30px;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('rdm-date').value=this.value" />
             </div>
             <div class="time-select-wrapper" style="gap:4px;align-items:center;flex:1">
-              <select id="rdm-hour" onchange="syncTimeSelect('rdm-time','rdm-hour','rdm-min')" style="flex:1;padding:8px 6px;border:1.5px solid #444;border-radius:8px;font-size:13px;font-family:inherit;background:#1a1a1a;color:#e2e8f0"></select>
-              <span style="color:#e2e8f0;font-weight:700">:</span>
-              <select id="rdm-min" onchange="syncTimeSelect('rdm-time','rdm-hour','rdm-min')" style="flex:1;padding:8px 6px;border:1.5px solid #444;border-radius:8px;font-size:13px;font-family:inherit;background:#1a1a1a;color:#e2e8f0"></select>
+              <div class="csel">
+                <button type="button" class="csel-btn" style="padding:8px 8px;font-size:13px;background:#fff;color:#1a202c;border:1.5px solid #cbd5e0" onclick="openCsel('rdm-hour')"><span>00시</span></button>
+                <select id="rdm-hour" onchange="syncTimeSelect('rdm-time','rdm-hour','rdm-min');refreshCselBtn('rdm-hour')" style="display:none"></select>
+              </div>
+              <span style="color:#4a5568;font-weight:700">:</span>
+              <div class="csel">
+                <button type="button" class="csel-btn" style="padding:8px 8px;font-size:13px;background:#fff;color:#1a202c;border:1.5px solid #cbd5e0" onclick="openCsel('rdm-min')"><span>00분</span></button>
+                <select id="rdm-min" onchange="syncTimeSelect('rdm-time','rdm-hour','rdm-min');refreshCselBtn('rdm-min')" style="display:none"></select>
+              </div>
             </div>
             <input type="time" id="rdm-time" class="time-input-pc" oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3))this.blur();this._v=this.value;" style="width:140px;flex-shrink:0;margin-left:24px;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a202c" />
             </div></div>
@@ -1590,6 +1614,7 @@
 
   /* ── TABS ── */
   function switchTab(tab, e) {
+    hideToast();
     if (tab === 'home') { goDashboard(); return; }
     // report/list/done은 fault 탭 안의 서브탭으로 처리
     if (tab === 'report' || tab === 'list' || tab === 'done') {
@@ -3348,10 +3373,18 @@
   }
 
   /* ── TOAST ── */
+  let _toastTimer = null;
   function showToast(msg) {
     const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3000);
+    t.textContent = msg;
+    t.classList.add('show');
+    if (_toastTimer) clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => { t.classList.remove('show'); _toastTimer = null; }, 3000);
+  }
+  function hideToast() {
+    const t = document.getElementById('toast');
+    t.classList.remove('show');
+    if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
   }
 
   let _adminUnackInterval = null;
@@ -4672,6 +4705,63 @@
     syncSelectFromTime('f-report-time', 'f-report-hour', 'f-report-min');
   }
 
+  function openCsel(selectId) {
+    closeCsel();
+    const sel = document.getElementById(selectId);
+    const wrap = sel.closest('.csel');
+    const btn = wrap.querySelector('.csel-btn');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'csel-overlay';
+    overlay.onclick = closeCsel;
+
+    const panel = document.createElement('div');
+    panel.className = 'csel-panel';
+    panel.id = '__csel__';
+
+    const rect = btn.getBoundingClientRect();
+    const panelH = Math.min(260, sel.options.length * 47);
+    if (window.innerHeight - rect.bottom >= panelH || window.innerHeight - rect.bottom >= rect.top) {
+      panel.style.top = (rect.bottom + 2) + 'px';
+    } else {
+      panel.style.bottom = (window.innerHeight - rect.top + 2) + 'px';
+    }
+    panel.style.left = rect.left + 'px';
+    panel.style.width = rect.width + 'px';
+
+    Array.from(sel.options).forEach(opt => {
+      const item = document.createElement('div');
+      item.className = 'csel-panel-item' + (opt.value === sel.value ? ' csel-sel' : '');
+      item.textContent = opt.text;
+      item.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        sel.value = opt.value;
+        sel.dispatchEvent(new Event('change'));
+        closeCsel();
+      });
+      panel.appendChild(item);
+    });
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(panel);
+    const active = panel.querySelector('.csel-sel');
+    if (active) setTimeout(() => active.scrollIntoView({ block: 'center' }), 10);
+  }
+
+  function closeCsel() {
+    document.getElementById('__csel__')?.remove();
+    document.querySelector('.csel-overlay')?.remove();
+  }
+
+  function refreshCselBtn(selectId) {
+    const sel = document.getElementById(selectId);
+    const wrap = sel?.closest('.csel');
+    if (!wrap) return;
+    const span = wrap.querySelector('.csel-btn span');
+    const opt = sel.options[sel.selectedIndex];
+    if (span && opt) span.textContent = opt.text;
+  }
+
   function buildTimeSelects() {
     const pairs = [
       { h: 'f-report-hour', m: 'f-report-min' },
@@ -4683,6 +4773,8 @@
       if (!hEl || !mEl) return;
       hEl.innerHTML = Array.from({length:24}, (_,i) => `<option value="${String(i).padStart(2,'0')}">${String(i).padStart(2,'0')}시</option>`).join('');
       mEl.innerHTML = Array.from({length:60}, (_,i) => `<option value="${String(i).padStart(2,'0')}">${String(i).padStart(2,'0')}분</option>`).join('');
+      refreshCselBtn(h);
+      refreshCselBtn(m);
     });
   }
 
@@ -4698,8 +4790,8 @@
     const [h, m] = val.split(':');
     const hEl = document.getElementById(hourId);
     const mEl = document.getElementById(minId);
-    if (hEl) hEl.value = h;
-    if (mEl) mEl.value = m;
+    if (hEl) { hEl.value = h; refreshCselBtn(hourId); }
+    if (mEl) { mEl.value = m; refreshCselBtn(minId); }
   }
 
   function clampReportDateTime() {
