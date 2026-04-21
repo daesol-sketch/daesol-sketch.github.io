@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>대솔이엘 유지보수 앱 사용 설명서</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Malgun Gothic', sans-serif; background: #f4f6f9; color: #1a202c; font-size: 15px; line-height: 1.7; }
+
+  header { background: linear-gradient(135deg, #1a365d, #2b6cb0); color: white; padding: 32px 20px 24px; text-align: center; }
+  header h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+  header p { font-size: 13px; opacity: 0.85; }
+
+  .badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 20px; padding: 3px 12px; font-size: 12px; margin-top: 10px; }
+
+  nav { background: #fff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100; overflow-x: auto; white-space: nowrap; padding: 0 12px; display: flex; gap: 4px; }
+  nav a { display: inline-block; padding: 12px 14px; font-size: 13px; color: #4a5568; text-decoration: none; border-bottom: 3px solid transparent; font-weight: 600; }
+  nav a:hover { color: #2b6cb0; border-bottom-color: #2b6cb0; }
+
+  .container { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 18px; font-weight: 800; color: #1a365d; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #bee3f8; display: flex; align-items: center; gap: 8px; }
+
+  .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .card h3 { font-size: 15px; font-weight: 700; color: #2d3748; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+
+  .step-list { list-style: none; counter-reset: step; }
+  .step-list li { counter-increment: step; display: flex; gap: 12px; margin-bottom: 10px; align-items: flex-start; }
+  .step-list li::before { content: counter(step); min-width: 26px; height: 26px; background: #2b6cb0; color: white; border-radius: 50%; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+
+  .tag { display: inline-block; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 700; margin-right: 4px; }
+  .tag-admin { background: #fefcbf; color: #744210; }
+  .tag-staff { background: #c6f6d5; color: #22543d; }
+  .tag-all { background: #bee3f8; color: #1a365d; }
+
+  .alert { border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; font-size: 14px; }
+  .alert-blue { background: #ebf8ff; border-left: 4px solid #3182ce; color: #1a365d; }
+  .alert-yellow { background: #fffff0; border-left: 4px solid #d69e2e; color: #744210; }
+  .alert-red { background: #fff5f5; border-left: 4px solid #e53e3e; color: #742a2a; }
+  .alert-green { background: #f0fff4; border-left: 4px solid #38a169; color: #22543d; }
+
+  .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+  .flow-item { background: #edf2f7; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 600; color: #2d3748; }
+  .flow-arrow { color: #a0aec0; font-size: 18px; }
+
+  .noti-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+  .noti-table th { background: #edf2f7; padding: 8px 10px; text-align: left; font-weight: 700; color: #4a5568; }
+  .noti-table td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  .noti-table tr:last-child td { border-bottom: none; }
+
+  .tip { background: #f7fafc; border: 1px dashed #cbd5e0; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #4a5568; margin-top: 10px; }
+  .tip strong { color: #2b6cb0; }
+
+  footer { text-align: center; padding: 24px; font-size: 12px; color: #a0aec0; }
+
+  @media (max-width: 480px) {
+    header h1 { font-size: 19px; }
+    .flow { gap: 4px; }
+    .flow-item { font-size: 12px; padding: 5px 9px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🛗 대솔이엘 유지보수 앱</h1>
+  <p>승강기 유지보수 관리 시스템 사용 설명서</p>
+  <div class="badge">v1.0 테스트버전 · 2026년 4월</div>
+</header>
+
+<nav>
+  <a href="#install">📲 설치</a>
+  <a href="#login">🔐 로그인</a>
+  <a href="#noti">🔔 알림</a>
+  <a href="#fault">🔧 고장신고</a>
+  <a href="#jungong">📋 준공계</a>
+  <a href="#admin">👑 관리자</a>
+  <a href="#tips">💡 자주 묻는 질문</a>
+</nav>
+
+<div class="container">
+
+  <!-- 역할 안내 -->
+  <div class="alert alert-blue" style="margin-top:8px">
+    📌 이 앱은 <strong>관리자</strong>와 <strong>직원(보수 직원)</strong> 두 가지 역할로 운영됩니다.<br>
+    <span class="tag tag-admin">관리자</span> 모든 기능 사용 가능 &nbsp;|&nbsp; <span class="tag tag-staff">직원</span> 배정된 신고 처리 및 피드백 입력
+  </div>
+
+  <!-- 1. 앱 설치 -->
+  <section id="install">
+    <h2>📲 앱 설치 방법</h2>
+
+    <div class="card">
+      <h3>📱 아이폰 (iOS)</h3>
+      <ul class="step-list">
+        <li>Safari 브라우저로 앱 주소 접속</li>
+        <li>하단 공유 버튼(□↑) 탭</li>
+        <li>"홈 화면에 추가" 선택</li>
+        <li>"추가" 버튼 탭 → 홈화면에 아이콘 생성</li>
+      </ul>
+      <div class="tip">⚠️ 반드시 <strong>Safari</strong>에서 설치해야 합니다. 크롬에서는 설치 불가.</div>
+    </div>
+
+    <div class="card">
+      <h3>🤖 안드로이드</h3>
+      <ul class="step-list">
+        <li>크롬 브라우저로 앱 주소 접속</li>
+        <li>주소창 우측 또는 상단에 "앱 설치" 배너 또는 메뉴(⋮) → "홈 화면에 추가" 선택</li>
+        <li>"설치" 버튼 탭 → 홈화면에 아이콘 생성</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>💻 PC (윈도우 / Mac)</h3>
+      <ul class="step-list">
+        <li>크롬 브라우저로 앱 주소 접속</li>
+        <li>주소창 우측 설치 아이콘(⊕) 클릭 또는 메뉴(⋮) → "대솔이엘 설치"</li>
+        <li>"설치" 클릭 → 바탕화면 앱으로 실행 가능</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 2. 로그인 -->
+  <section id="login">
+    <h2>🔐 로그인</h2>
+
+    <div class="card">
+      <ul class="step-list">
+        <li>앱 실행 후 <strong>아이디 / 비밀번호</strong> 입력</li>
+        <li>로그인 버튼 탭</li>
+        <li>로그인 성공 시 메인 화면으로 이동</li>
+      </ul>
+      <div class="tip"><strong>아이디·비밀번호는 관리자에게 문의하세요.</strong></div>
+    </div>
+
+    <div class="alert alert-yellow">
+      ⚠️ 로그인 상태는 자동 유지됩니다. 공용 기기에서는 사용 후 반드시 로그아웃하세요.
+    </div>
+  </section>
+
+  <!-- 3. 알림 허용 -->
+  <section id="noti">
+    <h2>🔔 알림 설정</h2>
+
+    <div class="alert alert-red">
+      🚨 알림을 허용해야 고장 신고 배정 및 전화 착신 알림을 받을 수 있습니다. 반드시 허용해주세요!
+    </div>
+
+    <div class="card">
+      <h3>알림 허용 방법</h3>
+      <ul class="step-list">
+        <li>로그인 후 알림 허용 팝업이 뜨면 <strong>"허용"</strong> 클릭</li>
+        <li>팝업이 안 뜬 경우 → 브라우저 주소창 자물쇠 아이콘 클릭 → 알림 → <strong>허용</strong>으로 변경</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>🤖 안드로이드 배터리 설정 (알림 누락 방지)</h3>
+      <ul class="step-list">
+        <li>휴대폰 <strong>설정</strong> 앱 열기</li>
+        <li><strong>애플리케이션</strong> → <strong>Chrome</strong> 선택</li>
+        <li><strong>배터리</strong> 탭 선택</li>
+        <li>배터리 사용량을 <strong>"제한 없음"</strong>으로 변경</li>
+      </ul>
+      <div class="tip">⚠️ 이 설정을 안 하면 화면이 꺼진 상태에서 알림이 늦게 오거나 누락될 수 있습니다.</div>
+    </div>
+
+    <div class="card">
+      <h3>📱 아이폰 백그라운드 설정 (알림 누락 방지)</h3>
+      <ul class="step-list">
+        <li>휴대폰 <strong>설정</strong> 앱 열기</li>
+        <li><strong>일반</strong> → <strong>백그라운드 앱 새로고침</strong> 선택</li>
+        <li>목록에서 <strong>Safari</strong>를 <strong>켜짐</strong>으로 설정</li>
+      </ul>
+      <div class="tip">⚠️ iOS는 Safari 기반 PWA만 알림을 지원합니다 (iOS 16.4 이상). 구형 기기는 알림이 지원되지 않을 수 있습니다.</div>
+    </div>
+
+    <div class="card">
+      <h3>📋 알림 종류</h3>
+
+      <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-top:8px">
+
+        <div style="padding:14px 16px;border-bottom:1px solid #e2e8f0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-size:15px">🔧</span>
+            <strong style="font-size:14px">고장 신고 배정</strong>
+            <span class="tag tag-staff">직원</span>
+          </div>
+          <div style="font-size:13px;color:#4a5568">관리자·직원이 신고를 나에게 배정하면 즉시 발송됩니다. 알림을 클릭하면 해당 신고로 바로 이동하며 상태가 <strong>"배치완료"</strong>에서 <strong>"처리중"</strong>으로 전환됩니다. 확인하지 않으면 <strong>2분마다 반복</strong> 알림이 옵니다.</div>
+        </div>
+
+        <div style="padding:14px 16px;border-bottom:1px solid #e2e8f0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-size:15px">⚠️</span>
+            <strong style="font-size:14px">신고접수 미확인</strong>
+            <span class="tag tag-admin">관리자</span>
+          </div>
+          <div style="font-size:13px;color:#4a5568">배정된 직원이 <strong>3분 이상</strong> 신고를 확인하지 않으면 관리자에게 발송됩니다. 직원이 고장신고 알림을 확인하지 못하는 상황이므로 전화로 직접 신고내용을 전달해야 할 상황임을 알려주는 알림입니다.</div>
+        </div>
+
+        <div style="padding:14px 16px;border-bottom:1px solid #e2e8f0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-size:15px">🚨</span>
+            <strong style="font-size:14px">피드백 미처리</strong>
+            <span class="tag tag-staff">직원</span>
+          </div>
+          <div style="font-size:13px;color:#4a5568">신고를 처리중으로 전환한 후 <strong>8시간 이상</strong> 피드백을 입력하지 않으면 발송됩니다. 현장 처리가 완료되면 반드시 피드백을 입력하고 완료 처리해주세요.</div>
+        </div>
+
+        <div style="padding:14px 16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-size:15px">📞</span>
+            <strong style="font-size:14px">전화 착신</strong>
+            <span class="tag tag-admin">관리자</span>
+          </div>
+          <div style="font-size:13px;color:#4a5568">회사 전화로 전화가 수신되면 즉시 발송됩니다. 알림 내용은 아래와 같이 표시됩니다.</div>
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;font-size:13px">
+            <div style="background:#f0fff4;border-radius:8px;padding:8px 12px;color:#22543d">① 등록된 현장 번호 → <strong>📞 전화 착신 · [현장명]</strong></div>
+            <div style="background:#ebf8ff;border-radius:8px;padding:8px 12px;color:#1a365d">② 등록된 직원 번호 → <strong>📞 전화 착신 · 직원 [직급] [이름]</strong></div>
+            <div style="background:#fff5f5;border-radius:8px;padding:8px 12px;color:#742a2a">③ 미등록 번호 → <strong>📞 전화 착신 · 미등록 번호 (010-XXXX-XXXX)</strong></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 고장신고 처리 (직원) -->
+  <section id="fault">
+    <h2>🔧 고장 신고 처리 <span class="tag tag-staff" style="font-size:13px">직원</span></h2>
+
+    <div class="card">
+      <h3>처리 흐름</h3>
+      <div class="flow">
+        <div class="flow-item">📩 배정 알림 수신</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">알림 클릭</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">🔄 처리중 전환</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">현장 출동</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">📝 피드백 입력</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">✅ 완료</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>① 배정 알림 수신 & 확인</h3>
+      <ul class="step-list">
+        <li>고장 신고 배정 알림이 오면 알림을 클릭</li>
+        <li>앱이 열리며 <strong>신고내역 탭</strong>으로 자동 이동</li>
+        <li>해당 신고 상태가 <strong>"처리중"</strong>으로 자동 변경됨</li>
+      </ul>
+      <div class="tip">알림을 클릭하지 않고 앱을 직접 열어도 됩니다. 신고내역 탭에서 배정된 신고를 확인하세요.</div>
+    </div>
+
+    <div class="card">
+      <h3>② 피드백 입력 & 완료 처리</h3>
+      <ul class="step-list">
+        <li>신고내역 탭에서 해당 신고 클릭</li>
+        <li>현장 처리 후 <strong>피드백 내용 입력</strong> (조치 내용, 교체 부품 등)</li>
+        <li><strong>"완료 처리"</strong> 버튼 클릭</li>
+      </ul>
+      <div class="alert alert-yellow" style="margin-top:10px">
+        ⏰ 처리중 상태에서 3분 이상 피드백을 입력하지 않으면 <strong>피드백 미처리 알림</strong>이 반복 발송됩니다.
+      </div>
+    </div>
+  </section>
+
+  <!-- 준공계 -->
+  <section id="jungong">
+    <h2>📋 준공계 발행 <span class="tag tag-all" style="font-size:13px">공통</span></h2>
+    <div class="card">
+      <ul class="step-list">
+        <li>우측 상단 ☰ 메뉴 → <strong>준공계</strong> 탭</li>
+        <li>현장명, 공사명, 내용, 날짜 입력</li>
+        <li>부품 사진 추가 (선택)</li>
+        <li><strong>"PDF 다운로드"</strong> 버튼 클릭 → 자동 저장</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 5. 관리자 기능 -->
+  <section id="admin">
+    <h2>👑 관리자 기능 <span class="tag tag-admin" style="font-size:13px">관리자</span></h2>
+
+    <div class="card">
+      <h3>🔧 고장 신고 접수 & 담당자 배정</h3>
+      <ul class="step-list">
+        <li>우측 상단 ☰ 메뉴 → <strong>고장 신고</strong> 탭</li>
+        <li>신규 신고 내용 확인 (건물명, 호기, 고장 내용)</li>
+        <li>담당자 선택 후 <strong>"배정"</strong> 버튼 클릭</li>
+        <li>배정된 직원에게 자동으로 알림 발송됨</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>👤 계정 관리</h3>
+      <ul class="step-list">
+        <li>우측 상단 ☰ 메뉴 → <strong>인사 관리</strong> 탭</li>
+        <li><strong>"+ 계정 추가"</strong> 버튼 클릭</li>
+        <li>아이디, 비밀번호, 역할(직원/관리자), 전화번호 입력</li>
+        <li>"추가" 클릭 → 계정 생성 완료</li>
+      </ul>
+      <div class="tip"><strong>전화번호를 등록하면</strong> 해당 직원이 전화할 때 알림에 이름이 표시됩니다.</div>
+    </div>
+
+    <div class="card">
+      <h3>📅 휴일 관리</h3>
+      <ul class="step-list">
+        <li>우측 상단 ☰ 메뉴 → <strong>휴일 관리</strong> 탭</li>
+        <li>날짜 선택 후 휴일명 입력 (예: 개천절, 단체연차)</li>
+        <li><strong>"추가"</strong> 버튼 클릭</li>
+      </ul>
+      <div class="tip">등록된 휴일은 근무 배정 시 자동으로 반영됩니다.</div>
+    </div>
+
+    <div class="card">
+      <h3>📞 전화 착신 알림</h3>
+      <ul class="step-list">
+        <li>등록된 <strong>현장 전화번호</strong> 또는 <strong>직원 전화번호</strong>로 전화 수신 시</li>
+        <li>관리자 PC에 <strong>"📞 전화 착신 - [현장명 또는 직원명]"</strong> 알림 표시</li>
+      </ul>
+      <div class="tip">현장·직원 전화번호는 각각 <strong>관리현장</strong>, <strong>인사관리</strong>에서 등록하세요.</div>
+    </div>
+  </section>
+
+  <!-- 6. 팁 -->
+  <section id="tips">
+    <h2>💡 자주 묻는 질문</h2>
+
+    <div class="card">
+      <h3>❓ 알림이 오지 않아요</h3>
+      <ul class="step-list">
+        <li>브라우저 알림이 <strong>허용</strong> 상태인지 확인</li>
+        <li>휴대폰 설정 → 브라우저(크롬/Safari) → 알림 <strong>켜짐</strong> 확인</li>
+        <li>앱에서 로그아웃 후 재로그인 후 알림 다시 허용</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>❓ 로그인이 안 돼요</h3>
+      <ul class="step-list">
+        <li>아이디·비밀번호 대소문자 확인</li>
+        <li>관리자에게 계정 확인 요청</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>❓ 앱이 느리거나 안 열려요</h3>
+      <ul class="step-list">
+        <li>브라우저 새로고침 (당겨서 새로고침 또는 F5)</li>
+        <li>앱 종료 후 재시작</li>
+        <li>인터넷 연결 상태 확인</li>
+      </ul>
+    </div>
+
+    <div class="alert alert-green">
+      📞 기타 문의사항은 양희준 차장에게 연락주세요.
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  ⓒ 2026 주식회사 대솔이엘 · 대솔이엘 유지보수 관리 시스템
+</footer>
+
+</body>
+</html>
