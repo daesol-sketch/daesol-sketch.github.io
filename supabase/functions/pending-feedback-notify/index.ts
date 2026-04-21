@@ -1,11 +1,12 @@
 const SUPABASE_URL = 'https://bbnmxwpacdfqvicybhau.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJibm14d3BhY2RmcXZpY3liaGF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NDA3NDYsImV4cCI6MjA5MTAxNjc0Nn0.cGqnmu5BeaXosxoE-IEmjX-dF4zDYipzpYb5hhc8S6I';
+const SUPABASE_ANON_KEY = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJibm14d3BhY2RmcXZpY3liaGF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NDA3NDYsImV4cCI6MjA5MTAxNjc0Nn0.cGqnmu5BeaXosxoE-IEmjX-dF4zDYipzpYb5hhc8S6I`;
 
 Deno.serve(async () => {
   const threshold = new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString();
 
   // confirmed_at 기준 8시간 초과 OR (confirmed_at 없고 created_at 기준 8시간 초과)
-  const filter = `status=eq.처리중&or=(confirmed_at.lt.${encodeURIComponent(threshold)},and(confirmed_at.is.null,created_at.lt.${encodeURIComponent(threshold)}))&select=id,building,elevator,completion_handler`;
+  const enc = encodeURIComponent(threshold);
+  const filter = 'status=eq.처리중&or=(confirmed_at.lt.' + enc + ',and(confirmed_at.is.null,created_at.lt.' + enc + '))&select=id,building,elevator,completion_handler';
 
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/reports?${filter}`,
