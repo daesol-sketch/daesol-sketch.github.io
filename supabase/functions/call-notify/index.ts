@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     console.log(`[call-notify] siteName=${siteName} employeeName=${employeeName}`);
 
     const title = '📞 전화 착신';
-    const body  = siteName ? siteName : employeeName ? `직원 ${employeeName}` : `미등록 번호 (${sender})`;
+    const body  = siteName ? `${siteName} (${sender})` : employeeName ? `직원 ${employeeName} (${sender})` : `미등록 번호 (${sender})`;
 
     const { data: admins } = await db
       .from('accounts')

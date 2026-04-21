@@ -1448,7 +1448,7 @@
     const shiftColor  = { '주간':'#2b6cb0', '평일당직':'#c05621', '주말당직':'#276749' };
     const shiftBg     = { '주간':'#ebf8ff', '평일당직':'#fffaf0', '주말당직':'#f0fff4' };
     const shiftBorder = { '주간':'#bee3f8', '평일당직':'#fbd38d', '주말당직':'#9ae6b4' };
-    const rows = [
+    const allRows = [
       { shift:'주간',     label:'☀️ 주간',      time:'08:30~17:30',
         cols:[ {key:'1팀',label:'1팀(2명)'}, {key:'2팀',label:'2팀(2명)'}, {key:'3팀',label:'3팀 파주(2명)'} ] },
       { shift:'평일당직', label:'🌙 평일숙직',  time:'17:30~익일 08:30',
@@ -1456,6 +1456,10 @@
       { shift:'주말당직', label:'📅 주말/휴일', time:'08:30~익일 08:30',
         cols:[ {key:'풍동숙직',label:'풍동숙직(2명)'}, {key:'파주숙직',label:'파주숙직(1명)'} ] },
     ];
+    const curShift = getCurrentShiftType();
+    const rows = curShift === '주말당직'
+      ? allRows.filter(r => r.shift === '주말당직')
+      : allRows.filter(r => r.shift !== '주말당직');
     el.innerHTML = rows.map(row => {
       const color = shiftColor[row.shift], bg = shiftBg[row.shift], border = shiftBorder[row.shift];
       const colHtml = row.cols.map(col => {
