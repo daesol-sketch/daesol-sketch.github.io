@@ -1349,12 +1349,13 @@
     const now = new Date();
     const day = now.getDay();
     const t = now.getHours() * 60 + now.getMinutes();
+    const toLocalDate = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     if (t < 8*60+30) {
       const prev = new Date(now); prev.setDate(prev.getDate()-1);
       const pd = prev.getDay();
-      return (pd === 0 || pd === 6 || isHoliday(prev.toISOString().slice(0,10))) ? '주말당직' : '평일당직';
+      return (pd === 0 || pd === 6 || isHoliday(toLocalDate(prev))) ? '주말당직' : '평일당직';
     }
-    const todayStr = now.toISOString().slice(0,10);
+    const todayStr = toLocalDate(now);
     if (day === 0 || day === 6 || isHoliday(todayStr)) return '주말당직';
     if (t < 17*60+30) return '주간';
     return '평일당직';
@@ -1364,12 +1365,13 @@
     const now = new Date();
     const h = now.getHours(), m = now.getMinutes();
     const t = h * 60 + m;
+    const toLocalDate = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     // 자정~8:30은 전날 당직으로 간주
     if (t < 8*60+30) {
       const d = new Date(now); d.setDate(d.getDate()-1);
-      return d.toISOString().slice(0,10);
+      return toLocalDate(d);
     }
-    return now.toISOString().slice(0,10);
+    return toLocalDate(now);
   }
 
   async function toggleDutyShift(shiftType, teamOverride) {
