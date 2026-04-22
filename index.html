@@ -1571,6 +1571,7 @@
   let reports = [];
   let holidayDates = new Set();
   let currentFilter = '전체';
+  let repeatCountMap = {};
 
   /* ── CLOCK ── */
   function updateClock() {
@@ -2320,9 +2321,21 @@
     reports = data || [];
   }
 
+  async function loadRepeatCountMap() {
+    const from = new Date();
+    from.setDate(from.getDate() - 30);
+    const fromStr = from.toISOString().slice(0, 10);
+    const { data } = await db.from('reports').select('building, elevator, type').eq('status', '완료').gte('completion_at', fromStr);
+    repeatCountMap = {};
+    if (data) data.forEach(r => {
+      const key = (r.building||'') + '||' + (r.elevator||'') + '||' + (r.type||'');
+      repeatCountMap[key] = (repeatCountMap[key] || 0) + 1;
+    });
+  }
+
   async function loadAndRender() {
     document.getElementById('report-list').innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
-    await loadReports();
+    await Promise.all([loadReports(), loadRepeatCountMap()]);
     updateStats(); updatePendingBadge(); renderList();
   }
 
@@ -2410,8 +2423,14 @@
       const _d = r.created_at ? new Date(r.created_at) : null;
       const dt = _d ? (_d.getMonth()+1) + '월' + _d.getDate() + '일 ' + String(_d.getHours()).padStart(2,'0') + ':' + String(_d.getMinutes()).padStart(2,'0') : '';
       const hc = r.status !== '접수중' && (r.completion_content || r.completion_handler || r.completion_at);
+      const repeatKey = (r.building||'') + '||' + (r.elevator||'') + '||' + (r.type||'');
+      const repeatCount = repeatCountMap[repeatKey] || 0;
+      const repeatNotice = (repeatCount >= 1 && r.type)
+        ? '<div style="font-size:12px;color:#c05621;background:#fffaf0;border-left:3px solid #ed8936;border-radius:4px;padding:5px 10px;margin-bottom:8px">※ 최근 1달 내 ' + escHtml(r.elevator||'') + ' ' + escHtml(r.type||'') + ' ' + (repeatCount+1) + '번째 고장입니다. 반복고장현황을 참고해주세요.</div>'
+        : '';
       return '<div class=report-item style=cursor:pointer onclick=showReportDetail(' + JSON.stringify(r.id) + ')>' +
         '<div class=report-left>' +
+        repeatNotice +
         '<div class=report-header>' +
         '<span class=report-id>' + r.id + '</span>' +
         '<span class=report-title>' + escHtml(r.building||'') + ' · ' + escHtml(r.elevator||'') + '</span>' +
