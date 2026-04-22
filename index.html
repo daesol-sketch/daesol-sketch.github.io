@@ -4907,6 +4907,10 @@
   // 서비스워커 등록 (PWA)
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
+    // SW 업데이트 감지 시 자동 새로고침 (배포 후 구버전 캐시 방지)
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
   }
 
   // 앱 포그라운드 복귀 시 구독 갱신 (구독이 만료/변경돼도 DB 최신 유지)
