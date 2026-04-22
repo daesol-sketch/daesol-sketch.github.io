@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -511,7 +511,7 @@
             <div class="report-datetime-wrap" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <div style="position:relative;display:flex;flex-shrink:0;">
                 <input type="text" id="f-report-date" placeholder="2026-04-15" maxlength="10" oninput="autoFormatDate(this);if(this.value.length===10)clampReportDateTime()" style="padding:10px 14px;border:1.5px solid #333;border-right:none;border-radius:8px 0 0 8px;font-size:14px;font-family:inherit;width:200px;background:#1a1a1a;color:#e2e8f0" />
-                <button type="button" onclick="document.getElementById('f-report-date-picker').showPicker()" style="width:40px;border:1.5px solid #333;border-left:none;border-radius:0 8px 8px 0;background:#1a1a1a;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center" title="달력">📅</button>
+                <button type="button" onclick="openDatePicker('f-report-date-picker')" style="width:40px;border:1.5px solid #333;border-left:none;border-radius:0 8px 8px 0;background:#1a1a1a;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center" title="달력">📅</button>
                 <input type="date" id="f-report-date-picker" style="position:absolute;left:0;top:30px;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('f-report-date').value=this.value;clampReportDateTime()" />
               </div>
               <div class="report-time-row time-select-wrapper" style="gap:4px;align-items:center;flex:1">
@@ -627,13 +627,13 @@
             <label style="font-size:13px;color:#4a5568;white-space:nowrap">날짜:</label>
             <div style="position:relative;display:flex">
               <input type="text" id="report-month-from" placeholder="2026-04-01" maxlength="10" oninput="autoFormatDate(this);renderList()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:110px" />
-              <button type="button" onclick="document.getElementById('report-month-from-picker').showPicker()" style="width:32px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">📅</button>
+              <button type="button" onclick="openDatePicker('report-month-from-picker')" style="width:32px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">📅</button>
               <input type="date" id="report-month-from-picker" style="position:absolute;right:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('report-month-from').value=this.value;renderList()" />
             </div>
             <span style="color:#a0aec0">~</span>
             <div style="position:relative;display:flex">
               <input type="text" id="report-month-to" placeholder="2026-04-30" maxlength="10" oninput="autoFormatDate(this);renderList()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:110px" />
-              <button type="button" onclick="document.getElementById('report-month-to-picker').showPicker()" style="width:32px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">📅</button>
+              <button type="button" onclick="openDatePicker('report-month-to-picker')" style="width:32px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">📅</button>
               <input type="date" id="report-month-to-picker" style="position:absolute;right:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('report-month-to').value=this.value;renderList()" />
             </div>
             <button onclick="clearReportFilter()" class="filter-reset-btn" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:12px;font-family:inherit;background:white;cursor:pointer;color:#718096;white-space:nowrap">초기화</button>
@@ -673,13 +673,13 @@
             <label style="font-size:13px;color:#4a5568;white-space:nowrap">날짜:</label>
             <div style="position:relative;display:flex">
               <input type="text" id="done-date-from" placeholder="2026-04-01" maxlength="10" oninput="autoFormatDate(this);renderDoneList()" style="padding:6px 8px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:110px" />
-              <button type="button" onclick="document.getElementById('done-date-from-picker').showPicker()" style="width:32px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">📅</button>
+              <button type="button" onclick="openDatePicker('done-date-from-picker')" style="width:32px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">📅</button>
               <input type="date" id="done-date-from-picker" style="position:absolute;right:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('done-date-from').value=this.value;renderDoneList()" />
             </div>
             <span style="font-size:13px;color:#718096">~</span>
             <div style="position:relative;display:flex">
               <input type="text" id="done-date-to" placeholder="2026-04-30" maxlength="10" oninput="autoFormatDate(this);renderDoneList()" style="padding:6px 8px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:110px" />
-              <button type="button" onclick="document.getElementById('done-date-to-picker').showPicker()" style="width:32px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">📅</button>
+              <button type="button" onclick="openDatePicker('done-date-to-picker')" style="width:32px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">📅</button>
               <input type="date" id="done-date-to-picker" style="position:absolute;right:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('done-date-to').value=this.value;renderDoneList()" />
             </div>
           </div>
@@ -772,7 +772,7 @@
       <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
         <div style="position:relative;display:flex;flex:1;min-width:140px">
           <input type="text" id="holiday-date-input" placeholder="2026-04-15" maxlength="10" oninput="autoFormatDate(this)" style="padding:9px 12px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:14px;font-family:inherit;width:100%" />
-          <button type="button" onclick="document.getElementById('holiday-date-picker').showPicker()" style="width:40px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">📅</button>
+          <button type="button" onclick="openDatePicker('holiday-date-picker')" style="width:40px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">📅</button>
           <input type="date" id="holiday-date-picker" style="position:absolute;right:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('holiday-date-input').value=this.value" />
         </div>
         <input type="text" id="holiday-name-input" placeholder="휴일명 (예: 개천절, 단체연차)" style="padding:9px 12px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:14px;font-family:inherit;flex:2;min-width:160px" />
@@ -923,7 +923,7 @@
             <div class="rdm-datetime-row" style=display:flex;gap:8px>
             <div class="rdm-date-wrap" style="position:relative;display:flex;flex-shrink:0;">
             <input type=text id=rdm-date placeholder="2026-04-15" maxlength=10 oninput="autoFormatDate(this)" style="padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:140px;background:#fff;color:#1a202c" />
-            <button type=button onclick="document.getElementById('rdm-date-picker').showPicker()" style="width:36px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">📅</button>
+            <button type=button onclick="openDatePicker('rdm-date-picker')" style="width:36px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">📅</button>
             <input type=date id=rdm-date-picker style="position:absolute;left:0;top:30px;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('rdm-date').value=this.value" />
             </div>
             <div class="time-select-wrapper" style="gap:4px;align-items:center;flex:1">
@@ -1165,7 +1165,7 @@
         <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">계약일자</label>
         <div style="display:flex;gap:0;position:relative">
           <input type="text" class="modal-input normal" id="mgmt-contract-date" placeholder="20260409" maxlength="10" style="margin-bottom:0;border-radius:8px 0 0 8px!important;flex:1" oninput="autoFormatDate(this)" onkeydown="mgmtEnterNext(event,this)" />
-          <button type="button" onclick="document.getElementById('mgmt-contract-date-picker').showPicker()" style="width:40px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background 0.15s" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#edf2f7'" title="달력 선택">📅</button>
+          <button type="button" onclick="openDatePicker('mgmt-contract-date-picker')" style="width:40px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background 0.15s" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#edf2f7'" title="달력 선택">📅</button>
           <input type="date" id="mgmt-contract-date-picker" style="position:absolute;right:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none" oninput="syncDatePicker(this)" />
         </div>
       </div>
@@ -1173,7 +1173,7 @@
         <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">계약시작</label>
         <div style="display:flex;gap:0;position:relative">
           <input type="text" class="modal-input normal" id="mgmt-contract-start" placeholder="20260101" maxlength="10" style="margin-bottom:0;border-radius:8px 0 0 8px!important;flex:1" oninput="autoFormatDate(this)" onkeydown="mgmtEnterNext(event,this)" />
-          <button type="button" onclick="document.getElementById('mgmt-contract-start-picker').showPicker()" style="width:40px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background 0.15s" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#edf2f7'" title="달력 선택">📅</button>
+          <button type="button" onclick="openDatePicker('mgmt-contract-start-picker')" style="width:40px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background 0.15s" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#edf2f7'" title="달력 선택">📅</button>
           <input type="date" id="mgmt-contract-start-picker" style="position:absolute;right:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('mgmt-contract-start').value=this.value" />
         </div>
       </div>
@@ -1181,7 +1181,7 @@
         <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">계약만료</label>
         <div style="display:flex;gap:0;position:relative">
           <input type="text" class="modal-input normal" id="mgmt-contract-end" placeholder="20261231" maxlength="10" style="margin-bottom:0;border-radius:8px 0 0 8px!important;flex:1" oninput="autoFormatDate(this)" onkeydown="mgmtEnterNext(event,this)" />
-          <button type="button" onclick="document.getElementById('mgmt-contract-end-picker').showPicker()" style="width:40px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background 0.15s" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#edf2f7'" title="달력 선택">📅</button>
+          <button type="button" onclick="openDatePicker('mgmt-contract-end-picker')" style="width:40px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#edf2f7;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background 0.15s" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#edf2f7'" title="달력 선택">📅</button>
           <input type="date" id="mgmt-contract-end-picker" style="position:absolute;right:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none" oninput="document.getElementById('mgmt-contract-end').value=this.value" />
         </div>
       </div>
@@ -2675,6 +2675,15 @@
   }
 
   /* ── 날짜 자동 포맷 ── */
+  function openDatePicker(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const orig = { w: el.style.width, h: el.style.height, op: el.style.opacity, pe: el.style.pointerEvents };
+    el.style.width = '1px'; el.style.height = '1px'; el.style.opacity = '0'; el.style.pointerEvents = 'auto';
+    try { el.showPicker(); } catch(e) { el.click(); }
+    setTimeout(() => { el.style.width = orig.w; el.style.height = orig.h; el.style.opacity = orig.op; el.style.pointerEvents = orig.pe; }, 200);
+  }
+
   function autoFormatDate(input) {
     let v = input.value.replace(/[^0-9]/g, '').slice(0, 8);
     if (v.length >= 5) v = v.slice(0,4) + '-' + v.slice(4);
