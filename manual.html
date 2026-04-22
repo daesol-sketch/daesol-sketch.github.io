@@ -28,8 +28,8 @@
   .card h3 { font-size: 15px; font-weight: 700; color: #2d3748; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
 
   .step-list { list-style: none; counter-reset: step; }
-  .step-list li { counter-increment: step; display: flex; gap: 12px; margin-bottom: 10px; align-items: flex-start; }
-  .step-list li::before { content: counter(step); min-width: 26px; height: 26px; background: #2b6cb0; color: white; border-radius: 50%; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .step-list li { counter-increment: step; position: relative; padding-left: 38px; margin-bottom: 10px; }
+  .step-list li::before { content: counter(step); position: absolute; left: 0; top: 2px; width: 26px; height: 26px; background: #2b6cb0; color: white; border-radius: 50%; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 
   .tag { display: inline-block; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 700; margin-right: 4px; }
   .tag-admin { background: #fefcbf; color: #744210; }
