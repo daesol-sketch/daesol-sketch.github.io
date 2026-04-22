@@ -733,6 +733,15 @@
               <option value="4">4회 이상</option>
               <option value="5">5회 이상</option>
             </select>
+            <label style="font-size:13px;color:#4a5568;white-space:nowrap;margin-left:8px">고장 유형:</label>
+            <select id="repeat-type-filter" onchange="renderRepeatPage()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit">
+              <option value="">전체</option>
+              <option>정지</option><option>갇힘정지</option><option>OPEN정지</option>
+              <option>도어OP-CL반복</option><option>도어개폐불량</option><option>도어소음</option>
+              <option>층레벨차이</option><option>소음&amp;진동</option><option>버튼불량</option>
+              <option>층표시기불량</option><option>카내부조명미점등</option><option>인터폰불량</option>
+              <option>침수&amp;정전</option><option>기타</option>
+            </select>
           </div>
         </div>
         <div id="repeat-list"></div>
@@ -2043,6 +2052,7 @@
 
     const days = parseInt(document.getElementById('repeat-period').value) || 30;
     const minCount = parseInt(document.getElementById('repeat-min-count').value) || 2;
+    const typeFilter = document.getElementById('repeat-type-filter').value;
     const fromDate = new Date();
     fromDate.setDate(fromDate.getDate() - days);
     const fromStr = fromDate.toISOString().slice(0, 10);
@@ -2069,6 +2079,11 @@
     });
 
     const filtered = Object.values(groups)
+      .map(g => {
+        if (!typeFilter) return g;
+        const filteredItems = g.items.filter(r => r.type === typeFilter);
+        return { ...g, items: filteredItems };
+      })
       .filter(g => g.items.length >= minCount)
       .sort((a, b) => b.items.length - a.items.length);
 
