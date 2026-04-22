@@ -15,6 +15,7 @@
   .badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 20px; padding: 3px 12px; font-size: 12px; margin-top: 10px; }
 
   nav { background: #fff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100; overflow-x: auto; white-space: nowrap; padding: 0 12px; display: flex; gap: 4px; }
+  @media print { nav { display: none; } }
   nav a { display: inline-block; padding: 12px 14px; font-size: 13px; color: #4a5568; text-decoration: none; border-bottom: 3px solid transparent; font-weight: 600; }
   nav a:hover { color: #2b6cb0; border-bottom-color: #2b6cb0; }
 
@@ -60,6 +61,22 @@
     .flow { gap: 4px; }
     .flow-item { font-size: 12px; padding: 5px 9px; }
   }
+  @media print {
+    nav { display: none; }
+    body { margin: 0; }
+    .content { padding: 10px 16px; }
+    section { padding: 0; margin: 0; }
+    section + section { page-break-before: always; }
+    h2 { font-size: 17px; margin-bottom: 10px; }
+    h3 { font-size: 14px; margin-bottom: 6px; }
+    .card { padding: 10px 14px; margin-bottom: 8px; box-shadow: none; border: 1px solid #e2e8f0; }
+    .step-list li { margin-bottom: 5px; }
+    .tip { padding: 8px 12px; font-size: 12px; }
+    .alert { padding: 8px 12px; font-size: 12px; margin-bottom: 8px; }
+    .flow { gap: 4px; flex-wrap: wrap; }
+    .flow-item { font-size: 11px; padding: 4px 8px; }
+    img { max-width: 100%; }
+  }
 </style>
 </head>
 <body>
@@ -83,10 +100,9 @@
 
 <div class="container">
 
-  <!-- 역할 안내 -->
-  <div class="alert alert-blue" style="margin-top:8px">
-    📌 이 앱은 <strong>관리자</strong>와 <strong>직원(보수 직원)</strong> 두 가지 역할로 운영됩니다.<br>
-    <span class="tag tag-admin">관리자</span> 모든 기능 사용 가능 &nbsp;|&nbsp; <span class="tag tag-staff">직원</span> 배정된 신고 처리 및 피드백 입력
+  <!-- 앱 주소 -->
+  <div class="alert alert-blue" style="margin-top:8px;text-align:center;font-size:15px">
+    🔗 앱 주소: <strong>https://daesol-sketch.github.io</strong>
   </div>
 
   <!-- 1. 앱 설치 -->
@@ -169,13 +185,13 @@
     </div>
 
     <div class="card">
-      <h3>📱 아이폰 백그라운드 설정 (알림 누락 방지)</h3>
+      <h3>📱 아이폰 알림 설정</h3>
       <ul class="step-list">
         <li>휴대폰 <strong>설정</strong> 앱 열기</li>
-        <li><strong>일반</strong> → <strong>백그라운드 앱 새로고침</strong> 선택</li>
-        <li>목록에서 <strong>대솔이엘</strong>(앱 이름) 또는 <strong>Safari</strong>가 있다면 <strong>켜짐</strong>으로 설정</li>
+        <li><strong>알림</strong> → <strong>Safari</strong> 선택</li>
+        <li><strong>알림 허용</strong> 켜짐으로 설정</li>
       </ul>
-      <div class="tip">⚠️ iOS 버전에 따라 목록에 Safari 대신 앱 이름으로 표시되거나 항목이 없을 수 있습니다. iOS 16.4 이상에서만 알림을 지원하며 구형 기기는 알림이 지원되지 않을 수 있습니다.</div>
+      <div class="tip">⚠️ iOS 16.4 이상에서만 알림을 지원합니다. 반드시 <strong>Safari</strong>로 홈 화면에 추가한 경우에만 알림이 동작합니다.</div>
     </div>
 
     <div class="card">
