@@ -6,7 +6,7 @@ Deno.serve(async () => {
 
   // confirmed_at 기준 8시간 초과 OR (confirmed_at 없고 created_at 기준 8시간 초과)
   const enc = encodeURIComponent(threshold);
-  const filter = 'status=eq.처리중&or=(confirmed_at.lt.' + enc + ',and(confirmed_at.is.null,created_at.lt.' + enc + '))&select=id,building,elevator,completion_handler';
+  const filter = 'status=eq.처리중&confirmed_at=lt.' + enc + '&select=id,building,elevator,completion_handler';
 
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/reports?${filter}`,
