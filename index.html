@@ -4864,6 +4864,15 @@
         switchTab('list', null);
         setTimeout(() => showReportDetail(e.data.reportId), 400);
       }
+      if (e.data?.action === 'fillReport') {
+        switchTab('report', null);
+        setTimeout(() => {
+          const bldg = document.getElementById('f-building');
+          if (bldg && e.data.siteName) { bldg.value = e.data.siteName; loadElevatorsForSite(e.data.siteName); }
+          const ph = document.getElementById('f-phone');
+          if (ph && e.data.phone) { ph.value = e.data.phone; autoFormatPhone(ph); }
+        }, 400);
+      }
     });
   }
   const _urlParams = new URLSearchParams(location.search);
@@ -4871,6 +4880,20 @@
   const _openReportParam = _urlParams.get('openReport');
   if (_tabParam) { setTimeout(() => switchTab(_tabParam, null), 800); history.replaceState(null, '', location.pathname); }
   if (_openReportParam) { setTimeout(() => { switchTab('list', null); setTimeout(() => showReportDetail(_openReportParam), 400); }, 800); history.replaceState(null, '', location.pathname); }
+  const _fillReportParam = _urlParams.get('fillReport');
+  const _fillPhoneParam = _urlParams.get('phone');
+  if (_fillReportParam) {
+    setTimeout(() => {
+      switchTab('report', null);
+      setTimeout(() => {
+        const bldg = document.getElementById('f-building');
+        if (bldg) { bldg.value = _fillReportParam; loadElevatorsForSite(_fillReportParam); }
+        const ph = document.getElementById('f-phone');
+        if (ph && _fillPhoneParam) { ph.value = _fillPhoneParam; autoFormatPhone(ph); }
+      }, 400);
+    }, 800);
+    history.replaceState(null, '', location.pathname);
+  }
 
   // 자동로그인 시도 → 완료 후 페이지 초기화
   (async () => {

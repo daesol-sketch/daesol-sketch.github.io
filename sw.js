@@ -41,7 +41,7 @@ self.addEventListener('push', event => {
       badge: './icon-192.png',
       vibrate: [300, 150, 300, 150, 300],
       requireInteraction: isMobile,
-      data: { reportId: data.reportId || null, type: data.type || null }
+      data: { reportId: data.reportId || null, type: data.type || null, siteName: data.siteName || null, phone: data.phone || null }
     }).then(() => {
       if (!isMobile) {
         return new Promise(resolve => setTimeout(resolve, 10000)).then(() =>
@@ -61,6 +61,10 @@ self.addEventListener('notificationclick', event => {
   const type = event.notification.data?.type;
   const isFeedback = type === 'feedback';
 
+  const siteName = event.notification.data?.siteName;
+  const phone = event.notification.data?.phone;
+  const isCall = type === 'call';
+
   event.waitUntil(
     Promise.all([
       // feedback 타입은 상태 변경 안 함, 그 외 reportId 있으면 처리중으로 변경
@@ -77,7 +81,12 @@ self.addEventListener('notificationclick', event => {
 
       // 앱 열기 + 메시지 전달
       clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-        if (isFeedback && reportId) {
+        if (isCall && siteName) {
+          // 현장 전화 착신: 신고접수 탭으로 이동 + 건물명/전화 자동입력
+          const msg = { action: 'fillReport', siteName, phone };
+          if (list.length) { list[0].postMessage(msg); return list[0].focus(); }
+          return clients.openWindow('./?fillReport=' + encodeURIComponent(siteName) + '&phone=' + encodeURIComponent(phone || ''));
+        } else if (isFeedback && reportId) {
           // 피드백 미처리: 해당 건 상세 모달로 이동
           const msg = { action: 'openReport', reportId };
           if (list.length) { list[0].postMessage(msg); return list[0].focus(); }

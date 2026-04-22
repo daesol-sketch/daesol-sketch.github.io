@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
       subs.map((s: any) =>
         webpush.sendNotification(
           s.subscription,
-          JSON.stringify({ title, body, type: 'call' }),
+          JSON.stringify({ title, body, type: 'call', siteName: siteName || null, phone: sender }),
           { TTL: 30 }
         )
       )
