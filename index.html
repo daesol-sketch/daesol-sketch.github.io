@@ -1174,6 +1174,8 @@
     <input type="text" class="modal-input normal" id="elev-number" placeholder="예: 2134-859" maxlength="8" style="margin-bottom:10px" oninput="autoFormatElevNum(this)" onblur="autoFillElevModelSingle(this.value)" />
     <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">엘리베이터 모델</label>
     <input type="text" class="modal-input normal" id="elev-model" placeholder="모델명" style="margin-bottom:10px" />
+    <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">검사일정</label>
+    <input type="text" class="modal-input normal" id="elev-inspection-scheduled" placeholder="예: 2026-05-15" style="margin-bottom:10px" />
     <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">비고</label>
     <textarea class="modal-input normal" id="elev-notes" placeholder="메모" style="margin-bottom:0;min-height:60px;resize:vertical"></textarea>
     <div class="modal-error" id="elev-error" style="display:none;margin-top:8px"></div>
@@ -3257,7 +3259,7 @@
     const isAdmin = currentRole === '관리자';
     el.innerHTML = `<div style="overflow-x:auto"><table class="site-table" style="width:100%">
       <thead><tr>
-        <th>#</th><th>호기명</th><th>승강기번호</th><th>엘리베이터 모델</th><th>검사만료일</th><th>비고</th>
+        <th>#</th><th>호기명</th><th>승강기번호</th><th>엘리베이터 모델</th><th>검사만료일</th><th>최근검사결과</th><th>검사일정</th><th>비고</th>
         ${isAdmin ? '<th>관리</th>' : ''}
       </tr></thead>
       <tbody>${data.map((e,i) => `<tr>
@@ -3275,6 +3277,14 @@
           if (diff <= 30) return `<span style="color:#dd6b20;font-weight:700">⚠️ ${dateStr} (${diff}일 후)</span>`;
           return `<span style="color:#38a169">${dateStr}</span>`;
         })()}</td>
+        <td>${(() => {
+          const r = e.last_inspection_result;
+          if (!r) return '<span style="color:#a0aec0">-</span>';
+          if (r === '합격') return '<span style="color:#38a169;font-weight:700">✓ 합격</span>';
+          if (r === '조건부합격') return '<span style="color:#dd6b20;font-weight:700">△ 조건부합격</span>';
+          return '<span style="color:#e53e3e;font-weight:700">✗ ' + escHtml(r) + '</span>';
+        })()}</td>
+        <td style="font-size:12px">${escHtml(e.next_inspection_scheduled||'')}</td>
         <td>${escHtml(e.notes||'-')}</td>
         ${isAdmin ? `<td style="white-space:nowrap">
           <button class="btn-sm" style="border-color:#bee3f8;color:#2b6cb0" onclick="showEditElevatorModal(${e.id})">수정</button>
@@ -3292,6 +3302,7 @@
     document.getElementById('elev-unit-name').value = '';
     document.getElementById('elev-number').value = '';
     document.getElementById('elev-model').value = '';
+    document.getElementById('elev-inspection-scheduled').value = '';
     document.getElementById('elev-notes').value = '';
     document.getElementById('elev-error').style.display = 'none';
     document.getElementById('elev-modal').style.display = 'flex';
@@ -3306,6 +3317,7 @@
     document.getElementById('elev-unit-name').value = data.unit_name || '';
     document.getElementById('elev-number').value = data.elevator_number || '';
     document.getElementById('elev-model').value = data.elevator_model || '';
+    document.getElementById('elev-inspection-scheduled').value = data.next_inspection_scheduled || '';
     document.getElementById('elev-notes').value = data.notes || '';
     document.getElementById('elev-error').style.display = 'none';
     document.getElementById('elev-modal').style.display = 'flex';
@@ -3318,9 +3330,10 @@
     const payload = {
       site_id:          currentSiteForElevator.id,
       unit_name,
-      elevator_number:  document.getElementById('elev-number').value.trim() || null,
-      elevator_model:   document.getElementById('elev-model').value.trim() || null,
-      notes:            document.getElementById('elev-notes').value.trim() || null,
+      elevator_number:           document.getElementById('elev-number').value.trim() || null,
+      elevator_model:            document.getElementById('elev-model').value.trim() || null,
+      next_inspection_scheduled: document.getElementById('elev-inspection-scheduled').value.trim() || null,
+      notes:                     document.getElementById('elev-notes').value.trim() || null,
     };
     const { error } = editingElevatorId
       ? await db.from('site_elevators').update(payload).eq('id', editingElevatorId)
