@@ -3539,6 +3539,8 @@
 
   async function checkPendingAssignments() {
     if (!currentUser || currentRole === '관리자') return;
+    const hour = new Date().getHours();
+    if (hour >= 23 || hour < 7) return;
     const handler = currentUser.username;
     const thresholdAgo = new Date(Date.now() - 8 * 60 * 60 * 1000);
     const { data } = await db.from('reports').select('*').eq('status', '처리중').eq('completion_handler', handler);
@@ -3566,7 +3568,7 @@
 
   function startPendingFeedbackCheck() {
     if (_pendingFeedbackInterval) clearInterval(_pendingFeedbackInterval);
-    _pendingFeedbackInterval = setInterval(checkPendingAssignments, 2 * 60 * 60 * 1000); // 2시간마다
+    _pendingFeedbackInterval = setInterval(checkPendingAssignments, 30 * 60 * 1000); // 30분마다
   }
 
   let alertAudio = null;
