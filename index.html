@@ -18,6 +18,7 @@
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; overflow-anchor: none; }
@@ -900,7 +901,7 @@
       <div id="gc-photo-sets" style="margin-bottom:16px"></div>
       <div style="display:flex;gap:12px;margin-bottom:40px">
         <button onclick="gcAddPhotoSet()" style="flex:1;padding:14px;background:white;color:#2b6cb0;border:2px dashed #2b6cb0;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">+ 사진철 추가</button>
-        <button onclick="downloadGongsaPDF()" style="flex:1;padding:14px;background:#1a365d;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">📥 PDF 다운로드</button>
+        <button onclick="downloadGongsaExcel()" style="flex:1;padding:14px;background:#1a6b35;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">📥 엑셀 다운로드</button>
       </div>
     </div>
   </div>
@@ -5355,94 +5356,117 @@
     gcRenderPhotoGrid(setIdx);
   }
 
-  let _gcPdfGenerating = false;
-  async function downloadGongsaPDF() {
-    if (_gcPdfGenerating) return;
-    _gcPdfGenerating = true;
+  async function downloadGongsaExcel() {
+    if (typeof ExcelJS === 'undefined') {
+      alert('ExcelJS 라이브러리를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+    if (!gcPhotoSets.length) { alert('사진철이 없습니다.'); return; }
 
-    const site = document.getElementById('gc-site').value.trim() || '';
+    const site = document.getElementById('gc-site').value.trim() || '무제';
     const title = document.getElementById('gc-title').value.trim() || '';
 
-    const btn = document.querySelector('#page-gongsa button[onclick="downloadGongsaPDF()"]');
+    const btn = document.querySelector('#page-gongsa button[onclick="downloadGongsaExcel()"]');
     if (btn) { btn.style.pointerEvents = 'none'; btn.style.opacity = '0.6'; }
 
-    const font = '"Malgun Gothic","맑은 고딕",sans-serif';
-    const W = 794, H = 1123;
-    const pageBase = `width:${W}px;height:${H}px;background:white;font-family:${font};position:relative;overflow:hidden;box-sizing:border-box;padding:28px 32px;`;
-
-    // 사진철 1개 = 1페이지 (헤더 + 사진 6장)
-    const pages = gcPhotoSets.map(set => {
-      const pg = document.createElement('div');
-      pg.style.cssText = pageBase;
-
-      // 헤더
-      let html = `
-        <div style="text-align:center;font-size:22px;font-weight:bold;letter-spacing:6px;color:#000;margin-bottom:10px;text-decoration:underline;text-underline-offset:12px">준 공 사 진</div>
-        <div style="font-size:13px;color:#000;margin-bottom:10px;display:flex;flex-direction:column;gap:6px">
-          <span><b>교체품목 :</b> ${escHtml(set.name)}</span>
-          <span><b>교체호기 :</b> ${escHtml(title)}</span>
-        </div>`;
-
-      // 사진 6칸 (2열 3행)
-      html += '<table style="width:100%;border-collapse:collapse;table-layout:fixed;">';
-      for (let row = 0; row < 3; row++) {
-        html += '<tr>';
-        for (let col = 0; col < 2; col++) {
-          const i = row * 2 + col;
-          const photo = set.photos[i];
-          const label = photo?.label || DEFAULT_PHOTO_LABELS[i];
-          html += `
-            <td style="border:1px solid #999;padding:0;width:50%;vertical-align:top">
-              <div style="height:270px;display:flex;align-items:center;justify-content:center;background:#f9f9f9;overflow:hidden">
-                ${photo?.dataUrl ? `<img src="${photo.dataUrl}" style="max-width:100%;max-height:100%;object-fit:contain" />` : '<div style="color:#ccc;font-size:12px">사진 없음</div>'}
-              </div>
-              <div style="border-top:1px solid #999;display:flex;font-size:12px;color:#000">
-                <span style="padding:4px 8px;border-right:1px solid #999;background:#f0f0f0;font-weight:bold;white-space:nowrap">내 용</span>
-                <span style="padding:4px 8px;flex:1;text-align:center">${label}</span>
-              </div>
-            </td>`;
-        }
-        html += '</tr>';
-      }
-      html += '</table>';
-
-      pg.innerHTML = html;
-      return pg;
-    });
-
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'position:fixed;left:-9999px;top:0;z-index:-999;';
-    pages.forEach(p => wrap.appendChild(p));
-    document.body.appendChild(wrap);
-
-    const savedScrollY = window.scrollY || window.pageYOffset;
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;font-weight:700;font-family:inherit';
-    overlay.textContent = 'PDF 생성 중...';
+    overlay.textContent = '엑셀 생성 중...';
     document.body.appendChild(overlay);
 
     try {
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      for (let i = 0; i < pages.length; i++) {
-        if (i > 0) pdf.addPage();
-        const canvas = await html2canvas(pages[i], {
-          scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff',
-          windowWidth: W, windowHeight: H, scrollX: 0, scrollY: 0
-        });
-        window.scrollTo(0, savedScrollY);
-        pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
+      const wb = new ExcelJS.Workbook();
+      const border = {
+        top: { style: 'thin', color: { argb: 'FF999999' } },
+        left: { style: 'thin', color: { argb: 'FF999999' } },
+        bottom: { style: 'thin', color: { argb: 'FF999999' } },
+        right: { style: 'thin', color: { argb: 'FF999999' } }
+      };
+      const PHOTO_ROWS = 10;
+
+      for (let si = 0; si < gcPhotoSets.length; si++) {
+        const set = gcPhotoSets[si];
+        const sheetName = (set.name || `사진철${si+1}`).replace(/[\[\]\*\/\\?:]/g, '').slice(0, 31) || `사진철${si+1}`;
+        const ws = wb.addWorksheet(sheetName);
+
+        ws.getColumn(1).width = 40;
+        ws.getColumn(2).width = 40;
+
+        // 행 1: 제목
+        ws.getRow(1).height = 36;
+        ws.mergeCells('A1:B1');
+        const titleCell = ws.getCell('A1');
+        titleCell.value = '준  공  사  진';
+        titleCell.font = { bold: true, size: 18, underline: true };
+        titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        // 행 2: 교체품목
+        ws.getRow(2).height = 20;
+        ws.mergeCells('A2:B2');
+        const itemCell = ws.getCell('A2');
+        itemCell.value = `교체품목 : ${set.name || ''}`;
+        itemCell.font = { size: 12 };
+        itemCell.alignment = { horizontal: 'left', vertical: 'middle' };
+
+        // 행 3: 교체호기
+        ws.getRow(3).height = 20;
+        ws.mergeCells('A3:B3');
+        const hogiCell = ws.getCell('A3');
+        hogiCell.value = `교체호기 : ${title}`;
+        hogiCell.font = { size: 12 };
+        hogiCell.alignment = { horizontal: 'left', vertical: 'middle' };
+
+        // 사진 3쌍 (6장)
+        for (let pair = 0; pair < 3; pair++) {
+          const photoStart = 4 + pair * (PHOTO_ROWS + 1); // 1-indexed
+          const photoEnd = photoStart + PHOTO_ROWS - 1;
+          const labelRowNum = photoEnd + 1;
+
+          for (let r = photoStart; r <= photoEnd; r++) ws.getRow(r).height = 18;
+          ws.getRow(labelRowNum).height = 18;
+
+          ws.mergeCells(photoStart, 1, photoEnd, 1);
+          ws.mergeCells(photoStart, 2, photoEnd, 2);
+          ws.getCell(photoStart, 1).border = border;
+          ws.getCell(photoStart, 2).border = border;
+
+          for (let col = 0; col < 2; col++) {
+            const photo = set.photos[pair * 2 + col];
+            if (photo?.dataUrl) {
+              const base64 = photo.dataUrl.split(',')[1];
+              const ext = photo.dataUrl.includes('image/png') ? 'png' : 'jpeg';
+              const imgId = wb.addImage({ base64, extension: ext });
+              ws.addImage(imgId, {
+                tl: { col: col, row: photoStart - 1 },
+                br: { col: col + 1, row: photoEnd }
+              });
+            }
+
+            const label = set.photos[pair * 2 + col]?.label || DEFAULT_PHOTO_LABELS[pair * 2 + col];
+            const lc = ws.getCell(labelRowNum, col + 1);
+            lc.value = label;
+            lc.font = { size: 10 };
+            lc.alignment = { horizontal: 'center', vertical: 'middle' };
+            lc.border = border;
+          }
+        }
       }
-      const filename = `공사팀사진철_${site||'무제'}.pdf`;
-      pdf.save(filename);
+
+      const buf = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `공사팀사진철_${site}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+
     } catch(e) {
-      alert('PDF 생성 오류: ' + e.message);
+      alert('엑셀 생성 오류: ' + e.message);
+      console.error(e);
     } finally {
-      document.body.removeChild(wrap);
       document.body.removeChild(overlay);
-      window.scrollTo(0, savedScrollY);
       if (btn) { btn.style.pointerEvents = ''; btn.style.opacity = ''; }
-      _gcPdfGenerating = false;
     }
   }
 
