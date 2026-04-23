@@ -3187,9 +3187,6 @@
         <th style="width:140px">계약구분</th>
         <th style="width:90px">주점검자</th>
         <th style="width:120px">현장전화</th>
-        <th style="width:130px">담당자 HP</th>
-        <th style="width:100px">계약시작</th>
-        <th style="width:100px">계약만료</th>
         ${(isAdmin || currentRole === '직원') ? '<th style="width:100px">비고</th>' : ''}
       </tr></thead>
       <tbody>${list.map((m,i) => {
@@ -3206,9 +3203,6 @@
         <td><span style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;border-radius:12px;padding:2px 8px;font-size:11px;white-space:nowrap">${escHtml(m.contract_type||'-')}</span></td>
         <td>${escHtml(m.main_inspector||'-')}</td>
         <td>${escHtml(m.site_phone||'-')}</td>
-        <td>${escHtml(m.manager_mobile||'-')}</td>
-        <td style="font-size:12px">${escHtml(m.contract_start||'-')}</td>
-        <td style="${endStyle}">${escHtml(m.contract_end||'-')}${endSuffix}</td>
         ${isAdmin ? `<td onclick="event.stopPropagation()" style="white-space:nowrap">
           <button class="btn-sm" style="border-color:#bee3f8;color:#2b6cb0" onclick="showEditMgmtModal(${m.id})">수정</button>
           <button class="btn-sm del" onclick="deleteMgmt(${m.id},'${(m.site_name||'').replace(/'/g,"\\'")}')">삭제</button>
