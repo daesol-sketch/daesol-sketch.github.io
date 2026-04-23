@@ -1062,7 +1062,7 @@
       </div>
     </div>
     <div class="modal-error" id="edit-account-error" style="display:none; margin-top:8px"></div>
-    <button type="button" onclick="resetAccountPassword()" style="width:100%;margin-top:12px;padding:10px;background:none;border:1.5px solid #b7791f;color:#f6ad55;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">🔑 비밀번호 초기화 (0000)</button>
+    <button type="button" onclick="resetAccountPassword()" style="width:100%;margin-top:12px;padding:10px;background:none;border:1.5px solid #b7791f;color:#f6ad55;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">🔑 비밀번호 초기화 (000000)</button>
     <div class="modal-btn-row" style="margin-top:12px">
       <button class="modal-btn cancel" onclick="closeModal('edit-account-modal')">취소</button>
       <button class="modal-btn confirm" onclick="editAccountConfirm()">저장</button>
@@ -2640,15 +2640,15 @@
   async function resetAccountPassword() {
     if (!editingAccountId) return;
     const [{ error }, res] = await Promise.all([
-      db.from('accounts').update({ password: '0000' }).eq('id', editingAccountId),
+      db.from('accounts').update({ password: '000000' }).eq('id', editingAccountId),
       fetch(`https://bbnmxwpacdfqvicybhau.supabase.co/functions/v1/admin-auth-ops`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
-        body: JSON.stringify({ action: 'reset_password', account_id: editingAccountId, password: '0000' })
-      })
+        body: JSON.stringify({ action: 'reset_password', account_id: editingAccountId, password: '000000' })
+      }).then(r => r.json())
     ]);
     if (error) { showToast('❌ 초기화 실패: ' + error.message); return; }
-    showToast('✅ 비밀번호가 0000으로 초기화되었습니다.');
+    showToast('✅ 비밀번호가 000000으로 초기화되었습니다.');
     closeModal('edit-account-modal');
   }
 
