@@ -898,6 +898,13 @@
           <label style="font-size:13px;font-weight:700;color:#4a5568;display:block;margin-bottom:6px">교체호기</label>
           <input id="gc-title" type="text" placeholder="교체호기 입력" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit" />
         </div>
+        <div>
+          <label style="font-size:13px;font-weight:700;color:#4a5568;display:block;margin-bottom:6px">파일명</label>
+          <div style="display:flex;align-items:center;gap:0">
+            <input id="gc-filename" type="text" placeholder="저장할 파일명 입력" style="flex:1;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px 0 0 8px;font-size:14px;font-family:inherit" />
+            <span style="padding:10px 12px;background:#2d3748;color:#a0aec0;border:1.5px solid #e2e8f0;border-left:none;border-radius:0 8px 8px 0;font-size:13px;white-space:nowrap">.xlsx</span>
+          </div>
+        </div>
       </div>
       <div id="gc-photo-sets" style="margin-bottom:16px"></div>
       <div style="display:flex;gap:12px;margin-bottom:40px">
@@ -5381,6 +5388,7 @@
     if (!gcPhotoSets.length) { alert('사진철이 없습니다.'); return; }
 
     const site = document.getElementById('gc-site').value.trim() || '무제';
+    const filename = document.getElementById('gc-filename').value.trim() || `공사팀사진철_${site}`;
     const title = document.getElementById('gc-title').value.trim() || '';
 
     const btn = document.querySelector('#page-gongsa button[onclick="downloadGongsaExcel()"]');
@@ -5462,7 +5470,7 @@
       const blob = new Blob([finalBuf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `공사팀사진철_${site}.xlsx`; a.click();
+      a.href = url; a.download = `${filename}.xlsx`; a.click();
       URL.revokeObjectURL(url);
 
     } catch(e) {
