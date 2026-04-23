@@ -5362,8 +5362,6 @@
 
     const site = document.getElementById('gc-site').value.trim() || '';
     const title = document.getElementById('gc-title').value.trim() || '';
-    const dateVal = document.getElementById('gc-date').value;
-    const dateStr = dateVal ? (() => { const [y,m,d] = dateVal.split('-'); return `${y}년 ${parseInt(m)}월 ${parseInt(d)}일`; })() : '';
 
     const btn = document.querySelector('#page-gongsa button[onclick="downloadGongsaPDF()"]');
     if (btn) { btn.style.pointerEvents = 'none'; btn.style.opacity = '0.6'; }
@@ -5435,7 +5433,7 @@
         window.scrollTo(0, savedScrollY);
         pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
       }
-      const filename = `공사팀사진철_${site||'무제'}_${dateVal || '날짜미정'}.pdf`;
+      const filename = `공사팀사진철_${site||'무제'}.pdf`;
       pdf.save(filename);
     } catch(e) {
       alert('PDF 생성 오류: ' + e.message);
