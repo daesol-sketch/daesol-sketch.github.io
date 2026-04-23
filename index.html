@@ -5387,16 +5387,10 @@
       // 헤더
       let html = `
         <div style="text-align:center;font-size:22px;font-weight:bold;letter-spacing:6px;color:#000;margin-bottom:10px;text-decoration:underline">준 공 사 진</div>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;color:#000;margin-bottom:10px">
-          <tr>
-            <td style="border:1px solid #999;padding:5px 10px;font-weight:bold;background:#f0f0f0;width:20%">교체품목</td>
-            <td style="border:1px solid #999;padding:5px 10px">${escHtml(set.name)}</td>
-          </tr>
-          <tr>
-            <td style="border:1px solid #999;padding:5px 10px;font-weight:bold;background:#f0f0f0">교체호기</td>
-            <td style="border:1px solid #999;padding:5px 10px">${escHtml(title)}</td>
-          </tr>
-        </table>`;
+        <div style="font-size:13px;color:#000;margin-bottom:10px;display:flex;gap:40px">
+          <span><b>교체품목 :</b> ${escHtml(set.name)}</span>
+          <span><b>교체호기 :</b> ${escHtml(title)}</span>
+        </div>`;
 
       // 사진 6칸 (2열 3행)
       html += '<table style="width:100%;border-collapse:collapse;table-layout:fixed;">';
