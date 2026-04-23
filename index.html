@@ -5323,9 +5323,6 @@
       setDiv.innerHTML = `
         <div style="background:#edf2f7;padding:10px 14px;display:flex;align-items:center;gap:10px">
           <span style="font-size:13px;font-weight:700;color:#4a5568;white-space:nowrap">사진철 ${setIdx + 1}</span>
-          <input type="text" value="${set.name}" oninput="gcPhotoSets[${setIdx}].name=this.value"
-            placeholder="부품명 입력" style="flex:1;padding:5px 10px;border:1.5px solid #cbd5e0;border-radius:6px;font-size:13px;font-family:inherit" />
-          ${gcPhotoSets.length > 1 ? `<button onclick="gcRemovePhotoSet(${setIdx})" style="padding:4px 10px;background:#fed7d7;color:#c53030;border:none;border-radius:6px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">삭제</button>` : ''}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px" id="gc-grid-${setIdx}"></div>`;
       container.appendChild(setDiv);
