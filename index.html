@@ -391,6 +391,7 @@
   <button class="drawer-menu-item tab-btn" id="tab-fault-btn" onclick="switchTab('fault');closeNavMenu()"><span class="menu-icon">🔧</span> 고장 관리</button>
   <button class="drawer-menu-item tab-btn" id="tab-mgmt-btn" onclick="switchTab('mgmt');closeNavMenu()" style="display:none"><span class="menu-icon">🏢</span> 관리현장</button>
   <button class="drawer-menu-item tab-btn" id="tab-jungong-btn" onclick="switchTab('jungong');closeNavMenu()" style="display:none"><span class="menu-icon">📋</span> 준공계</button>
+  <button class="drawer-menu-item tab-btn" id="tab-gongsa-btn" onclick="switchTab('gongsa');closeNavMenu()" style="display:none"><span class="menu-icon">📸</span> 공사팀 사진철</button>
   <button class="drawer-menu-item tab-btn" id="tab-sites-btn" onclick="switchTab('sites');closeNavMenu()" style="display:none"><span class="menu-icon">👤</span> 인사 관리</button>
   <button class="drawer-menu-item tab-btn" id="tab-holiday-btn" onclick="switchTab('holiday');closeNavMenu()" style="display:none"><span class="menu-icon">📅</span> 휴일 관리</button>
   <div style="flex:1"></div>
@@ -476,6 +477,9 @@
       </button>
       <button class="home-grid-item" onclick="switchTab('jungong')" id="home-gi-jungong" style="display:none">
         <span class="gi-icon">📋</span><span class="gi-label">준공계</span>
+      </button>
+      <button class="home-grid-item" onclick="switchTab('gongsa')" id="home-gi-gongsa" style="display:none">
+        <span class="gi-icon">📸</span><span class="gi-label">공사팀 사진철</span>
       </button>
     </div>
   </div>
@@ -879,6 +883,32 @@
     </div>
   </div>
 
+  <!-- 공사팀 사진철 -->
+  <div class="page" id="page-gongsa">
+    <div class="card" style="max-width:700px;margin:0 auto">
+      <h2>📸 공사팀 사진철</h2>
+      <div style="display:grid;gap:16px;margin-bottom:24px">
+        <div>
+          <label style="font-size:13px;font-weight:700;color:#4a5568;display:block;margin-bottom:6px">현장명</label>
+          <input id="gc-site" type="text" placeholder="현장명 입력" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit" />
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:700;color:#4a5568;display:block;margin-bottom:6px">공사명</label>
+          <input id="gc-title" type="text" placeholder="공사명 입력" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit" />
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:700;color:#4a5568;display:block;margin-bottom:6px">공사일</label>
+          <input id="gc-date" type="date" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit" />
+        </div>
+      </div>
+      <div id="gc-photo-sets" style="margin-bottom:16px"></div>
+      <div style="display:flex;gap:12px;margin-bottom:40px">
+        <button onclick="gcAddPhotoSet()" style="flex:1;padding:14px;background:white;color:#2b6cb0;border:2px dashed #2b6cb0;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">+ 사진철 추가</button>
+        <button onclick="downloadGongsaPDF()" style="flex:1;padding:14px;background:#1a365d;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">📥 PDF 다운로드</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 당직 등록 -->
   <div class="page" id="page-duty">
     <div class="card">
@@ -1144,7 +1174,7 @@
     <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">호기명 <span style="color:#e53e3e">*</span></label>
     <input type="text" class="modal-input normal" id="elev-unit-name" placeholder="예: 1호기, B동 2호기" style="margin-bottom:10px" />
     <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">승강기번호</label>
-    <input type="text" class="modal-input normal" id="elev-number" placeholder="예: 2134-859" maxlength="8" style="margin-bottom:10px" oninput="autoFormatElevNum(this)" />
+    <input type="text" class="modal-input normal" id="elev-number" placeholder="예: 2134-859" maxlength="8" style="margin-bottom:10px" oninput="autoFormatElevNum(this)" onblur="autoFillElevModelSingle(this.value)" />
     <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">엘리베이터 모델</label>
     <input type="text" class="modal-input normal" id="elev-model" placeholder="모델명" style="margin-bottom:10px" />
     <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">비고</label>
@@ -1604,7 +1634,7 @@
   updateClock(); setInterval(updateClock, 1000);
 
   /* ── NAV MENU (사이드 드로어) ── */
-  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', holiday:'📅 휴일 관리' };
+  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', gongsa:'📸 공사팀 사진철', holiday:'📅 휴일 관리' };
   function toggleNavMenu() {
     if (!currentUser) return;
     document.getElementById('side-drawer').classList.toggle('open');
@@ -1699,6 +1729,7 @@
     if (tab === 'duty')    loadDutyPage();
     if (tab === 'mgmt')    loadMgmt();
     if (tab === 'jungong') initJungong();
+    if (tab === 'gongsa') initGongsa();
     const lbl = document.getElementById('current-tab-label');
     if (lbl) lbl.textContent = TAB_LABELS[tab] || '';
   }
@@ -2232,6 +2263,7 @@
     document.getElementById('tab-mgmt-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-duty-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-jungong-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
+    document.getElementById('tab-gongsa-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     // 홈 그리드 아이콘 표시
     const giDuty = document.getElementById('home-gi-duty');
     const giMgmt = document.getElementById('home-gi-mgmt');
@@ -2239,6 +2271,8 @@
     if (giDuty) giDuty.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     if (giMgmt) giMgmt.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     if (giJungong) giJungong.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
+    const giGongsa = document.getElementById('home-gi-gongsa');
+    if (giGongsa) giGongsa.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('sub-tab-done-btn').style.display = 'inline-block';
     // 반복고장현황 서브탭: 직원/관리자만
     document.getElementById('sub-tab-repeat-btn').style.display = (isAdmin || isStaff) ? 'inline-block' : 'none';
@@ -2258,7 +2292,7 @@
     currentRole = null; currentSite = null; currentUser = null;
     localStorage.removeItem('daesol_autologin');
     db.auth.signOut();
-    ['tab-sites-btn','tab-mgmt-btn','tab-duty-btn','tab-jungong-btn'].forEach(id => {
+    ['tab-sites-btn','tab-mgmt-btn','tab-duty-btn','tab-jungong-btn','tab-gongsa-btn'].forEach(id => {
       const el = document.getElementById(id); if (el) el.style.display = 'none';
     });
     updateSiteBadge();
@@ -2820,7 +2854,7 @@
       return;
     }
     const inp = (v,ph,cb) => `<input type="text" value="${escHtml(v||'')}" placeholder="${ph}" oninput="${cb}" style="width:100%;padding:5px 7px;border:1.5px solid #cbd5e0;border-radius:6px;font-size:12px;font-family:inherit" />`;
-    const inpElev = (v,i) => `<input type="text" value="${escHtml(v||'')}" placeholder="2134-859" maxlength="8" oninput="autoFormatElevNum(this);pendingElevators[${i}].elevator_number=this.value" style="width:100%;padding:5px 7px;border:1.5px solid #cbd5e0;border-radius:6px;font-size:12px;font-family:inherit" />`;
+    const inpElev = (v,i) => `<input type="text" value="${escHtml(v||'')}" placeholder="2134-859" maxlength="8" oninput="autoFormatElevNum(this);pendingElevators[${i}].elevator_number=this.value" onblur="autoFillElevModel(${i},this.value)" style="width:100%;padding:5px 7px;border:1.5px solid #cbd5e0;border-radius:6px;font-size:12px;font-family:inherit" />`;
     container.innerHTML = `<table style="width:100%;border-collapse:collapse">
       <thead><tr style="background:#f7fafc">
         <th style="padding:6px 8px;font-size:12px;font-weight:700;color:#4a5568;text-align:left;border-bottom:1.5px solid #e2e8f0;white-space:nowrap">호기명 *</th>
@@ -2848,6 +2882,38 @@
   function addElevatorRow() {
     pendingElevators.push({ id: null, unit_name: '', elevator_number: '', elevator_model: '', notes: '', _deleted: false });
     renderElevatorRows();
+  }
+
+  async function autoFillElevModelSingle(num) {
+    const no = (num || '').replace(/-/g, '');
+    if (no.length < 7) return;
+    const modelInput = document.getElementById('elev-model');
+    if (!modelInput || modelInput.value) return;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/elevator-info?elevator_no=${no}`, {
+        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      });
+      const data = await res.json();
+      if (data.item?.elvtrModel) modelInput.value = data.item.elvtrModel;
+    } catch(e) {}
+  }
+
+  async function autoFillElevModel(idx, num) {
+    const no = (num || '').replace(/-/g, '');
+    if (no.length < 7) return;
+    const realIdx = pendingElevators.findIndex((e, i) => !e._deleted && pendingElevators.filter(x => !x._deleted).indexOf(e) === idx);
+    const target = pendingElevators.filter(e => !e._deleted)[idx];
+    if (!target || target.elevator_model) return;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/elevator-info?elevator_no=${no}`, {
+        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      });
+      const data = await res.json();
+      if (data.item?.elvtrModel) {
+        target.elevator_model = data.item.elvtrModel;
+        renderElevatorRows();
+      }
+    } catch(e) {}
   }
 
   function removeElevatorRow(idx) {
@@ -5204,6 +5270,190 @@
   }
 
   function updateJungongPreview() {}
+
+  // ── 공사팀 사진철 ──
+  let gcPhotoSets = [];
+
+  function gcMakePhotoSet(num) {
+    return {
+      name: `부품 ${num}`,
+      photos: Array.from({length: 6}, (_, i) => ({ dataUrl: null, label: DEFAULT_PHOTO_LABELS[i] }))
+    };
+  }
+
+  function initGongsa() {
+    if (!gcPhotoSets.length) gcPhotoSets = [gcMakePhotoSet(1)];
+    if (!document.getElementById('gc-date').value) {
+      document.getElementById('gc-date').value = new Date().toISOString().slice(0, 10);
+    }
+    gcRenderAllPhotoSets();
+  }
+
+  function gcAddPhotoSet() {
+    gcPhotoSets.push(gcMakePhotoSet(gcPhotoSets.length + 1));
+    gcRenderAllPhotoSets();
+  }
+
+  function gcRemovePhotoSet(setIdx) {
+    if (gcPhotoSets.length === 1) return;
+    gcPhotoSets.splice(setIdx, 1);
+    gcRenderAllPhotoSets();
+  }
+
+  function gcRenderAllPhotoSets() {
+    const container = document.getElementById('gc-photo-sets');
+    container.innerHTML = '';
+    gcPhotoSets.forEach((set, setIdx) => {
+      const setDiv = document.createElement('div');
+      setDiv.style.cssText = 'border:1.5px solid #e2e8f0;border-radius:10px;margin-bottom:16px;overflow:hidden';
+      setDiv.innerHTML = `
+        <div style="background:#edf2f7;padding:10px 14px;display:flex;align-items:center;gap:10px">
+          <span style="font-size:13px;font-weight:700;color:#4a5568;white-space:nowrap">사진철 ${setIdx + 1}</span>
+          <input type="text" value="${set.name}" oninput="gcPhotoSets[${setIdx}].name=this.value"
+            placeholder="부품명 입력" style="flex:1;padding:5px 10px;border:1.5px solid #cbd5e0;border-radius:6px;font-size:13px;font-family:inherit" />
+          ${gcPhotoSets.length > 1 ? `<button onclick="gcRemovePhotoSet(${setIdx})" style="padding:4px 10px;background:#fed7d7;color:#c53030;border:none;border-radius:6px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">삭제</button>` : ''}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px" id="gc-grid-${setIdx}"></div>`;
+      container.appendChild(setDiv);
+      gcRenderPhotoGrid(setIdx);
+    });
+  }
+
+  function gcRenderPhotoGrid(setIdx) {
+    const grid = document.getElementById(`gc-grid-${setIdx}`);
+    if (!grid) return;
+    const set = gcPhotoSets[setIdx];
+    grid.innerHTML = '';
+    for (let i = 0; i < 6; i++) {
+      const photo = set.photos[i];
+      const label = photo?.label || DEFAULT_PHOTO_LABELS[i];
+      grid.innerHTML += `
+        <div style="border:1.5px dashed #cbd5e0;border-radius:8px;overflow:hidden;background:#f7fafc">
+          <div style="position:relative;height:140px;display:flex;align-items:center;justify-content:center;background:#edf2f7;cursor:pointer" onclick="document.getElementById('gc-pi-${setIdx}-${i}').click()">
+            ${photo?.dataUrl ? `<img src="${photo.dataUrl}" style="width:100%;height:100%;object-fit:cover" />` : `<span style="color:#a0aec0;font-size:13px">+ 사진 추가</span>`}
+            ${photo?.dataUrl ? `<button onclick="event.stopPropagation();gcRemovePhoto(${setIdx},${i})" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);color:white;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:14px">✕</button>` : ''}
+          </div>
+          <input type="file" id="gc-pi-${setIdx}-${i}" accept="image/*" style="display:none" onchange="gcHandlePhoto(${setIdx},${i},this)" />
+          <div style="display:flex;align-items:center;padding:6px 10px;border-top:1px solid #e2e8f0;background:white">
+            <span style="font-size:12px;color:#718096;white-space:nowrap;margin-right:4px">작업명:</span>
+            <select onchange="gcPhotoSets[${setIdx}].photos[${i}].label=this.value" style="flex:1;border:none;font-size:13px;font-family:inherit;outline:none;background:white;cursor:pointer">
+              ${PHOTO_LABEL_OPTIONS.map(o => `<option value="${o}" ${o === label ? 'selected' : ''}>${o}</option>`).join('')}
+            </select>
+          </div>
+        </div>`;
+    }
+  }
+
+  function gcHandlePhoto(setIdx, idx, input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const prev = gcPhotoSets[setIdx].photos[idx];
+      gcPhotoSets[setIdx].photos[idx] = { file, dataUrl: e.target.result, label: prev?.label || DEFAULT_PHOTO_LABELS[idx] };
+      gcRenderPhotoGrid(setIdx);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function gcRemovePhoto(setIdx, idx) {
+    const prev = gcPhotoSets[setIdx].photos[idx];
+    gcPhotoSets[setIdx].photos[idx] = { dataUrl: null, label: prev?.label || DEFAULT_PHOTO_LABELS[idx] };
+    gcRenderPhotoGrid(setIdx);
+  }
+
+  let _gcPdfGenerating = false;
+  async function downloadGongsaPDF() {
+    if (_gcPdfGenerating) return;
+    _gcPdfGenerating = true;
+
+    const site = document.getElementById('gc-site').value.trim() || '현장명';
+    const title = document.getElementById('gc-title').value.trim() || '';
+    const dateVal = document.getElementById('gc-date').value;
+    const dateStr = dateVal ? (() => { const [y,m,d] = dateVal.split('-'); return `${y}년 ${parseInt(m)}월 ${parseInt(d)}일`; })() : '';
+
+    const btn = document.querySelector('#page-gongsa button[onclick="downloadGongsaPDF()"]');
+    if (btn) { btn.style.pointerEvents = 'none'; btn.style.opacity = '0.6'; }
+
+    const font = '"Malgun Gothic","맑은 고딕",sans-serif';
+    const W = 794, H = 1123;
+    const pageBase = `width:${W}px;height:${H}px;background:white;font-family:${font};position:relative;overflow:hidden;box-sizing:border-box;`;
+
+    // 표지 페이지
+    const page1 = document.createElement('div');
+    page1.style.cssText = pageBase + 'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;';
+    page1.innerHTML = `
+      <div style="font-size:32px;font-weight:bold;color:#1a365d;margin-bottom:16px;letter-spacing:2px">공사팀 사진철</div>
+      <div style="width:80px;border-top:3px solid #1a365d;margin-bottom:40px"></div>
+      <table style="width:100%;border-collapse:collapse;font-size:16px;color:#000">
+        <tr><td style="padding:14px 20px;border:1px solid #ccc;font-weight:bold;background:#f5f5f5;width:30%">현 장 명</td><td style="padding:14px 20px;border:1px solid #ccc">${escHtml(site)}</td></tr>
+        <tr><td style="padding:14px 20px;border:1px solid #ccc;font-weight:bold;background:#f5f5f5">공 사 명</td><td style="padding:14px 20px;border:1px solid #ccc">${escHtml(title)}</td></tr>
+        <tr><td style="padding:14px 20px;border:1px solid #ccc;font-weight:bold;background:#f5f5f5">공 사 일</td><td style="padding:14px 20px;border:1px solid #ccc">${dateStr}</td></tr>
+        <tr><td style="padding:14px 20px;border:1px solid #ccc;font-weight:bold;background:#f5f5f5">작 성 자</td><td style="padding:14px 20px;border:1px solid #ccc">${escHtml(currentUser?.name || currentUser?.username || '')}</td></tr>
+      </table>
+      <div style="position:absolute;bottom:60px;font-size:14px;color:#888">대솔이엘(주)</div>`;
+
+    // 사진 페이지들
+    const photoPages = gcPhotoSets.map(set => {
+      const pg = document.createElement('div');
+      pg.style.cssText = pageBase + 'padding:44px;';
+      let html = `<div style="font-size:16px;font-weight:bold;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #333;color:#000">${escHtml(set.name)}</div>`;
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px 16px;">';
+      for (let i = 0; i < 6; i++) {
+        const photo = set.photos[i];
+        const label = photo?.label || DEFAULT_PHOTO_LABELS[i];
+        html += `
+          <div>
+            <div style="border:1px solid #aaa;height:245px;display:flex;align-items:center;justify-content:center;background:#f9f9f9;overflow:hidden">
+              ${photo?.dataUrl ? `<img src="${photo.dataUrl}" style="max-width:100%;max-height:100%;object-fit:contain" />` : '<div style="color:#ccc;font-size:12px">사진 없음</div>'}
+            </div>
+            <div style="margin-top:5px;font-size:13px;display:flex;gap:4px;color:#000">
+              <span style="font-weight:bold">작업명:</span><span>${label}</span>
+            </div>
+          </div>`;
+      }
+      html += '</div>';
+      pg.innerHTML = html;
+      return pg;
+    });
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;left:-9999px;top:0;z-index:-999;';
+    wrap.appendChild(page1);
+    photoPages.forEach(p => wrap.appendChild(p));
+    document.body.appendChild(wrap);
+
+    const savedScrollY = window.scrollY || window.pageYOffset;
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;font-weight:700;font-family:inherit';
+    overlay.textContent = 'PDF 생성 중...';
+    document.body.appendChild(overlay);
+
+    try {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pages = [page1, ...photoPages];
+      for (let i = 0; i < pages.length; i++) {
+        if (i > 0) pdf.addPage();
+        const canvas = await html2canvas(pages[i], {
+          scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff',
+          windowWidth: W, windowHeight: H, scrollX: 0, scrollY: 0
+        });
+        window.scrollTo(0, savedScrollY);
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
+      }
+      const filename = `공사팀사진철_${site}_${dateVal || '날짜미정'}.pdf`;
+      pdf.save(filename);
+    } catch(e) {
+      alert('PDF 생성 오류: ' + e.message);
+    } finally {
+      document.body.removeChild(wrap);
+      document.body.removeChild(overlay);
+      window.scrollTo(0, savedScrollY);
+      if (btn) { btn.style.pointerEvents = ''; btn.style.opacity = ''; }
+      _gcPdfGenerating = false;
+    }
+  }
 
   let _pdfGenerating = false;
   async function downloadJungongPDF() {
