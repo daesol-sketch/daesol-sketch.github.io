@@ -5449,8 +5449,8 @@
         });
       }
 
-      function fillSheetData(ws, set, ttl) {
-        ws.getCell('B3').value = set.name || ''; ws.getCell('B3').font = { ...HY, size: 12 };
+      function fillSheetData(ws, set, ttl, siteVal) {
+        ws.getCell('B3').value = siteVal || ''; ws.getCell('B3').font = { ...HY, size: 12 };
         ws.getCell('B4').value = ttl; ws.getCell('B4').font = { ...HY, size: 12 };
         [['B7',0],['D7',1],['B9',2],['D9',3],['B11',4],['D11',5]].forEach(([a,i]) => {
           ws.getCell(a).value = set.photos[i]?.label || DEFAULT_PHOTO_LABELS[i];
@@ -5472,7 +5472,7 @@
         let ws;
         if (si === 0) { ws = wb.getWorksheet('시트1'); ws.name = sheetName; }
         else { ws = wb.addWorksheet(sheetName); setupSheet(ws); }
-        fillSheetData(ws, set, title);
+        fillSheetData(ws, set, title, site);
       }
 
       const finalBuf = await wb.xlsx.writeBuffer();
