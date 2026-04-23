@@ -14,7 +14,7 @@
   <link rel="icon" type="image/png" href="./icon-192.png?v=2" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=block" rel="stylesheet">
-  <script>if(localStorage.getItem('daesol_autologin')){document.addEventListener('DOMContentLoaded',function(){var o=document.getElementById('welcome-overlay');if(o)o.style.display='none';});}</script>
+  <script>if(localStorage.getItem('daesol_autologin')==='true'){document.addEventListener('DOMContentLoaded',function(){var o=document.getElementById('welcome-overlay');if(o)o.style.display='none';});}</script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1637,13 +1637,18 @@
     if (pwNew) updateObj.password = pwNew;
     const { error } = await db.from('accounts').update(updateObj).eq('id', currentUser.id);
     if (error) { errEl.textContent = '저장 실패: ' + error.message; errEl.style.display = 'block'; return; }
+    if (pwNew) {
+      const authRes = await fetch(`${SUPABASE_URL}/functions/v1/admin-auth-ops`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'change_password', account_id: currentUser.id, password: pwNew })
+      }).then(r => r.json());
+      if (authRes?.error) { errEl.textContent = '비밀번호 변경 실패: ' + authRes.error; errEl.style.display = 'block'; return; }
+    }
     currentUser.team = team; currentUser.group = group; currentUser.position = position; currentUser.phone = phone;
     if (pwNew) currentUser.password = pwNew;
     updateDrawerProfile();
     updateHomeProfile();
-    if (localStorage.getItem('daesol_autologin') && pwNew) {
-      localStorage.setItem('daesol_autologin', JSON.stringify({ username: currentUser.username, password: pwNew }));
-    }
     closeMyPageModal();
     showToast('✅ 내 정보가 저장되었습니다.');
   }
@@ -2213,6 +2218,7 @@
     }
     currentRole = null; currentSite = null; currentUser = null;
     localStorage.removeItem('daesol_autologin');
+    db.auth.signOut();
     ['tab-sites-btn','tab-mgmt-btn','tab-duty-btn','tab-jungong-btn'].forEach(id => {
       const el = document.getElementById(id); if (el) el.style.display = 'none';
     });
@@ -2572,11 +2578,17 @@
     const team = document.getElementById('new-acc-team')?.value || null;
     const unit = document.getElementById('new-acc-unit')?.value || null;
     const payload = { username, password: pw, role, site_name: null, name: null, phone: phone||null, position: position||null, team: team||null, unit: unit||null };
-    const { error } = await db.from('accounts').insert(payload);
+    const { data: inserted, error } = await db.from('accounts').insert(payload).select('id').single();
     if (error) {
       errEl.textContent = error.code==='23505' ? '이미 존재하는 아이디입니다.' : '추가 실패: ' + error.message;
       errEl.style.display='block'; return;
     }
+    // Supabase Auth 유저도 생성
+    await fetch(`https://bbnmxwpacdfqvicybhau.supabase.co/functions/v1/admin-auth-ops`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+      body: JSON.stringify({ action: 'create', account_id: inserted.id, password: pw })
+    });
     closeModal('add-account-modal');
     showToast('✅ 계정이 추가되었습니다.');
     loadSites();
@@ -2627,7 +2639,14 @@
 
   async function resetAccountPassword() {
     if (!editingAccountId) return;
-    const { error } = await db.from('accounts').update({ password: '0000' }).eq('id', editingAccountId);
+    const [{ error }, res] = await Promise.all([
+      db.from('accounts').update({ password: '0000' }).eq('id', editingAccountId),
+      fetch(`https://bbnmxwpacdfqvicybhau.supabase.co/functions/v1/admin-auth-ops`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+        body: JSON.stringify({ action: 'reset_password', account_id: editingAccountId, password: '0000' })
+      })
+    ]);
     if (error) { showToast('❌ 초기화 실패: ' + error.message); return; }
     showToast('✅ 비밀번호가 0000으로 초기화되었습니다.');
     closeModal('edit-account-modal');
@@ -2681,12 +2700,16 @@
     if (current !== currentUser.password) { errEl.textContent = '현재 비밀번호가 틀렸습니다.'; errEl.style.display = 'block'; return; }
     if (newPw !== confirm) { errEl.textContent = '새 비밀번호가 일치하지 않습니다.'; errEl.style.display = 'block'; return; }
     if (newPw.length < 4) { errEl.textContent = '비밀번호는 4자 이상이어야 합니다.'; errEl.style.display = 'block'; return; }
-    const { error } = await db.from('accounts').update({ password: newPw }).eq('id', currentUser.id);
-    if (error) { errEl.textContent = '변경 실패: ' + error.message; errEl.style.display = 'block'; return; }
+    const [{ error }, authRes] = await Promise.all([
+      db.from('accounts').update({ password: newPw }).eq('id', currentUser.id),
+      fetch(`${SUPABASE_URL}/functions/v1/admin-auth-ops`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'change_password', account_id: currentUser.id, password: newPw })
+      }).then(r => r.json())
+    ]);
+    if (error || authRes?.error) { errEl.textContent = '변경 실패: ' + (error?.message || authRes?.error); errEl.style.display = 'block'; return; }
     currentUser.password = newPw;
-    if (localStorage.getItem('daesol_autologin')) {
-      localStorage.setItem('daesol_autologin', JSON.stringify({ username: currentUser.username, password: newPw }));
-    }
     closeModal('change-pw-modal');
     showToast('✅ 비밀번호가 변경되었습니다.');
   }
@@ -3517,21 +3540,23 @@
   async function checkPendingAssignments() {
     if (!currentUser || currentRole === '관리자') return;
     const handler = currentUser.username;
-    const thresholdAgo = new Date(Date.now() - 3 * 60 * 1000);
+    const thresholdAgo = new Date(Date.now() - 8 * 60 * 60 * 1000);
     const { data } = await db.from('reports').select('*').eq('status', '처리중').eq('completion_handler', handler);
     if (!data || !data.length) return;
     const overdue = data.filter(r => {
-      const ref = r.confirmed_at ? new Date(r.confirmed_at) : new Date(r.created_at);
-      return ref < thresholdAgo;
+      if (!r.confirmed_at) return false;
+      return new Date(r.confirmed_at) < thresholdAgo;
     });
     if (!overdue.length) return;
 
     const listEl = document.getElementById('pending-alert-list');
     listEl.innerHTML = overdue.map(r => {
-      const mins = Math.floor((Date.now() - new Date(r.confirmed_at || r.created_at)) / (1000 * 60));
+      const hours = Math.floor((Date.now() - new Date(r.confirmed_at)) / (1000 * 60 * 60));
+      const mins = Math.floor((Date.now() - new Date(r.confirmed_at)) / (1000 * 60)) % 60;
+      const timeStr = hours > 0 ? hours + '시간 ' + mins + '분째 미처리' : mins + '분째 미처리';
       return '<div onclick="closePendingAlert();showReportDetail(\'' + r.id + '\')" style="background:#fff5f5;border:1.5px solid #fed7d7;border-radius:8px;padding:10px 14px;cursor:pointer">' +
         '<div style="font-size:14px;font-weight:700;color:#1a202c">' + escHtml(r.building||'') + ' · ' + escHtml(r.elevator||'') + '</div>' +
-        '<div style="font-size:12px;color:#c53030;margin-top:3px">⏰ ' + mins + '분째 미처리 · ' + escHtml(r.type||'') + ' · 탭하여 이동 →</div>' +
+        '<div style="font-size:12px;color:#c53030;margin-top:3px">⏰ ' + timeStr + ' · ' + escHtml(r.type||'') + ' · 탭하여 이동 →</div>' +
         '</div>';
     }).join('');
 
@@ -3541,7 +3566,7 @@
 
   function startPendingFeedbackCheck() {
     if (_pendingFeedbackInterval) clearInterval(_pendingFeedbackInterval);
-    _pendingFeedbackInterval = setInterval(checkPendingAssignments, 3 * 60 * 1000); // 3분마다
+    _pendingFeedbackInterval = setInterval(checkPendingAssignments, 2 * 60 * 60 * 1000); // 2시간마다
   }
 
   let alertAudio = null;
@@ -4664,36 +4689,45 @@
     if (!username || !pw) return;
     const btn = document.getElementById('login-site-btn');
     btn.disabled = true; btn.textContent = '확인 중...';
-    const { data, error } = await db.from('accounts').select('*').eq('username', username).eq('password', pw).maybeSingle();
-    btn.disabled = false; btn.textContent = '로그인';
-    if (error || !data) {
+    try {
+      // 1. username → auth email 조회
+      const { data: authEmail } = await db.rpc('get_user_auth_email', { p_username: username });
+      if (!authEmail) throw new Error('not_found');
+      // 2. Supabase Auth 로그인
+      const { error: authError } = await db.auth.signInWithPassword({ email: authEmail, password: pw });
+      if (authError) throw new Error('wrong_password');
+      // 3. 계정 정보 조회
+      const { data } = await db.from('accounts').select('*').eq('username', username).maybeSingle();
+      if (!data) throw new Error('not_found');
+      currentUser = data;
+      currentRole = data.role;
+      currentSite = null;
+      if (document.getElementById('auto-login-check')?.checked) {
+        localStorage.setItem('daesol_autologin', 'true');
+      } else {
+        localStorage.removeItem('daesol_autologin');
+      }
+      document.getElementById('welcome-overlay').style.display = 'none';
+      closeLoginForm();
+      applyRoleUI();
+      updateSiteBadge();
+      setBuildingField(); initReportTime();
+      setReporterField();
+      showToast(getRoleIcon(currentRole) + ' ' + username + '님으로 로그인되었습니다.');
+      renderReportPage();
+      goDashboard();
+      subscribePush();
+      startReportsRealtime();
+      if (currentRole === '관리자') startAdminUnackCheck();
+      if (currentRole !== '관리자') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
+    } catch(e) {
+      await db.auth.signOut();
       document.getElementById('login-error').textContent = '아이디 또는 비밀번호가 틀렸습니다.';
       document.getElementById('login-pw').value = '';
       document.getElementById('login-pw').focus();
-      return;
+    } finally {
+      btn.disabled = false; btn.textContent = '로그인';
     }
-    currentUser = data;
-    currentRole = data.role;
-    currentSite = null;
-    // 자동로그인 체크 여부에 따라 저장
-    if (document.getElementById('auto-login-check')?.checked) {
-      localStorage.setItem('daesol_autologin', JSON.stringify({ username, password: pw }));
-    } else {
-      localStorage.removeItem('daesol_autologin');
-    }
-    document.getElementById('welcome-overlay').style.display = 'none';
-    closeLoginForm();
-    applyRoleUI();
-    updateSiteBadge();
-    setBuildingField(); initReportTime();
-    setReporterField();
-    showToast(getRoleIcon(currentRole) + ' ' + username + '님으로 로그인되었습니다.');
-    renderReportPage();
-    goDashboard();
-    subscribePush();
-    startReportsRealtime();
-    if (currentRole === '관리자') startAdminUnackCheck();
-    if (currentRole !== '관리자') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
   }
 
   let _realtimeChannel = null;
@@ -4932,24 +4966,30 @@
   // 자동로그인 시도 → 완료 후 페이지 초기화
   (async () => {
     try {
-      const saved = localStorage.getItem('daesol_autologin');
-      if (saved) {
-        const { username, password } = JSON.parse(saved);
-        const { data } = await db.from('accounts').select('*').eq('username', username).eq('password', password).maybeSingle();
-        if (data) {
-          currentUser = data;
-          currentRole = data.role;
-          currentSite = null;
-          document.getElementById('welcome-overlay').style.display = 'none';
-          applyRoleUI();
-          updateSiteBadge();
-          setBuildingField(); initReportTime();
-          setReporterField();
-          subscribePush();
-          startReportsRealtime();
-          if (currentRole === '관리자') startAdminUnackCheck();
-          if (currentRole !== '관리자') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
-          goDashboard();
+      const autoLogin = localStorage.getItem('daesol_autologin');
+      if (autoLogin) {
+        const { data: { session } } = await db.auth.getSession();
+        if (session) {
+          const accountId = session.user.email.split('@')[0];
+          const { data } = await db.from('accounts').select('*').eq('id', accountId).maybeSingle();
+          if (data) {
+            currentUser = data;
+            currentRole = data.role;
+            currentSite = null;
+            document.getElementById('welcome-overlay').style.display = 'none';
+            applyRoleUI();
+            updateSiteBadge();
+            setBuildingField(); initReportTime();
+            setReporterField();
+            subscribePush();
+            startReportsRealtime();
+            if (currentRole === '관리자') startAdminUnackCheck();
+            if (currentRole !== '관리자') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
+            goDashboard();
+          } else {
+            await db.auth.signOut();
+            localStorage.removeItem('daesol_autologin');
+          }
         } else {
           localStorage.removeItem('daesol_autologin');
         }
