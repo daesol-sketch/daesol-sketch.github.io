@@ -5367,7 +5367,7 @@
     if (_gcPdfGenerating) return;
     _gcPdfGenerating = true;
 
-    const site = document.getElementById('gc-site').value.trim() || '현장명';
+    const site = document.getElementById('gc-site').value.trim() || '';
     const title = document.getElementById('gc-title').value.trim() || '';
     const dateVal = document.getElementById('gc-date').value;
     const dateStr = dateVal ? (() => { const [y,m,d] = dateVal.split('-'); return `${y}년 ${parseInt(m)}월 ${parseInt(d)}일`; })() : '';
@@ -5377,50 +5377,61 @@
 
     const font = '"Malgun Gothic","맑은 고딕",sans-serif';
     const W = 794, H = 1123;
-    const pageBase = `width:${W}px;height:${H}px;background:white;font-family:${font};position:relative;overflow:hidden;box-sizing:border-box;`;
+    const pageBase = `width:${W}px;height:${H}px;background:white;font-family:${font};position:relative;overflow:hidden;box-sizing:border-box;padding:28px 32px;`;
 
-    // 표지 페이지
-    const page1 = document.createElement('div');
-    page1.style.cssText = pageBase + 'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;';
-    page1.innerHTML = `
-      <div style="font-size:32px;font-weight:bold;color:#1a365d;margin-bottom:16px;letter-spacing:2px">공사팀 사진철</div>
-      <div style="width:80px;border-top:3px solid #1a365d;margin-bottom:40px"></div>
-      <table style="width:100%;border-collapse:collapse;font-size:16px;color:#000">
-        <tr><td style="padding:14px 20px;border:1px solid #ccc;font-weight:bold;background:#f5f5f5;width:30%">현 장 명</td><td style="padding:14px 20px;border:1px solid #ccc">${escHtml(site)}</td></tr>
-        <tr><td style="padding:14px 20px;border:1px solid #ccc;font-weight:bold;background:#f5f5f5">공 사 명</td><td style="padding:14px 20px;border:1px solid #ccc">${escHtml(title)}</td></tr>
-        <tr><td style="padding:14px 20px;border:1px solid #ccc;font-weight:bold;background:#f5f5f5">공 사 일</td><td style="padding:14px 20px;border:1px solid #ccc">${dateStr}</td></tr>
-        <tr><td style="padding:14px 20px;border:1px solid #ccc;font-weight:bold;background:#f5f5f5">작 성 자</td><td style="padding:14px 20px;border:1px solid #ccc">${escHtml(currentUser?.name || currentUser?.username || '')}</td></tr>
-      </table>
-      <div style="position:absolute;bottom:60px;font-size:14px;color:#888">대솔이엘(주)</div>`;
-
-    // 사진 페이지들
-    const photoPages = gcPhotoSets.map(set => {
+    // 사진철 1개 = 1페이지 (헤더 + 사진 6장)
+    const pages = gcPhotoSets.map(set => {
       const pg = document.createElement('div');
-      pg.style.cssText = pageBase + 'padding:44px;';
-      let html = `<div style="font-size:16px;font-weight:bold;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #333;color:#000">${escHtml(set.name)}</div>`;
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px 16px;">';
-      for (let i = 0; i < 6; i++) {
-        const photo = set.photos[i];
-        const label = photo?.label || DEFAULT_PHOTO_LABELS[i];
-        html += `
-          <div>
-            <div style="border:1px solid #aaa;height:245px;display:flex;align-items:center;justify-content:center;background:#f9f9f9;overflow:hidden">
-              ${photo?.dataUrl ? `<img src="${photo.dataUrl}" style="max-width:100%;max-height:100%;object-fit:contain" />` : '<div style="color:#ccc;font-size:12px">사진 없음</div>'}
-            </div>
-            <div style="margin-top:5px;font-size:13px;display:flex;gap:4px;color:#000">
-              <span style="font-weight:bold">작업명:</span><span>${label}</span>
-            </div>
-          </div>`;
+      pg.style.cssText = pageBase;
+
+      // 헤더
+      let html = `
+        <div style="text-align:center;font-size:22px;font-weight:bold;letter-spacing:6px;color:#000;margin-bottom:10px">공 사 팀  사 진 철</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;color:#000;margin-bottom:10px">
+          <tr>
+            <td style="border:1px solid #999;padding:5px 10px;font-weight:bold;background:#f0f0f0;width:14%">교체품목</td>
+            <td style="border:1px solid #999;padding:5px 10px;width:36%">${escHtml(set.name)}</td>
+            <td style="border:1px solid #999;padding:5px 10px;font-weight:bold;background:#f0f0f0;width:14%">현 장 명</td>
+            <td style="border:1px solid #999;padding:5px 10px;width:36%">${escHtml(site)}</td>
+          </tr>
+          <tr>
+            <td style="border:1px solid #999;padding:5px 10px;font-weight:bold;background:#f0f0f0">공 사 명</td>
+            <td style="border:1px solid #999;padding:5px 10px">${escHtml(title)}</td>
+            <td style="border:1px solid #999;padding:5px 10px;font-weight:bold;background:#f0f0f0">공 사 일</td>
+            <td style="border:1px solid #999;padding:5px 10px">${dateStr}</td>
+          </tr>
+        </table>`;
+
+      // 사진 6칸 (2열 3행)
+      html += '<table style="width:100%;border-collapse:collapse;table-layout:fixed;">';
+      for (let row = 0; row < 3; row++) {
+        html += '<tr>';
+        for (let col = 0; col < 2; col++) {
+          const i = row * 2 + col;
+          const photo = set.photos[i];
+          const label = photo?.label || DEFAULT_PHOTO_LABELS[i];
+          html += `
+            <td style="border:1px solid #999;padding:0;width:50%;vertical-align:top">
+              <div style="height:270px;display:flex;align-items:center;justify-content:center;background:#f9f9f9;overflow:hidden">
+                ${photo?.dataUrl ? `<img src="${photo.dataUrl}" style="max-width:100%;max-height:100%;object-fit:contain" />` : '<div style="color:#ccc;font-size:12px">사진 없음</div>'}
+              </div>
+              <div style="border-top:1px solid #999;display:flex;font-size:12px;color:#000">
+                <span style="padding:4px 8px;border-right:1px solid #999;background:#f0f0f0;font-weight:bold;white-space:nowrap">내 용</span>
+                <span style="padding:4px 8px">${label}</span>
+              </div>
+            </td>`;
+        }
+        html += '</tr>';
       }
-      html += '</div>';
+      html += '</table>';
+
       pg.innerHTML = html;
       return pg;
     });
 
     const wrap = document.createElement('div');
     wrap.style.cssText = 'position:fixed;left:-9999px;top:0;z-index:-999;';
-    wrap.appendChild(page1);
-    photoPages.forEach(p => wrap.appendChild(p));
+    pages.forEach(p => wrap.appendChild(p));
     document.body.appendChild(wrap);
 
     const savedScrollY = window.scrollY || window.pageYOffset;
@@ -5432,7 +5443,6 @@
     try {
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const pages = [page1, ...photoPages];
       for (let i = 0; i < pages.length; i++) {
         if (i > 0) pdf.addPage();
         const canvas = await html2canvas(pages[i], {
@@ -5442,7 +5452,7 @@
         window.scrollTo(0, savedScrollY);
         pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
       }
-      const filename = `공사팀사진철_${site}_${dateVal || '날짜미정'}.pdf`;
+      const filename = `공사팀사진철_${site||'무제'}_${dateVal || '날짜미정'}.pdf`;
       pdf.save(filename);
     } catch(e) {
       alert('PDF 생성 오류: ' + e.message);
