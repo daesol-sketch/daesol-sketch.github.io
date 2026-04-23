@@ -1853,7 +1853,7 @@
           `<div style="font-size:14px;font-weight:700;color:#e53e3e;letter-spacing:0.5px;margin-bottom:14px">처리 정보</div>` +
           `<div style="background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:16px">` +
           roRow('처리담당자', escHtml(r.completion_handler || '-')) +
-          roRow('확인시간', confirmedAt) +
+          (r.confirmed_at ? roRow('확인시간', confirmedAt) : '') +
           roRow('처리일시', completionAt) +
           roRow('처리내용', escHtml(r.completion_content || '-')) +
           roRow('부품교체', r.parts_replaced ? '있음' : '없음') +
