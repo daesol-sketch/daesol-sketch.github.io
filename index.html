@@ -1269,6 +1269,20 @@
 
 <div id="toast"></div>
 
+<!-- 직원 비고 수정 모달 -->
+<div class="modal-overlay" id="notes-modal" style="display:none">
+  <div class="modal-box" style="width:400px;max-width:calc(100vw - 40px);padding:28px">
+    <h3 style="margin:0 0 6px;font-size:17px;font-weight:800" id="notes-modal-title">비고 수정</h3>
+    <p style="margin:0 0 16px;font-size:13px;color:#718096" id="notes-modal-site"></p>
+    <textarea class="modal-input normal" id="notes-modal-input" placeholder="비고 내용 입력" style="min-height:100px;resize:vertical;margin-bottom:0"></textarea>
+    <div class="modal-error" id="notes-modal-error" style="display:none;margin-top:8px"></div>
+    <div class="modal-btn-row" style="margin-top:16px">
+      <button class="modal-btn cancel" onclick="document.getElementById('notes-modal').style.display='none'">취소</button>
+      <button class="modal-btn confirm" onclick="saveNotes()">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- 관리자용 미확인 배치 알림 모달 -->
 <div id="admin-unack-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2100;align-items:center;justify-content:center">
   <div style="background:white;border-radius:16px;padding:28px 28px 22px;width:380px;max-width:calc(100vw - 32px);box-shadow:0 8px 32px rgba(0,0,0,0.2)">
@@ -3113,7 +3127,7 @@
         <th style="width:130px">담당자 HP</th>
         <th style="width:100px">계약시작</th>
         <th style="width:100px">계약만료</th>
-        ${isAdmin ? '<th style="width:100px">관리</th>' : ''}
+        ${(isAdmin || currentRole === '직원') ? '<th style="width:100px">비고</th>' : ''}
       </tr></thead>
       <tbody>${list.map((m,i) => {
         const expired = isAlreadyExpired(m.contract_end);
@@ -3135,6 +3149,8 @@
         ${isAdmin ? `<td onclick="event.stopPropagation()" style="white-space:nowrap">
           <button class="btn-sm" style="border-color:#bee3f8;color:#2b6cb0" onclick="showEditMgmtModal(${m.id})">수정</button>
           <button class="btn-sm del" onclick="deleteMgmt(${m.id},'${(m.site_name||'').replace(/'/g,"\\'")}')">삭제</button>
+        </td>` : currentRole === '직원' ? `<td onclick="event.stopPropagation()">
+          <button class="btn-sm" style="border-color:#68d391;color:#68d391" onclick="showNotesModal(${m.id})">비고 수정</button>
         </td>` : ''}
       </tr>`;
       }).join('')}</tbody>
@@ -3435,6 +3451,29 @@
     showToast(editingMgmtId ? '✅ 현장이 수정되었습니다.' : '✅ 현장이 추가되었습니다.');
     loadMgmt();
     loadSiteNames();
+  }
+
+  let editingNotesId = null;
+
+  function showNotesModal(id) {
+    const m = mgmtData.find(x => x.id === id);
+    if (!m) return;
+    editingNotesId = id;
+    document.getElementById('notes-modal-site').textContent = m.site_name || '';
+    document.getElementById('notes-modal-input').value = m.notes || '';
+    document.getElementById('notes-modal-error').style.display = 'none';
+    document.getElementById('notes-modal').style.display = 'flex';
+  }
+
+  async function saveNotes() {
+    if (!editingNotesId) return;
+    const notes = document.getElementById('notes-modal-input').value.trim() || null;
+    const errEl = document.getElementById('notes-modal-error');
+    const { error } = await db.from('managed_sites').update({ notes }).eq('id', editingNotesId);
+    if (error) { errEl.textContent = '저장 실패: ' + error.message; errEl.style.display = 'block'; return; }
+    document.getElementById('notes-modal').style.display = 'none';
+    showToast('✅ 비고가 저장되었습니다.');
+    await loadMgmt();
   }
 
   async function deleteMgmt(id, name) {
