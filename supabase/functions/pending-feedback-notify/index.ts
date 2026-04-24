@@ -2,9 +2,14 @@ const SUPABASE_URL = 'https://bbnmxwpacdfqvicybhau.supabase.co';
 const SUPABASE_ANON_KEY = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJibm14d3BhY2RmcXZpY3liaGF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NDA3NDYsImV4cCI6MjA5MTAxNjc0Nn0.cGqnmu5BeaXosxoE-IEmjX-dF4zDYipzpYb5hhc8S6I`;
 
 Deno.serve(async () => {
+  // 한국 시간 23시 ~ 07시 사이엔 발송 안 함
+  const kstHour = (new Date().getUTCHours() + 9) % 24;
+  if (kstHour >= 23 || kstHour < 7) {
+    return new Response(JSON.stringify({ sent: 0, reason: 'quiet hours' }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
   const threshold = new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString();
 
-  // confirmed_at 기준 8시간 초과 OR (confirmed_at 없고 created_at 기준 8시간 초과)
   const enc = encodeURIComponent(threshold);
   const filter = 'status=eq.처리중&confirmed_at=lt.' + enc + '&select=id,building,elevator,completion_handler';
 
