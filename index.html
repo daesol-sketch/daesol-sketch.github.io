@@ -3056,8 +3056,10 @@
 
     const rows = [];
     list.forEach(m => {
-      const base = {
+      const makeRow = (unitName, elevNo) => ({
         '현장명': m.site_name || '',
+        '호기명': unitName,
+        '승강기번호': elevNo,
         '계약구분': m.contract_type || '',
         '계약일자': m.contract_date || '',
         '계약시작': m.contract_start || '',
@@ -3071,12 +3073,12 @@
         '담당자 메일': m.manager_email || '',
         '승강기 소재지': m.elevator_address || '',
         '비고': m.notes || '',
-      };
+      });
       const elevs = m.elev_info || [];
       if (!elevs.length) {
-        rows.push({ '호기명': '', '승강기번호': '', ...base });
+        rows.push(makeRow('', ''));
       } else {
-        elevs.forEach(e => rows.push({ '호기명': e.unit_name, '승강기번호': e.elevator_number, ...base }));
+        elevs.forEach(e => rows.push(makeRow(e.unit_name, e.elevator_number)));
       }
     });
 
