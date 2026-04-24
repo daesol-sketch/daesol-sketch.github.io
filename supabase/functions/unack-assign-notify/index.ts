@@ -12,12 +12,14 @@ Deno.serve(async () => {
   const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
   const threshold = new Date(Date.now() - 3 * 60 * 1000).toISOString();
 
-  // 배치완료 3분 이상 방치된 건 조회
+  // 배치 후 3분 이상 담당자가 미확인인 건 조회
   const { data: reports } = await db
     .from('reports')
     .select('id, building, elevator, completion_handler')
     .eq('status', '배치완료')
-    .lt('created_at', threshold);
+    .is('confirmed_at', null)
+    .not('assigned_at', 'is', null)
+    .lt('assigned_at', threshold);
 
   if (!reports?.length) return new Response(JSON.stringify({ sent: 0 }), { headers: { 'Content-Type': 'application/json' } });
 
