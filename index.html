@@ -3629,7 +3629,7 @@
     title.textContent = `${dateStr} 검사일정 (${rows.length}건)`;
     body.innerHTML = rows.map(r => `<tr style="border-bottom:1px solid #2a2a2a">
       <td style="padding:8px 10px;white-space:nowrap">${r.inspection_type||'-'}</td>
-      <td style="padding:8px 10px">${r.building_name||'-'}</td>
+      <td style="padding:8px 10px;white-space:nowrap">${r.building_name||'-'}</td>
       <td style="padding:8px 10px;white-space:nowrap">${r.elevator_number||'-'}</td>
       <td style="padding:8px 10px;white-space:nowrap">${r.inspection_date||'-'}</td>
       <td style="padding:8px 10px;white-space:nowrap">${r.arrival_time||'-'}</td>
