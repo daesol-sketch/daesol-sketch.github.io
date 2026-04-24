@@ -1272,6 +1272,10 @@
         <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">현장명 <span style="color:#e53e3e">*</span></label>
         <input type="text" class="modal-input normal" id="mgmt-name" placeholder="현장명" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
       </div>
+      <div style="grid-column:1/-1">
+        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">승강기 소재지</label>
+        <input type="text" class="modal-input normal" id="mgmt-elevator-address" placeholder="주소" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
+      </div>
       <div>
         <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">계약 구분 <span style="color:#e53e3e">*</span></label>
         <select class="modal-input normal" id="mgmt-contract-type" style="margin-bottom:0;letter-spacing:0" onkeydown="mgmtEnterNext(event,this)">
@@ -1340,10 +1344,6 @@
       <div>
         <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">담당자 이메일</label>
         <input type="text" class="modal-input normal" id="mgmt-manager-email" placeholder="example@email.com" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
-      </div>
-      <div style="grid-column:1/-1">
-        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">승강기 소재지</label>
-        <input type="text" class="modal-input normal" id="mgmt-elevator-address" placeholder="주소" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
       </div>
       <div style="grid-column:1/-1">
         <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">비고</label>
@@ -3167,17 +3167,15 @@
     for (const id of selectedMgmtIds) {
       const site = mgmtData.find(m => m.id === id);
       if (!site || !site.contract_end) continue;
-      const addYear = (dateStr) => {
-        const p = dateStr.split('-');
-        return p.length === 3 ? `${parseInt(p[0]) + years}-${p[1]}-${p[2]}` : null;
-      };
-      const newEnd = addYear(site.contract_end);
-      if (!newEnd) continue;
-      const update = { contract_end: newEnd };
-      if (site.contract_start) {
-        const newStart = addYear(site.contract_start);
-        if (newStart) update.contract_start = newStart;
-      }
+      // 새 계약시작 = 기존 만료일 + 1일, 새 계약만료 = 기존 만료일 + N년
+      const oldEnd = new Date(site.contract_end);
+      if (isNaN(oldEnd)) continue;
+      const newStart = new Date(oldEnd);
+      newStart.setDate(newStart.getDate() + 1);
+      const newEnd = new Date(oldEnd);
+      newEnd.setFullYear(newEnd.getFullYear() + years);
+      const fmt = d => d.toISOString().slice(0, 10);
+      const update = { contract_end: fmt(newEnd), contract_start: fmt(newStart) };
       const { error } = await db.from('managed_sites').update(update).eq('id', id);
       if (!error) ok++;
     }
@@ -3749,9 +3747,9 @@
   }
 
   const MGMT_FIELD_ORDER = [
-    'mgmt-name','mgmt-contract-type','mgmt-contract-date','mgmt-contract-start','mgmt-contract-end',
-    'mgmt-main-inspector','mgmt-sub-inspector','mgmt-site-phone','mgmt-fax',
-    'mgmt-emergency-phone','mgmt-manager-mobile','mgmt-manager-email','mgmt-elevator-address','mgmt-notes'
+    'mgmt-name','mgmt-elevator-address','mgmt-contract-type','mgmt-contract-date','mgmt-contract-start','mgmt-contract-end',
+    'mgmt-main-inspector','mgmt-sub-inspector','mgmt-site-phone',
+    'mgmt-manager-mobile','mgmt-emergency-phone','mgmt-fax','mgmt-manager-email','mgmt-notes'
   ];
   function mgmtEnterNext(e, el) {
     if (e.key !== 'Enter') return;
