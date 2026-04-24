@@ -1,24 +1,27 @@
-const SUPABASE_URL = 'https://bbnmxwpacdfqvicybhau.supabase.co';
-const SUPABASE_ANON_KEY = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJibm14d3BhY2RmcXZpY3liaGF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NDA3NDYsImV4cCI6MjA5MTAxNjc0Nn0.cGqnmu5BeaXosxoE-IEmjX-dF4zDYipzpYb5hhc8S6I`;
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 Deno.serve(async () => {
-  // 한국 시간 23시 ~ 07시 사이엔 발송 안 함
   const kstHour = (new Date().getUTCHours() + 9) % 24;
   if (kstHour >= 23 || kstHour < 7) {
     return new Response(JSON.stringify({ sent: 0, reason: 'quiet hours' }), { headers: { 'Content-Type': 'application/json' } });
   }
 
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+  const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+
+  const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
   const threshold = new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString();
 
-  const enc = encodeURIComponent(threshold);
-  const filter = 'status=eq.처리중&confirmed_at=lt.' + enc + '&select=id,building,elevator,completion_handler';
+  const { data: reports } = await db
+    .from('reports')
+    .select('id, building, elevator, completion_handler')
+    .eq('status', '처리중')
+    .not('confirmed_at', 'is', null)
+    .lt('confirmed_at', threshold);
 
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/reports?${filter}`,
-    { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
-  );
-  const reports = await res.json();
-  if (!Array.isArray(reports)) return new Response(JSON.stringify({ error: 'db error' }), { status: 500 });
+  if (!reports?.length) return new Response(JSON.stringify({ sent: 0 }), { headers: { 'Content-Type': 'application/json' } });
 
   let sent = 0;
   for (const r of reports) {
