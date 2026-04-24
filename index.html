@@ -2012,6 +2012,9 @@
     if (status === '처리중' && currentReport?.status !== '처리중') {
       update.confirmed_at = new Date().toISOString();
     }
+    if (status === '배치완료' && currentReport?.status !== '배치완료') {
+      update.assigned_at = new Date().toISOString();
+    }
     const { error } = await db.from('reports').update(update).eq('id', currentReportId);
     btn.disabled = false; btn.textContent = '저장';
     if (error) { showToast('저장 실패: ' + error.message); return; }
@@ -2383,6 +2386,7 @@
         status:      assignedHandler ? '배치완료' : '접수중',
         completion_handler: assignedHandler || null,
         assigned_team: selectedTeam || null,
+        ...(assignedHandler ? { assigned_at: new Date().toISOString() } : {}),
         ...(reportedAt ? { created_at: reportedAt } : {}),
       });
       if (error) throw error;
@@ -2950,7 +2954,7 @@
     // site_elevators 전체 페이지네이션 fetch
     let elevData = [], elevOffset = 0;
     while (true) {
-      const { data: batch } = await db.from('site_elevators').select('site_id, inspection_due_date, elevator_number, next_inspection_scheduled').range(elevOffset, elevOffset + 999);
+      const { data: batch } = await db.from('site_elevators').select('site_id, inspection_due_date, elevator_number, unit_name, next_inspection_scheduled').range(elevOffset, elevOffset + 999);
       if (!batch || batch.length === 0) break;
       elevData = elevData.concat(batch);
       if (batch.length < 1000) break;
@@ -2960,6 +2964,7 @@
     const inspExpired = {};
     const inspSoon = {};
     const elevNumbers = {};
+    const elevInfo = {};
     const inspScheduled = {};
     const today = new Date(); today.setHours(0,0,0,0);
     elevData.forEach(e => {
@@ -2968,6 +2973,8 @@
         if (!elevNumbers[e.site_id]) elevNumbers[e.site_id] = [];
         elevNumbers[e.site_id].push(e.elevator_number);
       }
+      if (!elevInfo[e.site_id]) elevInfo[e.site_id] = [];
+      elevInfo[e.site_id].push({ unit_name: e.unit_name || '', elevator_number: e.elevator_number || '' });
       if (e.inspection_due_date) {
         const due = new Date(e.inspection_due_date);
         const diff = Math.ceil((due - today) / (1000*60*60*24));
@@ -2976,7 +2983,7 @@
       }
       if (e.next_inspection_scheduled) inspScheduled[e.site_id] = true;
     });
-    mgmtData = data.map(m => ({ ...m, elev_count: elevCounts[m.id] || 0, insp_expired: inspExpired[m.id] || 0, insp_soon: inspSoon[m.id] || 0, elev_numbers: elevNumbers[m.id] || [], inspector_team: teamMap[m.main_inspector] || null, has_insp_scheduled: !!inspScheduled[m.id] }));
+    mgmtData = data.map(m => ({ ...m, elev_count: elevCounts[m.id] || 0, insp_expired: inspExpired[m.id] || 0, insp_soon: inspSoon[m.id] || 0, elev_numbers: elevNumbers[m.id] || [], elev_info: elevInfo[m.id] || [], inspector_team: teamMap[m.main_inspector] || null, has_insp_scheduled: !!inspScheduled[m.id] }));
     const isAdmin = currentRole === '관리자';
     document.getElementById('btn-add-mgmt').style.display = isAdmin ? 'inline-flex' : 'none';
     document.getElementById('btn-sync-all-inspection').style.display = isAdmin ? 'inline-block' : 'none';
@@ -3047,30 +3054,37 @@
     }
     if (!list.length) { showToast('내보낼 현장이 없습니다.'); return; }
 
-    const rows = list.map((m, i) => ({
-      '번호': i + 1,
-      '현장명': m.site_name || '',
-      '대수': m.elev_count || 0,
-      '계약구분': m.contract_type || '',
-      '계약일자': m.contract_date || '',
-      '계약시작': m.contract_start || '',
-      '계약만료': m.contract_end || '',
-      '주점검자': m.main_inspector || '',
-      '보조점검자': m.sub_inspector || '',
-      '현장전화': m.site_phone || '',
-      '팩스': m.fax || '',
-      '비상통화장치': m.emergency_phone || '',
-      '담당자 HP': m.manager_mobile || '',
-      '담당자 메일': m.manager_email || '',
-      '승강기 소재지': m.elevator_address || '',
-      '비고': m.notes || '',
-    }));
+    const rows = [];
+    list.forEach(m => {
+      const base = {
+        '현장명': m.site_name || '',
+        '계약구분': m.contract_type || '',
+        '계약일자': m.contract_date || '',
+        '계약시작': m.contract_start || '',
+        '계약만료': m.contract_end || '',
+        '주점검자': m.main_inspector || '',
+        '보조점검자': m.sub_inspector || '',
+        '현장전화': m.site_phone || '',
+        '팩스': m.fax || '',
+        '비상통화장치': m.emergency_phone || '',
+        '담당자 HP': m.manager_mobile || '',
+        '담당자 메일': m.manager_email || '',
+        '승강기 소재지': m.elevator_address || '',
+        '비고': m.notes || '',
+      };
+      const elevs = m.elev_info || [];
+      if (!elevs.length) {
+        rows.push({ '호기명': '', '승강기번호': '', ...base });
+      } else {
+        elevs.forEach(e => rows.push({ '호기명': e.unit_name, '승강기번호': e.elevator_number, ...base }));
+      }
+    });
 
     const ws = XLSX.utils.json_to_sheet(rows);
 
     // 컬럼 너비 설정
     ws['!cols'] = [
-      {wch:6},{wch:30},{wch:6},{wch:18},{wch:12},{wch:12},{wch:12},
+      {wch:30},{wch:12},{wch:12},{wch:18},{wch:12},{wch:12},{wch:12},
       {wch:10},{wch:10},{wch:14},{wch:14},{wch:14},{wch:14},{wch:22},{wch:30},{wch:20}
     ];
 
@@ -3080,7 +3094,7 @@
     const sheetName = mgmtFilter === 'expire' ? '계약만료현장' : (q || teamFilter ? '검색결과' : '전체현장');
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
     XLSX.writeFile(wb, `대솔이엘_관리현장_${dateStr}.xlsx`);
-    showToast(`📥 ${list.length}개 현장 엑셀 다운로드 완료`);
+    showToast(`📥 ${list.length}개 현장 (${rows.length}행) 엑셀 다운로드 완료`);
   }
 
   async function extendContracts(years) {
@@ -3649,11 +3663,11 @@
   async function checkUnacknowledgedAssignments() {
     if (currentRole !== '관리자') return;
     const thresholdAgo = new Date(Date.now() - 3 * 60 * 1000);
-    const { data, error } = await db.from('reports').select('*').eq('status', '배치완료').lt('created_at', thresholdAgo.toISOString());
+    const { data, error } = await db.from('reports').select('*').eq('status', '배치완료').is('confirmed_at', null).not('assigned_at', 'is', null).lt('assigned_at', thresholdAgo.toISOString());
     if (error || !data || !data.length) return;
     const listEl = document.getElementById('admin-unack-list');
     listEl.innerHTML = data.map(r => {
-      const mins = Math.floor((Date.now() - new Date(r.created_at)) / (1000 * 60));
+      const mins = Math.floor((Date.now() - new Date(r.assigned_at)) / (1000 * 60));
       return '<div style="background:#fff5f5;border:1.5px solid #fbd38d;border-radius:8px;padding:10px 14px">' +
         '<div style="font-size:14px;font-weight:700;color:#1a202c">' + escHtml(r.building||'') + ' · ' + escHtml(r.elevator||'') + '</div>' +
         '<div style="font-size:12px;color:#c05621;margin-top:3px">⏰ ' + mins + '분째 미확인 · 담당: ' + escHtml(r.completion_handler||'미배치') + '</div>' +
