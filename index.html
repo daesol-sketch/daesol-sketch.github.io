@@ -482,8 +482,8 @@
       <button class="home-grid-item" onclick="switchTab('jungong')" id="home-gi-jungong" style="display:none">
         <span class="gi-icon">📋</span><span class="gi-label">준공계</span>
       </button>
-      <button class="home-grid-item" onclick="switchTab('gongsa')" id="home-gi-gongsa" style="display:none">
-        <span class="gi-icon">📸</span><span class="gi-label">공사팀 사진철</span>
+      <button class="home-grid-item" onclick="switchTab('insp-calendar')" id="home-gi-insp-calendar" style="display:none">
+        <span class="gi-icon">🗓️</span><span class="gi-label">검사일정</span>
       </button>
     </div>
   </div>
@@ -2348,8 +2348,8 @@
     if (giDuty) giDuty.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     if (giMgmt) giMgmt.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     if (giJungong) giJungong.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
-    const giGongsa = document.getElementById('home-gi-gongsa');
-    if (giGongsa) giGongsa.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
+    const giInspCal = document.getElementById('home-gi-insp-calendar');
+    if (giInspCal) giInspCal.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('sub-tab-done-btn').style.display = 'inline-block';
     // 반복고장현황 서브탭: 직원/관리자만
     document.getElementById('sub-tab-repeat-btn').style.display = (isAdmin || isStaff) ? 'inline-block' : 'none';
