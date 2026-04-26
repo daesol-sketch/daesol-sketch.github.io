@@ -3162,6 +3162,7 @@
   }
 
   async function extendContracts(years) {
+    if (currentRole !== '관리자') { showToast('⚠️ 관리자만 계약 연장이 가능합니다.'); return; }
     if (!selectedMgmtIds.size) return;
     if (!confirm(`선택한 ${selectedMgmtIds.size}개 현장의 계약기간을 ${years}년 연장하시겠습니까?`)) return;
     let ok = 0;
