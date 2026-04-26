@@ -463,10 +463,6 @@
       <input type="text" id="mp-team" placeholder="예: 영업1팀" />
     </div>
     <div class="mypage-field">
-      <label>조</label>
-      <input type="text" id="mp-group" placeholder="예: 1조" />
-    </div>
-    <div class="mypage-field">
       <label>직급</label>
       <input type="text" id="mp-position" placeholder="예: 과장" />
     </div>
@@ -1801,7 +1797,6 @@
   function showMyPageModal() {
     if (!currentUser) return;
     document.getElementById('mp-team').value = currentUser.team || '';
-    document.getElementById('mp-group').value = currentUser.group || '';
     document.getElementById('mp-position').value = currentUser.position || '';
     document.getElementById('mp-phone').value = currentUser.phone || '';
     document.getElementById('mp-pw-new').value = '';
@@ -1814,7 +1809,6 @@
   }
   async function saveMyPage() {
     const team = document.getElementById('mp-team').value.trim();
-    const group = document.getElementById('mp-group').value.trim();
     const position = document.getElementById('mp-position').value.trim();
     const phone = document.getElementById('mp-phone').value.trim();
     const pwNew = document.getElementById('mp-pw-new').value;
@@ -1827,7 +1821,7 @@
     if (pwNew && pwNew.length < 6) {
       errEl.textContent = '비밀번호는 6자 이상이어야 합니다.'; errEl.style.display = 'block'; return;
     }
-    const updateObj = { team, "group": group, position, phone };
+    const updateObj = { team, position, phone };
     if (pwNew) updateObj.password = pwNew;
     const { error } = await db.from('accounts').update(updateObj).eq('id', currentUser.id);
     if (error) { errEl.textContent = '저장 실패: ' + error.message; errEl.style.display = 'block'; return; }
