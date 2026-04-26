@@ -66,38 +66,23 @@ self.addEventListener('notificationclick', event => {
   const isCall = type === 'call';
 
   event.waitUntil(
-    Promise.all([
-      // feedback 타입은 상태 변경 안 함, 그 외 reportId 있으면 처리중으로 변경
-      (!isFeedback && reportId) ? fetch(SUPABASE_URL + '/rest/v1/reports?id=eq.' + encodeURIComponent(reportId), {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({ status: '처리중', confirmed_at: new Date().toISOString() })
-      }).catch(() => {}) : Promise.resolve(),
-
-      // 앱 열기 + 메시지 전달
-      clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-        if (isCall && siteName) {
-          // 현장 전화 착신: 신고접수 탭으로 이동 + 건물명/전화 자동입력
-          const msg = { action: 'fillReport', siteName, phone };
-          if (list.length) { list[0].postMessage(msg); return list[0].focus(); }
-          return clients.openWindow('./?fillReport=' + encodeURIComponent(siteName) + '&phone=' + encodeURIComponent(phone || ''));
-        } else if (isFeedback && reportId) {
-          // 피드백 미처리: 해당 건 상세 모달로 이동
-          const msg = { action: 'openReport', reportId };
-          if (list.length) { list[0].postMessage(msg); return list[0].focus(); }
-          return clients.openWindow('./?openReport=' + reportId);
-        } else {
-          // 그 외: 신고내역 탭으로 이동
-          if (list.length) { list[0].postMessage({ action: 'switchTab', tab: 'list' }); return list[0].focus(); }
-          return clients.openWindow('./?tab=list');
-        }
-      })
-    ])
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      if (isCall && siteName) {
+        // 현장 전화 착신: 신고접수 탭으로 이동 + 건물명/전화 자동입력
+        const msg = { action: 'fillReport', siteName, phone };
+        if (list.length) { list[0].postMessage(msg); return list[0].focus(); }
+        return clients.openWindow('./?fillReport=' + encodeURIComponent(siteName) + '&phone=' + encodeURIComponent(phone || ''));
+      } else if (isFeedback && reportId) {
+        // 피드백 미처리: 해당 건 상세 모달로 이동
+        const msg = { action: 'openReport', reportId };
+        if (list.length) { list[0].postMessage(msg); return list[0].focus(); }
+        return clients.openWindow('./?openReport=' + reportId);
+      } else {
+        // 그 외: 신고내역 탭으로 이동 + 앱에서 처리중 변경
+        if (list.length) { list[0].postMessage({ action: 'switchTab', tab: 'list', reportId }); return list[0].focus(); }
+        return clients.openWindow('./?tab=list' + (reportId ? '&confirmReport=' + encodeURIComponent(reportId) : ''));
+      }
+    })
   );
 });
 
