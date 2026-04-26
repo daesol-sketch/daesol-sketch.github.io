@@ -1833,7 +1833,7 @@
       }).then(r => r.json());
       if (authRes?.error) { errEl.textContent = '비밀번호 변경 실패: ' + authRes.error; errEl.style.display = 'block'; return; }
     }
-    currentUser.team = team; currentUser.group = group; currentUser.position = position; currentUser.phone = phone;
+    currentUser.team = team; currentUser.position = position; currentUser.phone = phone;
     if (pwNew) currentUser.password = pwNew;
     updateDrawerProfile();
     updateHomeProfile();
