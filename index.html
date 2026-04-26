@@ -985,7 +985,7 @@
       <h2>🕐 고장 담당자 현황</h2>
       <div id="duty-current-shift" style="background:#1a1a1a;border:1.5px solid #2a2a2a;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:14px;color:#63b3ed;font-weight:600"></div>
       <div id="duty-register-section" style="margin-bottom:24px">
-        <div style="font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:12px">내 당직 등록</div>
+        <div style="font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:4px">내 당직 등록 <span style="font-size:11px;font-weight:400;color:#888">(매일 오전 8시 30분 초기화됩니다.)</span></div>
         <div style="font-size:13px;color:#888;margin-bottom:10px">아래 버튼을 눌러 등록/해제를 하세요</div>
         <div id="duty-weekday-section">
           <div style="margin-bottom:10px">
@@ -1950,6 +1950,7 @@
       document.getElementById('rdm-status').value = r.status || '접수중';
       document.getElementById('rdm-status').disabled = currentRole !== '관리자';
       document.getElementById('rdm-handler').value = r.completion_handler || (currentUser ? currentUser.username : '');
+      document.getElementById('rdm-handler').readOnly = r.status === '처리중';
       if (r.completion_at) {
         const d = new Date(r.completion_at);
         document.getElementById('rdm-date').value = d.toISOString().slice(0,10);
