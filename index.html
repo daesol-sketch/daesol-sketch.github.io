@@ -1447,7 +1447,7 @@
     <textarea class="modal-input normal" id="notes-modal-input" placeholder="비고 내용 입력" style="min-height:100px;resize:vertical;margin-bottom:0"></textarea>
     <div class="modal-error" id="notes-modal-error" style="display:none;margin-top:8px"></div>
     <div class="modal-btn-row" style="margin-top:16px">
-      <button class="modal-btn cancel" onclick="document.getElementById('notes-modal').style.display='none'">취소</button>
+      <button class="modal-btn cancel" onclick="closeModal('notes-modal')">취소</button>
       <button class="modal-btn confirm" onclick="saveNotes()">저장</button>
     </div>
   </div>
@@ -1871,8 +1871,26 @@
   let _isPopState = false;
   let _exitConfirm = false;
   let _currentHistoryTab = 'home';
+  let _manualModalClose = false;
+
+  function openModal(id) {
+    document.getElementById(id).style.display = 'flex';
+    history.pushState({ modal: id }, '', location.pathname);
+  }
+  function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+    if (history.state?.modal === id) { _manualModalClose = true; history.back(); }
+  }
 
   window.addEventListener('popstate', e => {
+    if (e.state?.modal) {
+      if (!_manualModalClose) {
+        const m = document.getElementById(e.state.modal);
+        if (m) m.style.display = 'none';
+      }
+      _manualModalClose = false;
+      return;
+    }
     _isPopState = true;
     try {
       if (e.state?.tab) {
@@ -2146,7 +2164,7 @@
         roSec.style.display = 'none';
       }
     }
-    document.getElementById('report-detail-modal').style.display = 'flex';
+    openModal('report-detail-modal');
   }
 
 
@@ -2278,19 +2296,19 @@
     btn.disabled = false; btn.textContent = '저장';
     if (error) { showToast('저장 실패: ' + error.message); return; }
     showToast('저장되었습니다.');
-    document.getElementById('report-detail-modal').style.display = 'none';
+    closeModal('report-detail-modal');
     await loadReports(); updateStats(); updatePendingBadge(); renderList(); if(document.getElementById('page-done').classList.contains('active')) renderDonePage();
   }
 
   function closeReportDetail() {
-    document.getElementById('report-detail-modal').style.display = 'none';
+    closeModal('report-detail-modal');
   }
 
   async function deleteFromDetail() {
     if (!confirm('이 신고 내역을 삭제하시겠습니까?')) return;
     const { error } = await db.from('reports').delete().eq('id', currentReportId);
     if (error) { showToast('삭제 실패'); return; }
-    document.getElementById('report-detail-modal').style.display = 'none';
+    closeModal('report-detail-modal');
     await loadReports(); updateStats(); updatePendingBadge(); renderList();
   }
 
@@ -2912,7 +2930,7 @@
     document.getElementById('new-acc-team').value = '';
     const unitEl = document.getElementById('new-acc-unit'); if (unitEl) unitEl.innerHTML = '<option value="">-- 조 선택 --</option>';
     document.getElementById('add-account-error').style.display = 'none';
-    document.getElementById('add-account-modal').style.display = 'flex';
+    openModal('add-account-modal');
     setTimeout(() => document.getElementById('new-acc-username').focus(), 100);
   }
 
@@ -2963,7 +2981,7 @@
     editTeamSec.style.display = (data.role === '직원' || data.role === '관리자') ? 'block' : 'none';
     document.getElementById('edit-acc-team').value = data.team || '';
     document.getElementById('edit-account-error').style.display = 'none';
-    document.getElementById('edit-account-modal').style.display = 'flex';
+    openModal('edit-account-modal');
     setTimeout(() => document.getElementById('edit-acc-username').focus(), 100);
   }
 
@@ -3032,7 +3050,7 @@
     showToast('🗑 계정이 삭제되었습니다.'); loadSites();
   }
 
-  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+  /* closeModal/openModal은 상단에 정의됨 */
 
   function showChangePwModal() {
     document.getElementById('change-pw-username').textContent = currentUser.username + ' 님';
@@ -3040,7 +3058,7 @@
     document.getElementById('change-pw-new').value = '';
     document.getElementById('change-pw-confirm').value = '';
     document.getElementById('change-pw-error').style.display = 'none';
-    document.getElementById('change-pw-modal').style.display = 'flex';
+    openModal('change-pw-modal');
     setTimeout(() => document.getElementById('change-pw-current').focus(), 100);
   }
 
@@ -3590,7 +3608,7 @@
         return `<div style="font-size:14px${extra ? ';' + extra : ''}"><span style="color:#718096;font-weight:700;font-size:12px">${k}</span><br><span style="color:#1a202c;font-weight:500">${val}</span></div>`;
       }).join('')}</div>`;
 
-    document.getElementById('elevator-modal').style.display = 'flex';
+    openModal('elevator-modal');
     await loadElevators();
   }
 
@@ -3654,7 +3672,7 @@
     document.getElementById('elev-model').value = '';
     document.getElementById('elev-notes').value = '';
     document.getElementById('elev-error').style.display = 'none';
-    document.getElementById('elev-modal').style.display = 'flex';
+    openModal('elev-modal');
     setTimeout(() => document.getElementById('elev-unit-name').focus(), 100);
   }
 
@@ -3668,7 +3686,7 @@
     document.getElementById('elev-model').value = data.elevator_model || '';
     document.getElementById('elev-notes').value = data.notes || '';
     document.getElementById('elev-error').style.display = 'none';
-    document.getElementById('elev-modal').style.display = 'flex';
+    openModal('elev-modal');
   }
 
   async function elevatorConfirm() {
@@ -4024,7 +4042,7 @@
     pendingElevators = [];
     renderElevatorRows();
     document.getElementById('mgmt-error').style.display = 'none';
-    document.getElementById('mgmt-modal').style.display = 'flex';
+    openModal('mgmt-modal');
     setTimeout(() => document.getElementById('mgmt-name').focus(), 100);
   }
 
@@ -4051,7 +4069,7 @@
     document.getElementById('mgmt-elevator-address').value = m.elevator_address || '';
     document.getElementById('mgmt-notes').value = m.notes || '';
     document.getElementById('mgmt-error').style.display = 'none';
-    document.getElementById('mgmt-modal').style.display = 'flex';
+    openModal('mgmt-modal');
     // 기존 호기 불러오기
     const { data: elevData } = await db.from('site_elevators').select('*').eq('site_id', id).order('id');
     pendingElevators = (elevData || []).map(e => ({ ...e, _deleted: false }));
@@ -4132,7 +4150,7 @@
     document.getElementById('notes-modal-site').textContent = m.site_name || '';
     document.getElementById('notes-modal-input').value = m.notes || '';
     document.getElementById('notes-modal-error').style.display = 'none';
-    document.getElementById('notes-modal').style.display = 'flex';
+    openModal('notes-modal');
   }
 
   async function saveNotes() {
@@ -4141,7 +4159,7 @@
     const errEl = document.getElementById('notes-modal-error');
     const { error } = await db.from('managed_sites').update({ notes }).eq('id', editingNotesId);
     if (error) { errEl.textContent = '저장 실패: ' + error.message; errEl.style.display = 'block'; return; }
-    document.getElementById('notes-modal').style.display = 'none';
+    closeModal('notes-modal');
     showToast('✅ 비고가 저장되었습니다.');
     await loadMgmt();
   }
@@ -4160,7 +4178,7 @@
     const modal = document.getElementById('elvtr-info-modal');
     const content = document.getElementById('elvtr-info-content');
     content.innerHTML = '<div style="text-align:center;padding:20px;color:#a0aec0">⏳ 불러오는 중...</div>';
-    modal.style.display = 'flex';
+    openModal('elvtr-info-modal');
 
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/elevator-info?elevator_no=${no}`, {
@@ -4248,13 +4266,13 @@
     }
     // 탭이 보이면 모달도 표시 + 경고음
     if (!document.hidden) {
-      document.getElementById('admin-unack-modal').style.display = 'flex';
+      openModal('admin-unack-modal');
       playAlertSound();
     }
   }
 
   function closeAdminUnackModal() {
-    document.getElementById('admin-unack-modal').style.display = 'none';
+    closeModal('admin-unack-modal');
   }
 
   function startAdminUnackCheck() {
@@ -4297,7 +4315,7 @@
         '</div>';
     }).join('');
 
-    document.getElementById('pending-alert-modal').style.display = 'flex';
+    openModal('pending-alert-modal');
     playAlertSound();
   }
 
@@ -4357,7 +4375,7 @@
   }
 
   function closePendingAlert() {
-    document.getElementById('pending-alert-modal').style.display = 'none';
+    closeModal('pending-alert-modal');
   }
 
   function goPendingList() {
