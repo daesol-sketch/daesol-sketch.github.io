@@ -5451,7 +5451,8 @@
       setReporterField();
       showToast(getRoleIcon(currentRole) + ' ' + username + '님으로 로그인되었습니다.');
       renderReportPage();
-      history.replaceState({ tab: 'home' }, '', location.pathname);
+      history.replaceState(null, '', location.pathname);
+      history.pushState({ tab: 'home' }, '', location.pathname);
       _currentHistoryTab = 'home';
       goDashboard();
       subscribePush();
@@ -5727,7 +5728,8 @@
             startReportsRealtime();
             if (currentRole === '관리자') startAdminUnackCheck();
             if (currentRole !== '관리자') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
-            history.replaceState({ tab: 'home' }, '', location.pathname);
+            history.replaceState(null, '', location.pathname);
+            history.pushState({ tab: 'home' }, '', location.pathname);
             _currentHistoryTab = 'home';
             goDashboard();
           } else {
