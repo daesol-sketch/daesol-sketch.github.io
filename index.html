@@ -1911,7 +1911,7 @@
     else { const btn = document.getElementById('tab-' + tab + '-btn'); if (btn) btn.classList.add('active'); }
     if (tab === 'fault')   {} // 서브탭이 처리
     if (tab === 'sites')   { loadSites(); }
-    if (tab === 'holiday') { const _hd = document.getElementById('holiday-date-input'); if (_hd && !_hd.value) _hd.value = new Date().toISOString().slice(0,10); loadHolidayList(); }
+    if (tab === 'holiday') { const _hd = document.getElementById('holiday-date-input'); if (_hd && !_hd.value) _hd.value = new Date().toLocaleDateString('sv'); loadHolidayList(); }
     if (tab === 'duty')    loadDutyPage();
     if (tab === 'mgmt')    loadMgmt();
     if (tab === 'jungong') initJungong();
@@ -2067,8 +2067,8 @@
       document.getElementById('rdm-status').disabled = currentRole !== '관리자';
       document.getElementById('rdm-handler').value = r.completion_handler || (currentUser ? currentUser.username : '');
       document.getElementById('rdm-handler').readOnly = r.status === '처리중';
-      const todayStr = new Date().toISOString().slice(0,10);
-      const receivedDateStr = r.created_at ? new Date(r.created_at).toISOString().slice(0,10) : todayStr;
+      const todayStr = new Date().toLocaleDateString('sv');
+      const receivedDateStr = r.created_at ? new Date(r.created_at).toLocaleDateString('sv') : todayStr;
       document.getElementById('rdm-arr-date-picker').min = receivedDateStr;
       document.getElementById('rdm-arr-date-picker').max = todayStr;
       document.getElementById('rdm-date-picker').min = receivedDateStr;
@@ -2080,21 +2080,21 @@
       document.getElementById('rdm-time').value = '';
       if (r.arrival_at) {
         const a = new Date(r.arrival_at);
-        document.getElementById('rdm-arr-date').value = a.toISOString().slice(0,10);
+        document.getElementById('rdm-arr-date').value = a.toLocaleDateString('sv');
         document.getElementById('rdm-arr-time').value = a.toTimeString().slice(0,5);
       } else {
         const now = new Date();
-        document.getElementById('rdm-arr-date').value = now.toISOString().slice(0,10);
+        document.getElementById('rdm-arr-date').value = now.toLocaleDateString('sv');
         document.getElementById('rdm-arr-time').value = now.toTimeString().slice(0,5);
       }
       syncSelectFromTime('rdm-arr-time', 'rdm-arr-hour', 'rdm-arr-min');
       if (r.completion_at) {
         const d = new Date(r.completion_at);
-        document.getElementById('rdm-date').value = d.toISOString().slice(0,10);
+        document.getElementById('rdm-date').value = d.toLocaleDateString('sv');
         document.getElementById('rdm-time').value = d.toTimeString().slice(0,5);
       } else {
         const now = new Date();
-        document.getElementById('rdm-date').value = now.toISOString().slice(0,10);
+        document.getElementById('rdm-date').value = now.toLocaleDateString('sv');
         document.getElementById('rdm-time').value = now.toTimeString().slice(0,5);
       }
       syncSelectFromTime('rdm-time', 'rdm-hour', 'rdm-min');
@@ -2182,7 +2182,7 @@
     const currentReport = reports.find(r => r.id === currentReportId);
     const receivedAt = currentReport?.created_at ? new Date(currentReport.created_at) : null;
     const setArrTime = (d) => {
-      document.getElementById('rdm-arr-date').value = d.toISOString().slice(0,10);
+      document.getElementById('rdm-arr-date').value = d.toLocaleDateString('sv');
       document.getElementById('rdm-arr-time').value = d.toTimeString().slice(0,5);
       syncSelectFromTime('rdm-arr-time','rdm-arr-hour','rdm-arr-min');
     };
@@ -2202,7 +2202,7 @@
     const arrTimeVal = document.getElementById('rdm-arr-time').value;
     const arrivalAt = (arrDateVal && arrTimeVal) ? new Date(arrDateVal + 'T' + arrTimeVal) : null;
     const setCompTime = (d) => {
-      document.getElementById('rdm-date').value = d.toISOString().slice(0,10);
+      document.getElementById('rdm-date').value = d.toLocaleDateString('sv');
       document.getElementById('rdm-time').value = d.toTimeString().slice(0,5);
       syncSelectFromTime('rdm-time','rdm-hour','rdm-min');
     };
@@ -2310,7 +2310,7 @@
   }
 
   function initDoneYearSelects() {
-    const today = new Date().toISOString().slice(0,10);
+    const today = new Date().toLocaleDateString('sv');
     const fromEl = document.getElementById('done-date-from');
     const toEl   = document.getElementById('done-date-to');
     if (fromEl && !fromEl.value) fromEl.value = today;
@@ -2318,7 +2318,7 @@
   }
 
   function setDoneFilterToday() {
-    const today = new Date().toISOString().slice(0,10);
+    const today = new Date().toLocaleDateString('sv');
     document.getElementById('done-date-from').value = today;
     document.getElementById('done-date-to').value   = today;
     renderDoneList();
@@ -2405,7 +2405,7 @@
     const typeFilter = document.getElementById('repeat-type-filter').value;
     const fromDate = new Date();
     fromDate.setDate(fromDate.getDate() - days);
-    const fromStr = fromDate.toISOString().slice(0, 10);
+    const fromStr = fromDate.toLocaleDateString('sv');
 
     document.getElementById('repeat-list').innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
 
@@ -2516,7 +2516,7 @@
     const ws = XLSX.utils.json_to_sheet(rows);
     ws['!cols'] = [{wch:6},{wch:12},{wch:25},{wch:12},{wch:12},{wch:12},{wch:8},{wch:10},{wch:14},{wch:30},{wch:20}];
     const wb = XLSX.utils.book_new();
-    const dateStr = new Date().toISOString().slice(0,10);
+    const dateStr = new Date().toLocaleDateString('sv');
     XLSX.utils.book_append_sheet(wb, ws, '고장처리내역');
     XLSX.writeFile(wb, `대솔이엘_고장처리내역_${dateStr}.xlsx`);
     showToast(`📥 ${list.length}건 엑셀 다운로드 완료`);
@@ -2679,7 +2679,7 @@
   async function loadRepeatCountMap() {
     const from = new Date();
     from.setDate(from.getDate() - 30);
-    const fromStr = from.toISOString().slice(0, 10);
+    const fromStr = from.toLocaleDateString('sv');
     const { data } = await db.from('reports').select('building, elevator, type').eq('status', '완료').gte('completion_at', fromStr);
     repeatCountMap = {};
     if (data) data.forEach(r => {
@@ -2712,7 +2712,7 @@
     document.getElementById('stat-all').textContent        = reports.length;
     document.getElementById('stat-assigned').textContent   = reports.filter(r=>r.status==='배치완료').length;
     document.getElementById('stat-processing').textContent = reports.filter(r=>r.status==='처리중').length;
-    const todayStr = new Date().toISOString().slice(0,10);
+    const todayStr = new Date().toLocaleDateString('sv');
     db.from('reports').select('*',{count:'exact',head:true}).eq('status','완료').gte('completion_at', todayStr+'T00:00:00').lte('completion_at', todayStr+'T23:59:59')
       .then(({count}) => { const el = document.getElementById('stat-today-done'); if(el) el.textContent = count||0; });
   }
@@ -3375,7 +3375,7 @@
       newStart.setDate(newStart.getDate() + 1);
       const newEnd = new Date(oldEnd);
       newEnd.setFullYear(newEnd.getFullYear() + years);
-      const fmt = d => d.toISOString().slice(0, 10);
+      const fmt = d => d.toLocaleDateString('sv');
       const update = { contract_end: fmt(newEnd), contract_start: fmt(newStart) };
       const { error } = await db.from('managed_sites').update(update).eq('id', id);
       if (!error) ok++;
@@ -3692,7 +3692,7 @@
 
       // 날짜 파싱: Date객체 / YYYYMMDD / YYYY.MM.DD 모두 처리
       const parseDate = (raw) => {
-        if (raw instanceof Date) return raw.toISOString().slice(0, 10);
+        if (raw instanceof Date) return raw.toLocaleDateString('sv');
         const s = String(raw || '').trim();
         if (/^\d{8}$/.test(s)) return s.slice(0,4) + '-' + s.slice(4,6) + '-' + s.slice(6,8);
         return s.replace(/\./g, '-').replace(/-$/, '');
@@ -3772,7 +3772,7 @@
 
     const firstDay = new Date(year, month - 1, 1).getDay();
     const lastDate = new Date(year, month, 0).getDate();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toLocaleDateString('sv');
 
     let html = '';
     let day = 1 - firstDay;
@@ -3870,7 +3870,7 @@
       if (headerRow < 0) { showToast('❌ 헤더를 찾을 수 없습니다.'); return; }
 
       const parseDate = (raw) => {
-        if (raw instanceof Date) return raw.toISOString().slice(0, 10);
+        if (raw instanceof Date) return raw.toLocaleDateString('sv');
         const s = String(raw || '').trim();
         if (/^\d{8}$/.test(s)) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
         return s.replace(/\./g, '-').replace(/-$/, '');
@@ -3886,7 +3886,7 @@
         Object.entries(colIdx).forEach(([field, ci]) => {
           if (field === 'inspection_date') return;
           const v = row[ci];
-          rec[field] = v instanceof Date ? v.toISOString().slice(0,10) : String(v || '').trim() || null;
+          rec[field] = v instanceof Date ? v.toLocaleDateString('sv') : String(v || '').trim() || null;
         });
         rec.elevator_number = elevNo;
         // 검사확정여부를 inspection_support에 합산
@@ -5484,7 +5484,7 @@
 
   function setReportTimeNow() {
     const now = new Date();
-    document.getElementById('f-report-date').value = now.toISOString().slice(0, 10);
+    document.getElementById('f-report-date').value = now.toLocaleDateString('sv');
     document.getElementById('f-report-time').value = now.toTimeString().slice(0, 5);
     syncSelectFromTime('f-report-time', 'f-report-hour', 'f-report-min');
   }
@@ -5723,10 +5723,10 @@
   function initJungong() {
     setJungongType('tke');
     if (!document.getElementById('jg-date').value) {
-      document.getElementById('jg-date').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('jg-date').value = new Date().toLocaleDateString('sv');
     }
     if (!document.getElementById('jg-submit-date').value) {
-      document.getElementById('jg-submit-date').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('jg-submit-date').value = new Date().toLocaleDateString('sv');
     }
     renderAllPhotoSets();
     // html2canvas 첫 실행 스크롤 리셋 방지: 탭 열릴 때 미리 워밍업
