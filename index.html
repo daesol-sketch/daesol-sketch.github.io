@@ -1085,44 +1085,44 @@
           <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>도착시간</label>
             <div class="rdm-datetime-row" style=display:flex;gap:8px>
             <div class="rdm-date-wrap" style="position:relative;display:flex;flex-shrink:0;">
-            <input type=text id=rdm-arr-date placeholder="2026-04-15" maxlength=10 oninput="autoFormatDate(this)" style="padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:140px;background:#fff;color:#1a202c" />
+            <input type=text id=rdm-arr-date placeholder="2026-04-15" maxlength=10 oninput="autoFormatDate(this);if(this.value.length===10)clampArrivalTime()" style="padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:140px;background:#fff;color:#1a202c" />
             <div style="position:relative;width:36px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer">📅
-              <input type=date id=rdm-arr-date-picker style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" oninput="document.getElementById('rdm-arr-date').value=this.value" />
+              <input type=date id=rdm-arr-date-picker style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" oninput="document.getElementById('rdm-arr-date').value=this.value;clampArrivalTime()" />
             </div>
             </div>
             <div class="time-select-wrapper" style="gap:4px;align-items:center;flex:1">
               <div class="csel">
                 <button type="button" class="csel-btn" style="padding:8px 8px;font-size:13px;background:#fff;color:#1a202c;border:1.5px solid #cbd5e0" onclick="openCsel('rdm-arr-hour')"><span>00시</span></button>
-                <select id="rdm-arr-hour" onchange="syncTimeSelect('rdm-arr-time','rdm-arr-hour','rdm-arr-min');refreshCselBtn('rdm-arr-hour')" style="display:none"></select>
+                <select id="rdm-arr-hour" onchange="syncTimeSelect('rdm-arr-time','rdm-arr-hour','rdm-arr-min');refreshCselBtn('rdm-arr-hour');clampArrivalTime()" style="display:none"></select>
               </div>
               <span style="color:#4a5568;font-weight:700">:</span>
               <div class="csel">
                 <button type="button" class="csel-btn" style="padding:8px 8px;font-size:13px;background:#fff;color:#1a202c;border:1.5px solid #cbd5e0" onclick="openCsel('rdm-arr-min')"><span>00분</span></button>
-                <select id="rdm-arr-min" onchange="syncTimeSelect('rdm-arr-time','rdm-arr-hour','rdm-arr-min');refreshCselBtn('rdm-arr-min')" style="display:none"></select>
+                <select id="rdm-arr-min" onchange="syncTimeSelect('rdm-arr-time','rdm-arr-hour','rdm-arr-min');refreshCselBtn('rdm-arr-min');clampArrivalTime()" style="display:none"></select>
               </div>
             </div>
-            <input type="time" id="rdm-arr-time" class="time-input-pc" oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3))this.blur();this._v=this.value;" style="width:140px;flex-shrink:0;margin-left:24px;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a202c" />
+            <input type="time" id="rdm-arr-time" class="time-input-pc" oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3))this.blur();this._v=this.value;clampArrivalTime()" style="width:140px;flex-shrink:0;margin-left:24px;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a202c" />
             </div></div>
           <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리일시</label>
             <div class="rdm-datetime-row" style=display:flex;gap:8px>
             <div class="rdm-date-wrap" style="position:relative;display:flex;flex-shrink:0;">
-            <input type=text id=rdm-date placeholder="2026-04-15" maxlength=10 oninput="autoFormatDate(this)" style="padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:140px;background:#fff;color:#1a202c" />
+            <input type=text id=rdm-date placeholder="2026-04-15" maxlength=10 oninput="autoFormatDate(this);if(this.value.length===10)clampCompletionTime()" style="padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:140px;background:#fff;color:#1a202c" />
             <div style="position:relative;width:36px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer">📅
-              <input type=date id=rdm-date-picker style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" oninput="document.getElementById('rdm-date').value=this.value" />
+              <input type=date id=rdm-date-picker style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" oninput="document.getElementById('rdm-date').value=this.value;clampCompletionTime()" />
             </div>
             </div>
             <div class="time-select-wrapper" style="gap:4px;align-items:center;flex:1">
               <div class="csel">
                 <button type="button" class="csel-btn" style="padding:8px 8px;font-size:13px;background:#fff;color:#1a202c;border:1.5px solid #cbd5e0" onclick="openCsel('rdm-hour')"><span>00시</span></button>
-                <select id="rdm-hour" onchange="syncTimeSelect('rdm-time','rdm-hour','rdm-min');refreshCselBtn('rdm-hour')" style="display:none"></select>
+                <select id="rdm-hour" onchange="syncTimeSelect('rdm-time','rdm-hour','rdm-min');refreshCselBtn('rdm-hour');clampCompletionTime()" style="display:none"></select>
               </div>
               <span style="color:#4a5568;font-weight:700">:</span>
               <div class="csel">
                 <button type="button" class="csel-btn" style="padding:8px 8px;font-size:13px;background:#fff;color:#1a202c;border:1.5px solid #cbd5e0" onclick="openCsel('rdm-min')"><span>00분</span></button>
-                <select id="rdm-min" onchange="syncTimeSelect('rdm-time','rdm-hour','rdm-min');refreshCselBtn('rdm-min')" style="display:none"></select>
+                <select id="rdm-min" onchange="syncTimeSelect('rdm-time','rdm-hour','rdm-min');refreshCselBtn('rdm-min');clampCompletionTime()" style="display:none"></select>
               </div>
             </div>
-            <input type="time" id="rdm-time" class="time-input-pc" oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3))this.blur();this._v=this.value;" style="width:140px;flex-shrink:0;margin-left:24px;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a202c" />
+            <input type="time" id="rdm-time" class="time-input-pc" oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3))this.blur();this._v=this.value;clampCompletionTime()" style="width:140px;flex-shrink:0;margin-left:24px;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a202c" />
             </div></div>
           <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리내용</label>
             <input type=text id=rdm-content placeholder="처리한 내용을 적어주세요. 부품교체를 하셨으면 아래 체크해주세요." style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit /></div>
@@ -2041,13 +2041,25 @@
       document.getElementById('rdm-status').disabled = currentRole !== '관리자';
       document.getElementById('rdm-handler').value = r.completion_handler || (currentUser ? currentUser.username : '');
       document.getElementById('rdm-handler').readOnly = r.status === '처리중';
+      const todayStr = new Date().toISOString().slice(0,10);
+      const receivedDateStr = r.created_at ? new Date(r.created_at).toISOString().slice(0,10) : todayStr;
+      document.getElementById('rdm-arr-date-picker').min = receivedDateStr;
+      document.getElementById('rdm-arr-date-picker').max = todayStr;
+      document.getElementById('rdm-date-picker').min = receivedDateStr;
+      document.getElementById('rdm-date-picker').max = todayStr;
+      // 이전 오픈 값 간섭 방지: 먼저 초기화
+      document.getElementById('rdm-arr-date').value = '';
+      document.getElementById('rdm-arr-time').value = '';
+      document.getElementById('rdm-date').value = '';
+      document.getElementById('rdm-time').value = '';
       if (r.arrival_at) {
         const a = new Date(r.arrival_at);
         document.getElementById('rdm-arr-date').value = a.toISOString().slice(0,10);
         document.getElementById('rdm-arr-time').value = a.toTimeString().slice(0,5);
       } else {
-        document.getElementById('rdm-arr-date').value = '';
-        document.getElementById('rdm-arr-time').value = '';
+        const now = new Date();
+        document.getElementById('rdm-arr-date').value = now.toISOString().slice(0,10);
+        document.getElementById('rdm-arr-time').value = now.toTimeString().slice(0,5);
       }
       syncSelectFromTime('rdm-arr-time', 'rdm-arr-hour', 'rdm-arr-min');
       if (r.completion_at) {
@@ -2135,6 +2147,44 @@
     renderList();
   }
 
+  function clampArrivalTime() {
+    const dateVal = document.getElementById('rdm-arr-date').value;
+    const timeVal = document.getElementById('rdm-arr-time').value;
+    if (!dateVal || !timeVal) return;
+    const selected = new Date(dateVal + 'T' + timeVal);
+    const now = new Date();
+    const currentReport = reports.find(r => r.id === currentReportId);
+    const receivedAt = currentReport?.created_at ? new Date(currentReport.created_at) : null;
+    const setArrTime = (d) => {
+      document.getElementById('rdm-arr-date').value = d.toISOString().slice(0,10);
+      document.getElementById('rdm-arr-time').value = d.toTimeString().slice(0,5);
+      syncSelectFromTime('rdm-arr-time','rdm-arr-hour','rdm-arr-min');
+    };
+    if (selected > now) { setArrTime(now); showToast('❌ 도착시간이 현재 시각보다 미래일 수 없습니다.'); return; }
+    if (receivedAt && selected < receivedAt) { setArrTime(receivedAt); showToast('❌ 도착시간이 접수일시보다 빠를 수 없습니다.'); return; }
+  }
+
+  function clampCompletionTime() {
+    const dateVal = document.getElementById('rdm-date').value;
+    const timeVal = document.getElementById('rdm-time').value;
+    if (!dateVal || !timeVal) return;
+    const selected = new Date(dateVal + 'T' + timeVal);
+    const now = new Date();
+    const currentReport = reports.find(r => r.id === currentReportId);
+    const receivedAt = currentReport?.created_at ? new Date(currentReport.created_at) : null;
+    const arrDateVal = document.getElementById('rdm-arr-date').value;
+    const arrTimeVal = document.getElementById('rdm-arr-time').value;
+    const arrivalAt = (arrDateVal && arrTimeVal) ? new Date(arrDateVal + 'T' + arrTimeVal) : null;
+    const setCompTime = (d) => {
+      document.getElementById('rdm-date').value = d.toISOString().slice(0,10);
+      document.getElementById('rdm-time').value = d.toTimeString().slice(0,5);
+      syncSelectFromTime('rdm-time','rdm-hour','rdm-min');
+    };
+    if (selected > now) { setCompTime(now); showToast('❌ 처리일시가 현재 시각보다 미래일 수 없습니다.'); return; }
+    if (arrivalAt && selected < arrivalAt) { setCompTime(arrivalAt); showToast('❌ 처리일시가 도착시간보다 빠를 수 없습니다.'); return; }
+    if (receivedAt && selected < receivedAt) { setCompTime(receivedAt); showToast('❌ 처리일시가 접수일시보다 빠를 수 없습니다.'); return; }
+  }
+
   async function saveReportDetail() {
     const btn = document.getElementById('rdm-save-btn');
     btn.disabled = true; btn.textContent = '저장 중...';
@@ -2151,12 +2201,26 @@
 
     const currentReport = reports.find(r => r.id === currentReportId);
 
-    // 처리일시가 접수일시보다 빠르면 저장 불가
-    if (completionAt && currentReport?.created_at) {
-      if (new Date(completionAt) < new Date(currentReport.created_at)) {
-        showToast('❌ 처리일시가 접수일시보다 빠를 수 없습니다.');
-        btn.disabled = false; btn.textContent = '저장';
-        return;
+    const now = new Date();
+    const receivedAt = currentReport?.created_at ? new Date(currentReport.created_at) : null;
+
+    if (arrivalAt) {
+      if (receivedAt && new Date(arrivalAt) < receivedAt) {
+        showToast('❌ 도착시간이 접수일시보다 빠를 수 없습니다.'); btn.disabled = false; btn.textContent = '저장'; return;
+      }
+      if (new Date(arrivalAt) > now) {
+        showToast('❌ 도착시간이 현재 시각보다 미래일 수 없습니다.'); btn.disabled = false; btn.textContent = '저장'; return;
+      }
+    }
+    if (completionAt) {
+      if (receivedAt && new Date(completionAt) < receivedAt) {
+        showToast('❌ 처리일시가 접수일시보다 빠를 수 없습니다.'); btn.disabled = false; btn.textContent = '저장'; return;
+      }
+      if (new Date(completionAt) > now) {
+        showToast('❌ 처리일시가 현재 시각보다 미래일 수 없습니다.'); btn.disabled = false; btn.textContent = '저장'; return;
+      }
+      if (arrivalAt && new Date(completionAt) < new Date(arrivalAt)) {
+        showToast('❌ 처리일시가 도착시간보다 빠를 수 없습니다.'); btn.disabled = false; btn.textContent = '저장'; return;
       }
     }
 
@@ -5463,7 +5527,8 @@
   function buildTimeSelects() {
     const pairs = [
       { h: 'f-report-hour', m: 'f-report-min' },
-      { h: 'rdm-hour',      m: 'rdm-min'      }
+      { h: 'rdm-hour',      m: 'rdm-min'      },
+      { h: 'rdm-arr-hour',  m: 'rdm-arr-min'  }
     ];
     pairs.forEach(({ h, m }) => {
       const hEl = document.getElementById(h);
