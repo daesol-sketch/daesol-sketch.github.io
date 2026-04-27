@@ -1924,7 +1924,7 @@
   /* ── 대시보드 홈 ── */
   function goDashboard() {
     if (!currentUser) { goHome(); return; }
-    if (!_isPopState && _currentHistoryTab !== 'home') history.pushState({ tab: 'home' }, '', location.pathname);
+    if (!_isPopState) history.replaceState({ tab: 'home' }, '', location.pathname);
     _currentHistoryTab = 'home';
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -5673,6 +5673,8 @@
             startReportsRealtime();
             if (currentRole === '관리자') startAdminUnackCheck();
             if (currentRole !== '관리자') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
+            history.replaceState({ tab: 'home' }, '', location.pathname);
+            _currentHistoryTab = 'home';
             goDashboard();
           } else {
             await db.auth.signOut();
