@@ -3155,7 +3155,8 @@
   async function openNavForReport(building, e) {
     if (e) { e.stopPropagation(); e.preventDefault(); }
     if (!/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) { showToast('모바일에서만 사용 가능합니다.'); return; }
-    const { data } = await db.from('managed_sites').select('elevator_address, site_name').eq('site_name', building).maybeSingle();
+    const { data: rows } = await db.from('managed_sites').select('elevator_address, site_name').eq('site_name', building).limit(1);
+    const data = rows?.[0];
     if (!data?.elevator_address) { showToast('⚠️ 등록된 소재지 주소가 없습니다.'); return; }
     await openTmap(data.elevator_address, data.site_name);
   }
