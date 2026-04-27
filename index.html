@@ -1397,6 +1397,10 @@
         <input type="text" class="modal-input normal" id="mgmt-site-phone" placeholder="02-0000-0000" style="margin-bottom:0" oninput="autoFormatPhone(this)" onkeydown="mgmtEnterNext(event,this)" />
       </div>
       <div>
+        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">현장 연락처2</label>
+        <input type="text" class="modal-input normal" id="mgmt-site-phone2" placeholder="010-0000-0000" style="margin-bottom:0" oninput="autoFormatPhone(this)" onkeydown="mgmtEnterNext(event,this)" />
+      </div>
+      <div>
         <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">비상통화장치번호</label>
         <input type="text" class="modal-input normal" id="mgmt-emergency-phone" placeholder="02-0000-0000" style="margin-bottom:0" oninput="autoFormatPhone(this)" onkeydown="mgmtEnterNext(event,this)" />
       </div>
@@ -3324,6 +3328,7 @@
         '주점검자': m.main_inspector || '',
         '보조점검자': m.sub_inspector || '',
         '현장전화': m.site_phone || '',
+        '현장연락처2': m.site_phone2 || '',
         '팩스': m.fax || '',
         '비상통화장치': m.emergency_phone || '',
         '담당자 메일': m.manager_email || '',
@@ -3520,7 +3525,7 @@
     const fields = [
       ['계약구분', m.contract_type], ['주점검자', m.main_inspector], ['보조점검자', m.sub_inspector],
       ['계약일자', m.contract_date], ['계약시작', m.contract_start], ['계약만료', m.contract_end],
-      ['현장전화', m.site_phone], ['비상통화장치', m.emergency_phone], ['담당자 메일', m.manager_email],
+      ['현장전화', m.site_phone], ['현장연락처2', m.site_phone2], ['비상통화장치', m.emergency_phone], ['담당자 메일', m.manager_email],
       ['팩스', m.fax], ['승강기 소재지', m.elevator_address],
       ['비고', m.notes],
     ];
@@ -3940,8 +3945,8 @@
 
   const MGMT_FIELD_ORDER = [
     'mgmt-name','mgmt-elevator-address','mgmt-contract-type','mgmt-contract-date','mgmt-contract-start','mgmt-contract-end',
-    'mgmt-main-inspector','mgmt-sub-inspector','mgmt-site-phone',
-    'mgmt-manager-mobile','mgmt-emergency-phone','mgmt-fax','mgmt-manager-email','mgmt-notes'
+    'mgmt-main-inspector','mgmt-sub-inspector','mgmt-site-phone','mgmt-site-phone2',
+    'mgmt-emergency-phone','mgmt-fax','mgmt-manager-email','mgmt-notes'
   ];
   function mgmtEnterNext(e, el) {
     if (e.key !== 'Enter') return;
@@ -3957,8 +3962,8 @@
     editingMgmtId = null;
     document.getElementById('mgmt-modal-title').textContent = '현장 추가';
     ['mgmt-name','mgmt-contract-type','mgmt-contract-date','mgmt-contract-start','mgmt-contract-end',
-     'mgmt-main-inspector','mgmt-sub-inspector','mgmt-site-phone','mgmt-fax',
-     'mgmt-emergency-phone','mgmt-manager-mobile','mgmt-manager-email','mgmt-elevator-address','mgmt-notes'].forEach(id => {
+     'mgmt-main-inspector','mgmt-sub-inspector','mgmt-site-phone','mgmt-site-phone2','mgmt-fax',
+     'mgmt-emergency-phone','mgmt-manager-email','mgmt-elevator-address','mgmt-notes'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';
     });
     pendingElevators = [];
@@ -3984,6 +3989,7 @@
     document.getElementById('mgmt-main-inspector').value = m.main_inspector || '';
     document.getElementById('mgmt-sub-inspector').value = m.sub_inspector || '';
     document.getElementById('mgmt-site-phone').value = m.site_phone || '';
+    document.getElementById('mgmt-site-phone2').value = m.site_phone2 || '';
     document.getElementById('mgmt-fax').value = m.fax || '';
     document.getElementById('mgmt-emergency-phone').value = m.emergency_phone || '';
     document.getElementById('mgmt-manager-email').value = m.manager_email || '';
@@ -4014,6 +4020,7 @@
       main_inspector:    document.getElementById('mgmt-main-inspector').value.trim() || null,
       sub_inspector:     document.getElementById('mgmt-sub-inspector').value.trim() || null,
       site_phone:        document.getElementById('mgmt-site-phone').value.trim() || null,
+      site_phone2:       document.getElementById('mgmt-site-phone2').value.trim() || null,
       fax:               document.getElementById('mgmt-fax').value.trim() || null,
       emergency_phone:   document.getElementById('mgmt-emergency-phone').value.trim() || null,
       manager_email:     document.getElementById('mgmt-manager-email').value.trim() || null,
