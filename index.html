@@ -3144,12 +3144,15 @@
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
         body: JSON.stringify({ address })
       });
-      const { lon, lat } = await res.json();
-      if (!lon || !lat) { showToast('⚠️ 주소를 찾을 수 없습니다.'); return; }
-      _openTmapDeeplink(`tmap://route?goalname=${encodeURIComponent(siteName || address)}&goalx=${lon}&goaly=${lat}`);
-    } catch(e) {
-      showToast('⚠️ 네비게이션 연결에 실패했습니다.');
-    }
+      if (res.ok) {
+        const { lon, lat } = await res.json();
+        if (lon && lat) {
+          _openTmapDeeplink(`tmap://route?goalname=${encodeURIComponent(siteName || address)}&goalx=${lon}&goaly=${lat}`);
+          return;
+        }
+      }
+    } catch(e) {}
+    _openTmapDeeplink(`tmap://search?name=${encodeURIComponent(address)}`);
   }
 
   async function openNavForReport(building) {
