@@ -1082,6 +1082,27 @@
             <select id=rdm-status style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit><option>배치완료</option><option>처리중</option><option>완료</option></select></div>
           <div><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리담당자</label>
             <input type=text id=rdm-handler placeholder=담당자 이름 style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit /></div>
+          <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>도착시간</label>
+            <div class="rdm-datetime-row" style=display:flex;gap:8px>
+            <div class="rdm-date-wrap" style="position:relative;display:flex;flex-shrink:0;">
+            <input type=text id=rdm-arr-date placeholder="2026-04-15" maxlength=10 oninput="autoFormatDate(this)" style="padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:140px;background:#fff;color:#1a202c" />
+            <div style="position:relative;width:36px;border:1.5px solid #cbd5e0;border-left:none;border-radius:0 8px 8px 0;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer">📅
+              <input type=date id=rdm-arr-date-picker style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" oninput="document.getElementById('rdm-arr-date').value=this.value" />
+            </div>
+            </div>
+            <div class="time-select-wrapper" style="gap:4px;align-items:center;flex:1">
+              <div class="csel">
+                <button type="button" class="csel-btn" style="padding:8px 8px;font-size:13px;background:#fff;color:#1a202c;border:1.5px solid #cbd5e0" onclick="openCsel('rdm-arr-hour')"><span>00시</span></button>
+                <select id="rdm-arr-hour" onchange="syncTimeSelect('rdm-arr-time','rdm-arr-hour','rdm-arr-min');refreshCselBtn('rdm-arr-hour')" style="display:none"></select>
+              </div>
+              <span style="color:#4a5568;font-weight:700">:</span>
+              <div class="csel">
+                <button type="button" class="csel-btn" style="padding:8px 8px;font-size:13px;background:#fff;color:#1a202c;border:1.5px solid #cbd5e0" onclick="openCsel('rdm-arr-min')"><span>00분</span></button>
+                <select id="rdm-arr-min" onchange="syncTimeSelect('rdm-arr-time','rdm-arr-hour','rdm-arr-min');refreshCselBtn('rdm-arr-min')" style="display:none"></select>
+              </div>
+            </div>
+            <input type="time" id="rdm-arr-time" class="time-input-pc" oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3))this.blur();this._v=this.value;" style="width:140px;flex-shrink:0;margin-left:24px;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a202c" />
+            </div></div>
           <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리일시</label>
             <div class="rdm-datetime-row" style=display:flex;gap:8px>
             <div class="rdm-date-wrap" style="position:relative;display:flex;flex-shrink:0;">
@@ -2020,6 +2041,15 @@
       document.getElementById('rdm-status').disabled = currentRole !== '관리자';
       document.getElementById('rdm-handler').value = r.completion_handler || (currentUser ? currentUser.username : '');
       document.getElementById('rdm-handler').readOnly = r.status === '처리중';
+      if (r.arrival_at) {
+        const a = new Date(r.arrival_at);
+        document.getElementById('rdm-arr-date').value = a.toISOString().slice(0,10);
+        document.getElementById('rdm-arr-time').value = a.toTimeString().slice(0,5);
+      } else {
+        document.getElementById('rdm-arr-date').value = '';
+        document.getElementById('rdm-arr-time').value = '';
+      }
+      syncSelectFromTime('rdm-arr-time', 'rdm-arr-hour', 'rdm-arr-min');
       if (r.completion_at) {
         const d = new Date(r.completion_at);
         document.getElementById('rdm-date').value = d.toISOString().slice(0,10);
@@ -2049,6 +2079,7 @@
           `<div style="display:flex;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid #edf2f7">` +
           `<span style="color:#718096;font-size:11px;font-weight:700;min-width:72px;flex-shrink:0">${label}</span>` +
           `<span style="font-size:13px;color:#2d3748;font-weight:500;word-break:break-all">${value}</span></div>`;
+        const arrivalAt = r.arrival_at ? new Date(r.arrival_at).toLocaleString('ko-KR') : null;
         const completionAt = r.completion_at ? new Date(r.completion_at).toLocaleString('ko-KR') : '-';
         const confirmedAt = r.confirmed_at ? new Date(r.confirmed_at).toLocaleString('ko-KR') : '-';
         roSec.innerHTML =
@@ -2057,6 +2088,7 @@
           `<div style="background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:16px">` +
           roRow('처리담당자', escHtml(r.completion_handler || '-')) +
           (r.confirmed_at ? roRow('확인시간', confirmedAt) : '') +
+          (arrivalAt ? roRow('도착시간', arrivalAt) : '') +
           roRow('처리일시', completionAt) +
           roRow('처리내용', escHtml(r.completion_content || '-')) +
           roRow('부품교체', r.parts_replaced ? '있음' : '없음') +
@@ -2106,6 +2138,11 @@
   async function saveReportDetail() {
     const btn = document.getElementById('rdm-save-btn');
     btn.disabled = true; btn.textContent = '저장 중...';
+    const arrDateVal = document.getElementById('rdm-arr-date').value;
+    const arrTimeVal = document.getElementById('rdm-arr-time').value;
+    let arrivalAt = null;
+    if (arrDateVal && arrTimeVal) arrivalAt = new Date(arrDateVal + 'T' + arrTimeVal).toISOString();
+    else if (arrDateVal) arrivalAt = new Date(arrDateVal).toISOString();
     const dateVal = document.getElementById('rdm-date').value;
     const timeVal = document.getElementById('rdm-time').value;
     let completionAt = null;
@@ -2134,6 +2171,7 @@
     const update = {
       status,
       completion_handler:  handler,
+      arrival_at:          arrivalAt,
       completion_at:       completionAt,
       completion_content:  content,
       parts_replaced:      document.getElementById('rdm-parts').checked,
