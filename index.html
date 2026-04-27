@@ -1397,10 +1397,6 @@
         <input type="text" class="modal-input normal" id="mgmt-site-phone" placeholder="02-0000-0000" style="margin-bottom:0" oninput="autoFormatPhone(this)" onkeydown="mgmtEnterNext(event,this)" />
       </div>
       <div>
-        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">담당자 핸드폰</label>
-        <input type="text" class="modal-input normal" id="mgmt-manager-mobile" placeholder="010-0000-0000" style="margin-bottom:0" oninput="autoFormatPhone(this)" onkeydown="mgmtEnterNext(event,this)" />
-      </div>
-      <div>
         <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">비상통화장치번호</label>
         <input type="text" class="modal-input normal" id="mgmt-emergency-phone" placeholder="02-0000-0000" style="margin-bottom:0" oninput="autoFormatPhone(this)" onkeydown="mgmtEnterNext(event,this)" />
       </div>
@@ -3330,7 +3326,6 @@
         '현장전화': m.site_phone || '',
         '팩스': m.fax || '',
         '비상통화장치': m.emergency_phone || '',
-        '담당자 HP': m.manager_mobile || '',
         '담당자 메일': m.manager_email || '',
         '승강기 소재지': m.elevator_address || '',
         '비고': m.notes || '',
@@ -3991,7 +3986,6 @@
     document.getElementById('mgmt-site-phone').value = m.site_phone || '';
     document.getElementById('mgmt-fax').value = m.fax || '';
     document.getElementById('mgmt-emergency-phone').value = m.emergency_phone || '';
-    document.getElementById('mgmt-manager-mobile').value = m.manager_mobile || '';
     document.getElementById('mgmt-manager-email').value = m.manager_email || '';
     document.getElementById('mgmt-elevator-address').value = m.elevator_address || '';
     document.getElementById('mgmt-notes').value = m.notes || '';
@@ -4022,7 +4016,6 @@
       site_phone:        document.getElementById('mgmt-site-phone').value.trim() || null,
       fax:               document.getElementById('mgmt-fax').value.trim() || null,
       emergency_phone:   document.getElementById('mgmt-emergency-phone').value.trim() || null,
-      manager_mobile:    document.getElementById('mgmt-manager-mobile').value.trim() || null,
       manager_email:     document.getElementById('mgmt-manager-email').value.trim() || null,
       elevator_address:  document.getElementById('mgmt-elevator-address').value.trim() || null,
       notes:             document.getElementById('mgmt-notes').value.trim() || null,
