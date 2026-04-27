@@ -1814,6 +1814,7 @@
     const pwNew = document.getElementById('mp-pw-new').value;
     const pwConfirm = document.getElementById('mp-pw-confirm').value;
     const errEl = document.getElementById('mp-error');
+    const saveBtn = document.querySelector('#mypage-modal .mypage-btn.save');
     errEl.style.display = 'none';
     if (pwNew && pwNew !== pwConfirm) {
       errEl.textContent = '비밀번호가 일치하지 않습니다.'; errEl.style.display = 'block'; return;
@@ -1821,24 +1822,29 @@
     if (pwNew && pwNew.length < 6) {
       errEl.textContent = '비밀번호는 6자 이상이어야 합니다.'; errEl.style.display = 'block'; return;
     }
-    const updateObj = { team, position, phone };
-    if (pwNew) updateObj.password = pwNew;
-    const { error } = await db.from('accounts').update(updateObj).eq('id', currentUser.id);
-    if (error) { errEl.textContent = '저장 실패: ' + error.message; errEl.style.display = 'block'; return; }
-    if (pwNew) {
-      const authRes = await fetch(`${SUPABASE_URL}/functions/v1/admin-auth-ops`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'change_password', account_id: currentUser.id, password: pwNew })
-      }).then(r => r.json());
-      if (authRes?.error) { errEl.textContent = '비밀번호 변경 실패: ' + authRes.error; errEl.style.display = 'block'; return; }
+    saveBtn.disabled = true; saveBtn.textContent = '저장 중...';
+    try {
+      const updateObj = { team, position, phone };
+      if (pwNew) updateObj.password = pwNew;
+      const { error } = await db.from('accounts').update(updateObj).eq('id', currentUser.id);
+      if (error) { errEl.textContent = '저장 실패: ' + error.message; errEl.style.display = 'block'; return; }
+      if (pwNew) {
+        const authRes = await fetch(`${SUPABASE_URL}/functions/v1/admin-auth-ops`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'change_password', account_id: currentUser.id, password: pwNew })
+        }).then(r => r.json());
+        if (authRes?.error) { errEl.textContent = '비밀번호 변경 실패: ' + authRes.error; errEl.style.display = 'block'; return; }
+      }
+      currentUser.team = team; currentUser.position = position; currentUser.phone = phone;
+      if (pwNew) currentUser.password = pwNew;
+      updateDrawerProfile();
+      updateHomeProfile();
+      closeMyPageModal();
+      showToast('✅ 내 정보가 저장되었습니다.');
+    } finally {
+      saveBtn.disabled = false; saveBtn.textContent = '저장';
     }
-    currentUser.team = team; currentUser.position = position; currentUser.phone = phone;
-    if (pwNew) currentUser.password = pwNew;
-    updateDrawerProfile();
-    updateHomeProfile();
-    closeMyPageModal();
-    showToast('✅ 내 정보가 저장되었습니다.');
   }
 
   /* ── TABS ── */
