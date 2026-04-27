@@ -1871,24 +1871,19 @@
   let _isPopState = false;
   let _exitConfirm = false;
   let _currentHistoryTab = 'home';
-  let _manualModalClose = false;
-
   function openModal(id) {
     document.getElementById(id).style.display = 'flex';
     history.pushState({ modal: id }, '', location.pathname);
   }
   function closeModal(id) {
     document.getElementById(id).style.display = 'none';
-    if (history.state?.modal === id) { _manualModalClose = true; history.back(); }
+    if (history.state?.modal) history.replaceState({ tab: _currentHistoryTab }, '', location.pathname);
   }
 
   window.addEventListener('popstate', e => {
-    if (e.state?.modal) {
-      if (!_manualModalClose) {
-        const m = document.getElementById(e.state.modal);
-        if (m) m.style.display = 'none';
-      }
-      _manualModalClose = false;
+    const visibleModal = document.querySelector('.modal-overlay[style*="flex"]');
+    if (visibleModal) {
+      visibleModal.style.display = 'none';
       return;
     }
     _isPopState = true;
