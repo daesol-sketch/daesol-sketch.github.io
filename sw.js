@@ -67,7 +67,7 @@ self.addEventListener('notificationclick', event => {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      if (isCall && siteName) {
+      if (isCall) {
         // 현장 전화 착신: 신고접수 탭으로 이동 + 건물명/전화 자동입력
         const msg = { action: 'fillReport', siteName, phone };
         if (list.length) { list[0].postMessage(msg); return list[0].focus(); }
