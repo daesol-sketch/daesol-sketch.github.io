@@ -2785,15 +2785,15 @@
         ? '<div style="font-size:12px;color:#c05621;background:#fffaf0;border-left:3px solid #ed8936;border-radius:4px;padding:5px 10px;margin-bottom:8px">※ 최근 1달 내 ' + escHtml(r.elevator||'') + ' ' + escHtml(r.type||'') + ' ' + (repeatCount+1) + '번째 고장입니다. 반복고장현황을 참고해주세요.</div>'
         : '';
       const _isMob = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-      const _tmapBtn = _isMob ? '<button onclick="event.stopPropagation();openNavForReport(' + JSON.stringify(r.building).replace(/"/g,'&quot;') + ',event)" style="background:none;border:none;padding:0;cursor:pointer;flex-shrink:0;line-height:0"><img src="./tmap-icon.png" style="width:26px;height:26px;border-radius:6px;display:block"></button>' : '';
+      const _tmapBtn = _isMob ? '<button onclick="event.stopPropagation();openNavForReport(' + JSON.stringify(r.building).replace(/"/g,'&quot;') + ',event)" style="position:absolute;top:10px;right:10px;background:none;border:none;padding:0;cursor:pointer;z-index:2;line-height:0"><img src="./tmap-icon.png" style="width:28px;height:28px;border-radius:6px;display:block"></button>' : '';
       return '<div class=report-item style="cursor:pointer;position:relative" onclick=showReportDetail(' + JSON.stringify(r.id) + ')>' +
+        _tmapBtn +
         '<div class=report-left>' +
         repeatNotice +
         '<div class=report-header>' +
         '<span class=report-id>' + r.id + '</span>' +
         '<span class=report-title>' + escHtml(r.building||'') + ' · ' + escHtml(r.elevator||'') + '</span>' +
         '<span class=status-badge status-PLACEHOLDER>' + r.status + '</span>'.replace('status-PLACEHOLDER', 'status-'+r.status) +
-        _tmapBtn +
         (r.parts_replaced ? '<span style=background:#fffbeb;color:#744210;border:1px_solid_#fbd38d;border-radius:12px;padding:2px_8px;font-size:11px;font-weight:700>부품교체</span>'.replace(/_/g,' ') : '') +
         '</div>' +
         '<div class=report-meta>' +
