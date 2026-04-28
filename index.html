@@ -1158,6 +1158,7 @@
       <option value="">-- 계정 유형 선택 --</option>
       <option value="직원">👷 직원 (보수 직원)</option>
       <option value="관리자">👑 관리자 (전체 권한)</option>
+      <option value="마스터">🔱 마스터 (최고 권한)</option>
     </select>
     <div id="site-name-field" style="display:none"></div>
     <div style="border-top:1.5px solid #e2e8f0;margin:12px 0 8px;padding-top:12px">
@@ -1204,6 +1205,7 @@
     <select class="modal-input normal" id="edit-acc-role" style="margin-bottom:8px; letter-spacing:0">
       <option value="직원">👷 직원 (보수 직원)</option>
       <option value="관리자">👑 관리자 (전체 권한)</option>
+      <option value="마스터">🔱 마스터 (최고 권한)</option>
     </select>
     <div id="edit-site-name-field" style="display:none"></div>
     <div style="border-top:1.5px solid #e2e8f0;margin:12px 0 8px;padding-top:12px">
@@ -1594,7 +1596,7 @@
   }
 
   async function toggleDutyShift(shiftType, teamOverride) {
-    if (!currentUser || currentRole === '관리자') return showToast('❌ 직원 계정으로 로그인하세요.');
+    if (!currentUser || currentRole === '관리자' || currentRole === '마스터') return showToast('❌ 직원 계정으로 로그인하세요.');
     const team = teamOverride || currentUser.team;
     const handler = currentUser.username;
     if (!team) return showToast('❌ 계정에 팀 정보가 없습니다. 관리자에게 문의하세요.');
@@ -1917,8 +1919,8 @@
       switchSubTab(tab);
       return;
     }
-    if (tab === 'sites' && currentRole !== '관리자') return;
-    if (tab === 'holiday' && currentRole !== '관리자') return;
+    if (tab === 'sites' && currentRole !== '관리자' && currentRole !== '마스터') return;
+    if (tab === 'holiday' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'mgmt' && !currentRole) return;
     if (tab === 'jungong' && !currentRole) return;
     if (!_isPopState && tab !== _currentHistoryTab) history.pushState({ tab }, '', location.pathname);
@@ -2028,7 +2030,7 @@
     const { data: r, error } = await db.from('reports').select('*').eq('id', id).maybeSingle();
     if (!r || error) return;
     // 배치완료/접수중 상태면 배치 버튼 안내만 표시
-    if ((r.status === '배치완료' || r.status === '접수중') && (currentRole === '직원' || currentRole === '관리자')) {
+    if ((r.status === '배치완료' || r.status === '접수중') && (currentRole === '직원' || currentRole === '관리자' || currentRole === '마스터')) {
       showToast('⚠️ 배치 버튼을 눌러 처리를 시작하세요.');
       return;
     }
@@ -2041,7 +2043,7 @@
     const idx = reports.findIndex(x => x.id === id);
     if (idx !== -1) reports[idx] = r;
     currentReportId = id;
-    const canEdit = currentRole === '관리자' || (currentRole === '직원' && r.status !== '완료');
+    const canEdit = currentRole === '관리자' || currentRole === '마스터' || (currentRole === '직원' && r.status !== '완료');
 
     document.getElementById('rdm-title').textContent = r.building + ' · ' + r.elevator;
 
@@ -2072,7 +2074,7 @@
     if (canEdit) {
       editSec.style.display = '';
       saveBtn.style.display = '';
-      delBtn.style.display = currentRole === '관리자' ? '' : 'none';
+      delBtn.style.display = currentRole === '관리자' || currentRole === '마스터' ? '' : 'none';
 
       let roSec = document.getElementById('rdm-readonly-section');
       if (!roSec) { roSec = document.createElement('div'); roSec.id = 'rdm-readonly-section'; editSec.parentNode.insertBefore(roSec, editSec); }
@@ -2083,7 +2085,7 @@
       } else { roSec.style.display = 'none'; }
 
       document.getElementById('rdm-status').value = r.status || '접수중';
-      document.getElementById('rdm-status').disabled = currentRole !== '관리자';
+      document.getElementById('rdm-status').disabled = currentRole !== '관리자' && currentRole !== '마스터';
       document.getElementById('rdm-handler').value = r.completion_handler || (currentUser ? currentUser.username : '');
       document.getElementById('rdm-handler').readOnly = r.status === '처리중';
       const todayStr = new Date().toLocaleDateString('sv');
@@ -2409,7 +2411,7 @@
         (r.completion_detail ? '<div class=report-desc>' + escHtml(r.completion_detail) + '</div>' : '') +
         '</div>' +
         '<div class=report-right onclick=event.stopPropagation()>' +
-        (currentRole==='관리자' ? '<button class=btn-delete onclick=deleteReport(' + JSON.stringify(r.id) + ')>삭제</button>' : '') +
+        ((currentRole==='관리자'||currentRole==='마스터') ? '<button class=btn-delete onclick=deleteReport(' + JSON.stringify(r.id) + ')>삭제</button>' : '') +
         '</div></div>';
     }).join('');
   }
@@ -2543,13 +2545,14 @@
 
   /* ── AUTH ── */
   function getRoleIcon(role) {
+    if (role === '마스터') return '🔱';
     if (role === '관리자') return '👑';
     if (role === '직원') return '👷';
     return '🏢';
   }
 
   function applyRoleUI() {
-    const isAdmin = currentRole === '관리자';
+    const isAdmin = currentRole === '관리자' || currentRole === '마스터';
     const isStaff = currentRole === '직원';
     document.getElementById('tab-sites-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-holiday-btn').style.display = isAdmin ? 'flex' : 'none';
@@ -2603,6 +2606,7 @@
     const w = document.getElementById('site-badge-wrap');
     if (!currentRole) { w.innerHTML = ''; return; }
     const colors = {
+      '마스터': 'background:#faf5ff;color:#553c9a;border-color:#b794f4',
       '관리자': 'background:#fffff0;color:#744210;border-color:#f6ad55',
       '직원':   'background:#f0fff4;color:#276749;border-color:#9ae6b4',
     };
@@ -2826,14 +2830,14 @@
         (hc ? '<div style=margin-top:4px;font-size:12px;color:#276749;background:#f0fff4;border-radius:6px;padding:4px_8px;display:inline-block>' .replace(/_/g,' ') + '처리: ' + escHtml(r.completion_handler||'') + (dispatchTime ? '&nbsp;&nbsp;확인시간: ' + dispatchTime : '') + (r.completion_content ? ' · ' + escHtml(r.completion_content) : '') + '</div>' : '') +
         '</div>' +
         '<div class=report-right onclick=event.stopPropagation() style=display:flex;flex-direction:column;align-items:flex-end;gap:6px>' +
-        ((r.status === '배치완료' || r.status === '처리중' || r.status === '접수중') && (currentRole==='직원'||currentRole==='관리자') ? '<button style=background:#2b6cb0;color:white;border:none;border-radius:10px;padding:12px_20px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;width:100% onclick=confirmDispatch(' + JSON.stringify(r.id) + ')>' + (r.completion_handler ? '🔄 재배치' : '✅ 배치') + '</button>'.replace(/_/g,' ') : '') +
-        (currentRole==='관리자' ? '<button class=btn-delete style=width:100% onclick=deleteReport(' + JSON.stringify(r.id) + ')>삭제</button>' : '') +
+        ((r.status === '배치완료' || r.status === '처리중' || r.status === '접수중') && (currentRole==='직원'||currentRole==='마스터') ? '<button style=background:#2b6cb0;color:white;border:none;border-radius:10px;padding:12px_20px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;width:100% onclick=confirmDispatch(' + JSON.stringify(r.id) + ')>' + (r.completion_handler ? '🔄 재배치' : '✅ 배치') + '</button>'.replace(/_/g,' ') : '') +
+        ((currentRole==='관리자'||currentRole==='마스터') ? '<button class=btn-delete style=width:100% onclick=deleteReport(' + JSON.stringify(r.id) + ')>삭제</button>' : '') +
         '</div></div>';
     }).join('');
   }
 
   /* ── 계정 관리 ── */
-  const ROLE_LABEL = { '직원':'👷 직원', '관리자':'👑 관리자' };
+  const ROLE_LABEL = { '직원':'👷 직원', '관리자':'👑 관리자', '마스터':'🔱 마스터' };
 
   async function loadHolidayList() {
     const el = document.getElementById('holiday-list');
@@ -3308,7 +3312,7 @@
       }
     });
     mgmtData = data.map(m => ({ ...m, elev_count: elevCounts[m.id] || 0, insp_expired: inspExpired[m.id] || 0, insp_soon: inspSoon[m.id] || 0, elev_numbers: elevNumbers[m.id] || [], elev_info: elevInfo[m.id] || [], inspector_team: teamMap[m.main_inspector] || null }));
-    const isAdmin = currentRole === '관리자';
+    const isAdmin = currentRole === '관리자' || currentRole === '마스터';
     document.getElementById('btn-add-mgmt').style.display = isAdmin ? 'inline-flex' : 'none';
     document.getElementById('btn-sync-all-inspection').style.display = isAdmin ? 'inline-block' : 'none';
 
@@ -3428,7 +3432,7 @@
   }
 
   async function extendContracts(years) {
-    if (currentRole !== '관리자') { showToast('⚠️ 관리자만 계약 연장이 가능합니다.'); return; }
+    if (currentRole !== '관리자' && currentRole !== '마스터') { showToast('⚠️ 관리자만 계약 연장이 가능합니다.'); return; }
     if (!selectedMgmtIds.size) return;
     if (!confirm(`선택한 ${selectedMgmtIds.size}개 현장의 계약기간을 ${years}년 연장하시겠습니까?`)) return;
     let ok = 0;
@@ -3541,7 +3545,7 @@
       el.innerHTML = `<div class="empty-state"><div class="icon">🏢</div>${mgmtFilter === 'expire' ? '이번 달 만료 예정 현장이 없습니다.' : '등록된 현장이 없습니다.'}</div>`;
       return;
     }
-    const isAdmin = currentRole === '관리자';
+    const isAdmin = currentRole === '관리자' || currentRole === '마스터';
     const showCheck = mgmtFilter === 'expire';
     el.innerHTML = `<table class="site-table" style="width:100%">
       <thead><tr>
@@ -3586,7 +3590,7 @@
     if (!m) return;
     currentSiteForElevator = m;
     document.getElementById('elevator-modal-title').textContent = '🏢 ' + m.site_name;
-    document.getElementById('elevator-modal-add-btn').style.display = currentRole === '관리자' ? 'inline-block' : 'none';
+    document.getElementById('elevator-modal-add-btn').style.display = currentRole === '관리자' || currentRole === '마스터' ? 'inline-block' : 'none';
 
     // 현장 상세정보 표시
     const fields = [
@@ -3625,7 +3629,7 @@
       el.innerHTML = '<div class="empty-state" style="padding:24px 0"><div class="icon">🛗</div>등록된 호기가 없습니다.</div>';
       return;
     }
-    const isAdmin = currentRole === '관리자';
+    const isAdmin = currentRole === '관리자' || currentRole === '마스터';
     el.innerHTML = `<div style="overflow-x:auto"><table class="site-table" style="width:100%">
       <thead><tr>
         <th>#</th><th>호기명</th><th>승강기번호</th><th>엘리베이터 모델</th><th>검사만료일</th><th>최근검사결과</th><th>비고</th>
@@ -3824,7 +3828,7 @@
   let inspCalSelectedDate = null;
 
   async function loadInspCalendar() {
-    const isAdmin = currentRole === '관리자';
+    const isAdmin = currentRole === '관리자' || currentRole === '마스터';
     document.getElementById('btn-insp-cal-upload').style.display = isAdmin ? 'inline-block' : 'none';
     const { data, error } = await db.from('inspection_schedules').select('*').order('inspection_date');
     if (error) { showToast('❌ 검사일정 로드 실패'); return; }
@@ -4238,7 +4242,7 @@
   let _adminUnackInterval = null;
 
   async function checkUnacknowledgedAssignments() {
-    if (currentRole !== '관리자') return;
+    if (currentRole !== '관리자' && currentRole !== '마스터') return;
     const thresholdAgo = new Date(Date.now() - 3 * 60 * 1000);
     const { data, error } = await db.from('reports').select('*').eq('status', '배치완료').is('confirmed_at', null).not('assigned_at', 'is', null).lt('assigned_at', thresholdAgo.toISOString());
     if (error || !data || !data.length) return;
@@ -4285,13 +4289,13 @@
   }
 
   function _onAdminVisibility() {
-    if (!document.hidden && currentRole === '관리자') checkUnacknowledgedAssignments();
+    if (!document.hidden && currentRole === '관리자' || currentRole === '마스터') checkUnacknowledgedAssignments();
   }
 
   let _pendingFeedbackInterval = null;
 
   async function checkPendingAssignments() {
-    if (!currentUser || currentRole === '관리자') return;
+    if (!currentUser || currentRole === '관리자' || currentRole === '마스터') return;
     const hour = new Date().getHours();
     if (hour >= 23 || hour < 7) return;
     const handler = currentUser.username;
@@ -5476,8 +5480,8 @@
       goDashboard();
       subscribePush();
       startReportsRealtime();
-      if (currentRole === '관리자') startAdminUnackCheck();
-      if (currentRole !== '관리자') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
+      if (currentRole === '관리자' || currentRole === '마스터') startAdminUnackCheck();
+      if (currentRole === '직원' || currentRole === '마스터') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
     } catch(e) {
       await db.auth.signOut();
       document.getElementById('login-error').textContent = '아이디 또는 비밀번호가 틀렸습니다.';
@@ -5533,7 +5537,7 @@
     const nameInput  = document.getElementById('f-name');
     const phoneInput = document.getElementById('f-phone');
     if (!nameInput) return;
-    if (currentRole === '직원' || currentRole === '관리자') {
+    if (currentRole === '직원' || currentRole === '관리자' || currentRole === '마스터') {
       nameInput.value = currentUser ? (currentUser.username) : '';
       nameInput.readOnly = true;
       nameInput.classList.add('readonly-input');
@@ -5761,8 +5765,8 @@
             setReporterField();
             subscribePush();
             startReportsRealtime();
-            if (currentRole === '관리자') startAdminUnackCheck();
-            if (currentRole !== '관리자') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
+            if (currentRole === '관리자' || currentRole === '마스터') startAdminUnackCheck();
+            if (currentRole !== '관리자' && currentRole !== '마스터') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
             history.replaceState(null, '', location.pathname);
             history.pushState({ tab: 'home' }, '', location.pathname);
             _currentHistoryTab = 'home';
