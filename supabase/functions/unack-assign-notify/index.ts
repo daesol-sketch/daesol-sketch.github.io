@@ -27,7 +27,7 @@ Deno.serve(async () => {
   const handlers = [...new Set(reports.map((r: any) => r.completion_handler).filter(Boolean))];
 
   // 관리자 계정 조회
-  const { data: admins } = await db.from('accounts').select('id').eq('role', '관리자');
+  const { data: admins } = await db.from('accounts').select('id').in('role', ['관리자', '마스터']);
   if (!admins?.length) return new Response(JSON.stringify({ sent: 0 }), { headers: { 'Content-Type': 'application/json' } });
 
   const adminIds = admins.map((a: any) => String(a.id));
