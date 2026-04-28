@@ -1699,7 +1699,7 @@
       const colHtml = row.cols.map(col => {
         const found = (data||[]).filter(r => r.shift_type===row.shift && r.team===col.key);
         const nameHtml = found.length
-          ? found.map(r => '<span style="font-size:15px;font-weight:700;color:'+color+'">'+r.handler_name+'</span>').join(' · ')
+          ? found.map(r => '<span style="font-size:15px;font-weight:700;color:'+color+'">'+r.handler_name+'</span>').join('<br>')
           : '<span style="font-size:13px;color:#a0aec0">미등록</span>';
         return '<div style="flex:1;background:white;border-radius:8px;padding:10px 12px;border:1px solid '+border+'">'
           + '<div style="font-size:11px;color:#718096;font-weight:600;margin-bottom:4px">'+col.label+'</div>'
