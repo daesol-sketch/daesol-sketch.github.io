@@ -745,11 +745,12 @@
               </div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <button onclick="setDoneFilterToday()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:12px;font-family:inherit;background:white;cursor:pointer;color:#4a5568;white-space:nowrap">오늘</button>
-            <button onclick="setDoneFilterMonth()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:12px;font-family:inherit;background:white;cursor:pointer;color:#4a5568;white-space:nowrap">이번달</button>
-            <button onclick="clearDoneFilter()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:12px;font-family:inherit;background:white;cursor:pointer;color:#718096;white-space:nowrap">전체</button>
-          </div>
+          <select id="done-date-preset" onchange="applyDoneDatePreset(this.value)" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:12px;font-family:inherit;background:white;cursor:pointer;color:#4a5568">
+            <option value="today" selected>오늘</option>
+            <option value="week">이번주</option>
+            <option value="month">이번달</option>
+            <option value="all">전체</option>
+          </select>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <select id="done-type-filter" onchange="renderDoneList()" style="padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit">
               <option value="">전체 유형</option>
@@ -2389,7 +2390,7 @@
     let q = db.from('reports').select('*').eq('status', '완료').order('created_at', { ascending: false });
     const { data } = await q;
     doneReports = data || [];
-    renderDoneList();
+    applyDoneDatePreset(document.getElementById('done-date-preset')?.value || 'today');
   }
 
   function initDoneYearSelects() {
@@ -2398,6 +2399,31 @@
     const toEl   = document.getElementById('done-date-to');
     if (fromEl && !fromEl.value) fromEl.value = today;
     if (toEl   && !toEl.value)   toEl.value   = today;
+  }
+
+  function applyDoneDatePreset(val) {
+    const now = new Date();
+    const today = now.toLocaleDateString('sv');
+    if (val === 'today') {
+      document.getElementById('done-date-from').value = today;
+      document.getElementById('done-date-to').value   = today;
+    } else if (val === 'week') {
+      const day = now.getDay();
+      const mon = new Date(now);
+      mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+      document.getElementById('done-date-from').value = mon.toLocaleDateString('sv');
+      document.getElementById('done-date-to').value   = today;
+    } else if (val === 'month') {
+      const y    = now.getFullYear();
+      const m    = String(now.getMonth()+1).padStart(2,'0');
+      const last = new Date(y, now.getMonth()+1, 0).getDate();
+      document.getElementById('done-date-from').value = y+'-'+m+'-01';
+      document.getElementById('done-date-to').value   = y+'-'+m+'-'+String(last).padStart(2,'0');
+    } else {
+      document.getElementById('done-date-from').value = '';
+      document.getElementById('done-date-to').value   = '';
+    }
+    renderDoneList();
   }
 
   function setDoneFilterToday() {
