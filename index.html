@@ -2934,6 +2934,7 @@
     document.getElementById('new-acc-team').value = '';
     const unitEl = document.getElementById('new-acc-unit'); if (unitEl) unitEl.innerHTML = '<option value="">-- 조 선택 --</option>';
     document.getElementById('add-account-error').style.display = 'none';
+    document.querySelector('#new-acc-role option[value="마스터"]').style.display = currentRole === '마스터' ? '' : 'none';
     openModal('add-account-modal');
     setTimeout(() => document.getElementById('new-acc-username').focus(), 100);
   }
@@ -2978,6 +2979,7 @@
     editingAccountId = id;
     document.getElementById('edit-acc-username').value = data.username;
     document.getElementById('edit-acc-role').value = data.role;
+    document.querySelector('#edit-acc-role option[value="마스터"]').style.display = currentRole === '마스터' ? '' : 'none';
     document.getElementById('edit-acc-phone').value = data.phone || '';
     document.getElementById('edit-acc-position').value = data.position || '';
     // 팀 불러오기
@@ -3001,6 +3003,7 @@
     const position = document.getElementById('edit-acc-position').value.trim();
     const errEl    = document.getElementById('edit-account-error');
     if (!username || !role) { errEl.textContent='아이디와 유형을 입력하세요.'; errEl.style.display='block'; return; }
+    if (role === '마스터' && currentRole !== '마스터') { errEl.textContent='마스터 권한은 마스터만 부여할 수 있습니다.'; errEl.style.display='block'; return; }
     const teamE = document.getElementById('edit-acc-team')?.value || null;
     const payload = { username, role, site_name: null, name: null, phone: phone||null, position: position||null, team: teamE||null };
     const { error } = await db.from('accounts').update(payload).eq('id', editingAccountId);
