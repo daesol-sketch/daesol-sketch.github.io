@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     const { data: admins } = await db
       .from('accounts')
       .select('id')
-      .eq('role', '관리자');
+      .in('role', ['관리자', '마스터']);
 
     console.log(`[call-notify] admins=${JSON.stringify(admins)}`);
 
