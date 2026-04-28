@@ -1104,6 +1104,38 @@
             </div>
             <input type="time" id="rdm-arr-time" class="time-input-pc" oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3))this.blur();this._v=this.value;clampArrivalTime()" style="width:140px;flex-shrink:0;margin-left:24px;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a202c" />
             </div></div>
+          <div id=rdm-rescue-section style="display:none;grid-column:1/-1">
+            <div style="background:#ebf8ff;border:1.5px solid #90cdf4;border-radius:10px;padding:14px 16px;display:grid;gap:12px">
+              <div style="font-size:12px;font-weight:700;color:#2b6cb0">🆘 구출 정보</div>
+              <div><label style="font-size:12px;font-weight:600;color:#2c5282;display:block;margin-bottom:5px">구출자</label>
+                <select id=rdm-rescue-handler style="width:100%;padding:8px 10px;border:1.5px solid #90cdf4;border-radius:8px;font-size:13px;font-family:inherit;background:#fff">
+                  <option>119</option><option>유지관리업체</option><option>관리주체</option><option>해당없음</option>
+                </select>
+              </div>
+              <div><label style="font-size:12px;font-weight:600;color:#2c5282;display:block;margin-bottom:5px">구출시간</label>
+                <div class="rdm-datetime-row" style="display:flex;gap:8px">
+                  <div class="rdm-date-wrap" style="position:relative;display:flex;flex-shrink:0">
+                    <input type=text id=rdm-rescue-date placeholder="2026-04-15" maxlength=10 oninput="autoFormatDate(this)" style="padding:8px 10px;border:1.5px solid #90cdf4;border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:130px;background:#fff;color:#1a202c" />
+                    <div style="position:relative;width:36px;border:1.5px solid #90cdf4;border-left:none;border-radius:0 8px 8px 0;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer">📅
+                      <input type=date id=rdm-rescue-date-picker style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" oninput="document.getElementById('rdm-rescue-date').value=this.value" />
+                    </div>
+                  </div>
+                  <div class="time-select-wrapper" style="gap:4px;align-items:center;flex:1">
+                    <div class="csel">
+                      <button type="button" class="csel-btn" style="padding:8px 8px;font-size:13px;background:#fff;color:#1a202c;border:1.5px solid #90cdf4" onclick="openCsel('rdm-rescue-hour')"><span>00시</span></button>
+                      <select id="rdm-rescue-hour" onchange="syncTimeSelect('rdm-rescue-time','rdm-rescue-hour','rdm-rescue-min');refreshCselBtn('rdm-rescue-hour')" style="display:none"></select>
+                    </div>
+                    <span style="color:#4a5568;font-weight:700">:</span>
+                    <div class="csel">
+                      <button type="button" class="csel-btn" style="padding:8px 8px;font-size:13px;background:#fff;color:#1a202c;border:1.5px solid #90cdf4" onclick="openCsel('rdm-rescue-min')"><span>00분</span></button>
+                      <select id="rdm-rescue-min" onchange="syncTimeSelect('rdm-rescue-time','rdm-rescue-hour','rdm-rescue-min');refreshCselBtn('rdm-rescue-min')" style="display:none"></select>
+                    </div>
+                  </div>
+                  <input type="time" id="rdm-rescue-time" class="time-input-pc" style="width:140px;flex-shrink:0;margin-left:24px;padding:8px 10px;border:1.5px solid #90cdf4;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a202c" />
+                </div>
+              </div>
+            </div>
+          </div>
           <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리일시</label>
             <div class="rdm-datetime-row" style=display:flex;gap:8px>
             <div class="rdm-date-wrap" style="position:relative;display:flex;flex-shrink:0;">
@@ -2125,6 +2157,25 @@
       document.getElementById('rdm-content').value  = r.completion_content || '';
       document.getElementById('rdm-parts').checked  = r.parts_replaced || false;
       document.getElementById('rdm-detail').value   = r.completion_detail || '';
+      const rescueSec = document.getElementById('rdm-rescue-section');
+      if (r.type === '갇힘정지') {
+        rescueSec.style.display = '';
+        document.getElementById('rdm-rescue-handler').value = r.rescue_handler || '119';
+        document.getElementById('rdm-rescue-date').value = '';
+        document.getElementById('rdm-rescue-time').value = '';
+        if (r.rescue_at) {
+          const ra = new Date(r.rescue_at);
+          document.getElementById('rdm-rescue-date').value = ra.toLocaleDateString('sv');
+          document.getElementById('rdm-rescue-time').value = ra.toTimeString().slice(0,5);
+        } else {
+          const now2 = new Date();
+          document.getElementById('rdm-rescue-date').value = now2.toLocaleDateString('sv');
+          document.getElementById('rdm-rescue-time').value = now2.toTimeString().slice(0,5);
+        }
+        syncSelectFromTime('rdm-rescue-time', 'rdm-rescue-hour', 'rdm-rescue-min');
+      } else {
+        rescueSec.style.display = 'none';
+      }
     } else {
       editSec.style.display = 'none';
       saveBtn.style.display = 'none';
@@ -2151,6 +2202,8 @@
           roRow('처리담당자', escHtml(r.completion_handler || '-')) +
           (r.confirmed_at ? roRow('확인시간', confirmedAt) : '') +
           (arrivalAt ? roRow('도착시간', arrivalAt) : '') +
+          (r.type === '갇힘정지' ? roRow('구출자', escHtml(r.rescue_handler || '-')) : '') +
+          (r.type === '갇힘정지' && r.rescue_at ? roRow('구출시간', new Date(r.rescue_at).toLocaleString('ko-KR')) : '') +
           roRow('처리일시', completionAt) +
           roRow('처리내용', escHtml(r.completion_content || '-')) +
           roRow('부품교체', r.parts_replaced ? '있음' : '없음') +
@@ -2291,6 +2344,12 @@
       parts_replaced:      document.getElementById('rdm-parts').checked,
       completion_detail:   detail,
     };
+    if (currentReport?.type === '갇힘정지') {
+      const rescueDateVal = document.getElementById('rdm-rescue-date').value;
+      const rescueTimeVal = document.getElementById('rdm-rescue-time').value;
+      update.rescue_handler = document.getElementById('rdm-rescue-handler').value || null;
+      update.rescue_at = (rescueDateVal && rescueTimeVal) ? new Date(rescueDateVal + 'T' + rescueTimeVal).toISOString() : null;
+    }
     if (status === '처리중' && currentReport?.status !== '처리중') {
       update.confirmed_at = new Date().toISOString();
     }
@@ -5640,7 +5699,8 @@
     const pairs = [
       { h: 'f-report-hour', m: 'f-report-min' },
       { h: 'rdm-hour',      m: 'rdm-min'      },
-      { h: 'rdm-arr-hour',  m: 'rdm-arr-min'  }
+      { h: 'rdm-arr-hour',  m: 'rdm-arr-min'  },
+      { h: 'rdm-rescue-hour', m: 'rdm-rescue-min' }
     ];
     pairs.forEach(({ h, m }) => {
       const hEl = document.getElementById(h);
