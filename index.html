@@ -2030,7 +2030,7 @@
     const { data: r, error } = await db.from('reports').select('*').eq('id', id).maybeSingle();
     if (!r || error) return;
     // 배치완료/접수중 상태면 배치 버튼 안내만 표시
-    if ((r.status === '배치완료' || r.status === '접수중') && (currentRole === '직원' || currentRole === '관리자' || currentRole === '마스터')) {
+    if ((r.status === '배치완료' || r.status === '접수중') && (currentRole === '직원' || currentRole === '마스터')) {
       showToast('⚠️ 배치 버튼을 눌러 처리를 시작하세요.');
       return;
     }
