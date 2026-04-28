@@ -1082,7 +1082,7 @@
           <div><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리 상태</label>
             <select id=rdm-status style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit><option>배치완료</option><option>처리중</option><option>완료</option></select></div>
           <div><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리담당자</label>
-            <input type=text id=rdm-handler placeholder=담당자 이름 style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit /></div>
+            <select id=rdm-handler style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit></select></div>
           <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>도착시간</label>
             <div class="rdm-datetime-row" style=display:flex;gap:8px>
             <div class="rdm-date-wrap" style="position:relative;display:flex;flex-shrink:0;">
@@ -2030,7 +2030,7 @@
     const { data: r, error } = await db.from('reports').select('*').eq('id', id).maybeSingle();
     if (!r || error) return;
     // 배치완료/접수중 상태면 배치 버튼 안내만 표시
-    if ((r.status === '배치완료' || r.status === '접수중') && (currentRole === '직원' || currentRole === '마스터')) {
+    if ((r.status === '배치완료' || r.status === '접수중') && currentRole === '직원') {
       showToast('⚠️ 배치 버튼을 눌러 처리를 시작하세요.');
       return;
     }
@@ -2086,8 +2086,11 @@
 
       document.getElementById('rdm-status').value = r.status || '접수중';
       document.getElementById('rdm-status').disabled = currentRole !== '관리자' && currentRole !== '마스터';
-      document.getElementById('rdm-handler').value = r.completion_handler || (currentUser ? currentUser.username : '');
-      document.getElementById('rdm-handler').readOnly = r.status === '처리중';
+      const { data: handlerAccs } = await db.from('accounts').select('username').in('role', ['직원', '마스터']).order('username');
+      const handlerSel = document.getElementById('rdm-handler');
+      handlerSel.innerHTML = (handlerAccs || []).map(a => `<option value="${escHtml(a.username)}">${escHtml(a.username)}</option>`).join('');
+      handlerSel.value = r.completion_handler || (currentUser ? currentUser.username : '');
+      handlerSel.disabled = r.status === '처리중' && currentRole !== '마스터';
       const todayStr = new Date().toLocaleDateString('sv');
       const receivedDateStr = r.created_at ? new Date(r.created_at).toLocaleDateString('sv') : todayStr;
       document.getElementById('rdm-arr-date-picker').min = receivedDateStr;
