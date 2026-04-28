@@ -1614,7 +1614,7 @@
         showToast('❌ 이미 ' + otherTeam.team + '으로 등록되어 있습니다. 하나만 선택 가능합니다.');
         return;
       }
-      const maxCount = (team === '풍동숙직' || team === '1팀' || team === '2팀' || team === '3팀') ? 2 : 1;
+      const maxCount = team === '풍동숙직' ? 3 : (team === '1팀' || team === '2팀' || team === '3팀') ? 2 : 1;
       const { error } = await db.from('duty_roster').insert(
         { date, shift_type: shiftType, team, handler_name: handler, account_id: String(currentUser.id) }
       );
@@ -1686,9 +1686,9 @@
       { shift:'주간',     label:'☀️ 주간',      time:'08:30~17:30',
         cols:[ {key:'1팀',label:'1팀(2명)'}, {key:'2팀',label:'2팀(2명)'}, {key:'3팀',label:'3팀 파주(2명)'} ] },
       { shift:'평일당직', label:'🌙 평일숙직',  time:'17:30~익일 08:30',
-        cols:[ {key:'풍동숙직',label:'풍동숙직(2명)'}, {key:'파주대기',label:'파주대기(1명)'} ] },
+        cols:[ {key:'풍동숙직',label:'풍동숙직(최대3명)'}, {key:'파주대기',label:'파주대기(1명)'} ] },
       { shift:'주말당직', label:'📅 주말/휴일', time:'08:30~익일 08:30',
-        cols:[ {key:'풍동숙직',label:'풍동숙직(2명)'}, {key:'파주숙직',label:'파주숙직(1명)'} ] },
+        cols:[ {key:'풍동숙직',label:'풍동숙직(최대3명)'}, {key:'파주숙직',label:'파주숙직(1명)'} ] },
     ];
     const curShift = getCurrentShiftType();
     const rows = curShift === '주말당직'
