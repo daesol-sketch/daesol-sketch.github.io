@@ -1823,9 +1823,11 @@
     document.getElementById('mp-pw-confirm').value = '';
     document.getElementById('mp-error').style.display = 'none';
     document.getElementById('mypage-modal').classList.add('open');
+    history.pushState({ modal: 'mypage-modal' }, '', location.pathname);
   }
   function closeMyPageModal() {
     document.getElementById('mypage-modal').classList.remove('open');
+    if (history.state?.modal === 'mypage-modal') history.replaceState({ tab: _currentHistoryTab }, '', location.pathname);
   }
   async function saveMyPage() {
     const team = document.getElementById('mp-team').value.trim();
@@ -1880,12 +1882,13 @@
     if (history.state?.modal) history.replaceState({ tab: _currentHistoryTab }, '', location.pathname);
   }
 
-  const _ALL_MODAL_IDS = ['report-detail-modal','add-account-modal','edit-account-modal','change-pw-modal','elevator-modal','elvtr-info-modal','elev-modal','mgmt-modal','notes-modal','admin-unack-modal','pending-alert-modal'];
+  const _ALL_MODAL_IDS = ['report-detail-modal','add-account-modal','edit-account-modal','change-pw-modal','elevator-modal','elvtr-info-modal','elev-modal','mgmt-modal','notes-modal','admin-unack-modal','pending-alert-modal','mypage-modal'];
 
   window.addEventListener('popstate', e => {
-    const visibleModal = _ALL_MODAL_IDS.map(id => document.getElementById(id)).find(m => m && m.style.display === 'flex');
+    const visibleModal = _ALL_MODAL_IDS.map(id => document.getElementById(id)).find(m => m && (m.style.display === 'flex' || m.classList.contains('open')));
     if (visibleModal) {
       visibleModal.style.display = 'none';
+      visibleModal.classList.remove('open');
       return;
     }
     _isPopState = true;
