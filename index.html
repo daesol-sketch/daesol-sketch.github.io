@@ -1880,8 +1880,10 @@
     if (history.state?.modal) history.replaceState({ tab: _currentHistoryTab }, '', location.pathname);
   }
 
+  const _ALL_MODAL_IDS = ['report-detail-modal','add-account-modal','edit-account-modal','change-pw-modal','elevator-modal','elvtr-info-modal','elev-modal','mgmt-modal','notes-modal','admin-unack-modal','pending-alert-modal'];
+
   window.addEventListener('popstate', e => {
-    const visibleModal = document.querySelector('.modal-overlay[style*="flex"]');
+    const visibleModal = _ALL_MODAL_IDS.map(id => document.getElementById(id)).find(m => m && m.style.display === 'flex');
     if (visibleModal) {
       visibleModal.style.display = 'none';
       return;
