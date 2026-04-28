@@ -35,22 +35,27 @@ self.addEventListener('push', event => {
   const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
   event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: './icon-192.png',
-      badge: './icon-192.png',
-      vibrate: [300, 150, 300, 150, 300],
-      requireInteraction: isMobile,
-      data: { reportId: data.reportId || null, type: data.type || null, siteName: data.siteName || null, phone: data.phone || null }
-    }).then(() => {
-      if (!isMobile) {
-        return new Promise(resolve => setTimeout(resolve, 10000)).then(() =>
-          self.registration.getNotifications().then(notifications =>
-            notifications.forEach(n => n.close())
-          )
-        );
-      }
-    })
+    Promise.all([
+      self.registration.showNotification(data.title, {
+        body: data.body,
+        icon: './icon-192.png',
+        badge: './icon-192.png',
+        vibrate: [300, 150, 300, 150, 300],
+        requireInteraction: isMobile,
+        data: { reportId: data.reportId || null, type: data.type || null, siteName: data.siteName || null, phone: data.phone || null }
+      }).then(() => {
+        if (!isMobile) {
+          return new Promise(resolve => setTimeout(resolve, 10000)).then(() =>
+            self.registration.getNotifications().then(notifications =>
+              notifications.forEach(n => n.close())
+            )
+          );
+        }
+      }),
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+        list.forEach(client => client.postMessage({ action: 'playSound' }));
+      })
+    ])
   );
 });
 
