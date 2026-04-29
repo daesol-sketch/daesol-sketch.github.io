@@ -45,7 +45,7 @@ self.addEventListener('push', event => {
         data: { reportId: data.reportId || null, type: data.type || null, siteName: data.siteName || null, phone: data.phone || null }
       }).then(() => {
         if (!isMobile) {
-          return new Promise(resolve => setTimeout(resolve, 10000)).then(() =>
+          return new Promise(resolve => setTimeout(resolve, 40000)).then(() =>
             self.registration.getNotifications().then(notifications =>
               notifications.forEach(n => n.close())
             )
