@@ -449,6 +449,7 @@
   <button class="drawer-menu-item tab-btn" id="tab-insp-calendar-btn" onclick="switchTab('insp-calendar');closeNavMenu()" style="display:none"><span class="menu-icon">🗓️</span> 검사일정</button>
   <button class="drawer-menu-item tab-btn" id="tab-jungong-btn" onclick="switchTab('jungong');closeNavMenu()" style="display:none"><span class="menu-icon">📋</span> 준공계</button>
   <button class="drawer-menu-item tab-btn" id="tab-gongsa-btn" onclick="switchTab('gongsa');closeNavMenu()" style="display:none"><span class="menu-icon">📸</span> 공사팀 사진철</button>
+  <button class="drawer-menu-item tab-btn" id="tab-docket-btn" onclick="switchTab('docket');closeNavMenu()" style="display:none"><span class="menu-icon">📝</span> 서비스다켓</button>
   <button class="drawer-menu-item tab-btn" id="tab-sites-btn" onclick="switchTab('sites');closeNavMenu()" style="display:none"><span class="menu-icon">👤</span> 인사 관리</button>
   <button class="drawer-menu-item tab-btn" id="tab-holiday-btn" onclick="switchTab('holiday');closeNavMenu()" style="display:none"><span class="menu-icon">📅</span> 휴일 관리</button>
   <div style="flex:1"></div>
@@ -533,6 +534,9 @@
       </button>
       <button class="home-grid-item" onclick="switchTab('insp-calendar')" id="home-gi-insp-calendar" style="display:none">
         <span class="gi-icon">🗓️</span><span class="gi-label">검사일정</span>
+      </button>
+      <button class="home-grid-item" onclick="switchTab('docket')" id="home-gi-docket" style="display:none">
+        <span class="gi-icon">📝</span><span class="gi-label">서비스다켓</span>
       </button>
     </div>
   </div>
@@ -1025,6 +1029,210 @@
       <div id="gc-photo-sets" style="margin-bottom:16px"></div>
       <div style="display:flex;gap:12px;margin-bottom:40px">
         <button onclick="downloadGongsaExcel()" style="flex:1;padding:14px;background:#1a6b35;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">📥 엑셀 다운로드</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 서비스다켓 -->
+  <div class="page" id="page-docket">
+    <div style="max-width:900px;margin:0 auto">
+      <!-- 목록 헤더 -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+        <h2 style="font-size:20px;font-weight:800;color:var(--tx)">📝 서비스다켓</h2>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select id="docket-filter-type" onchange="renderDocketList()" style="padding:8px 12px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:13px;font-family:inherit;color:var(--tx);background:var(--bg-card)">
+            <option value="">전체 양식</option>
+            <option value="TKE">TKE</option>
+            <option value="대솔이엘">대솔이엘</option>
+          </select>
+          <input id="docket-filter-site" type="text" placeholder="현장명 검색" oninput="renderDocketList()" style="padding:8px 12px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:13px;font-family:inherit;color:var(--tx);background:var(--bg-card);width:140px" />
+          <button onclick="openDocketModal(null)" style="padding:8px 16px;background:var(--btn-bg);color:var(--btn-tx);border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">+ 새 다켓</button>
+        </div>
+      </div>
+      <div id="docket-list" style="display:grid;gap:12px"></div>
+    </div>
+  </div>
+
+  <!-- 서비스다켓 모달 -->
+  <div id="docket-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);overflow-y:auto">
+    <div style="max-width:720px;margin:60px auto;background:var(--bg-card);border-radius:16px;border:1px solid var(--br);padding:28px 24px;position:relative">
+      <button onclick="closeDocketModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--tx-3)">✕</button>
+      <h2 style="font-size:18px;font-weight:800;margin-bottom:24px;color:var(--tx)" id="docket-modal-title">서비스다켓 작성</h2>
+
+      <!-- 양식 선택 -->
+      <div style="display:flex;gap:10px;margin-bottom:20px">
+        <button id="dk-type-tke" onclick="setDocketType('TKE')" style="flex:1;padding:10px;border:2px solid var(--br-mid);border-radius:8px;background:var(--bg-card);color:var(--tx-3);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">TKE 양식</button>
+        <button id="dk-type-daesol" onclick="setDocketType('대솔이엘')" style="flex:1;padding:10px;border:2px solid var(--br-mid);border-radius:8px;background:var(--bg-card);color:var(--tx-3);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">대솔이엘 양식</button>
+      </div>
+
+      <!-- 기본 정보 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+        <div class="form-group">
+          <label>현장명</label>
+          <select id="dk-site" onchange="onDocketSiteChange()" style="padding:10px 14px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:14px;font-family:inherit;color:var(--tx);background:var(--bg-card)">
+            <option value="">현장 선택</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>승강기 호기</label>
+          <select id="dk-elevator" style="padding:10px 14px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:14px;font-family:inherit;color:var(--tx);background:var(--bg-card)">
+            <option value="">호기 선택</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>신고건 연결 (선택)</label>
+          <select id="dk-report" onchange="onDocketReportChange()" style="padding:10px 14px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:14px;font-family:inherit;color:var(--tx);background:var(--bg-card)">
+            <option value="">연결 안함</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 시간 정보 -->
+      <div style="background:var(--bg-high);border-radius:10px;padding:14px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;color:var(--tx-3);margin-bottom:12px">⏱ 시간 정보</div>
+        <div style="display:grid;gap:14px">
+          <div class="form-group">
+            <label style="display:flex;align-items:center;justify-content:space-between">고장발생일시 <button type="button" class="report-timenow-btn" onclick="setDocketTimeNow('dk-occ')" style="font-size:11px;padding:3px 8px">🕐 현재</button></label>
+            <div class="rdm-datetime-row" style="display:flex;gap:6px;align-items:center">
+              <div class="rdm-date-wrap" style="position:relative;display:flex;flex-shrink:0">
+                <input type="text" id="dk-occ-date" placeholder="2026-04-29" maxlength="10" oninput="autoFormatDate(this)" style="padding:8px 10px;border:1.5px solid var(--br-mid);border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:130px;color:var(--tx);background:var(--bg-card)" />
+                <div style="position:relative"><input type="date" id="dk-occ-date-picker" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" oninput="document.getElementById('dk-occ-date').value=this.value" /><button type="button" style="padding:8px 10px;border:1.5px solid var(--br-mid);border-left:none;border-radius:0 8px 8px 0;background:var(--bg-card);color:var(--tx-3);cursor:pointer;font-size:14px">📅</button></div>
+              </div>
+              <input type="time" id="dk-occ-time" style="display:none" />
+              <button type="button" class="csel-btn" onclick="openCsel('dk-occ-hour')" style="padding:8px 8px;font-size:13px;background:var(--bg-card);color:var(--tx);border:1.5px solid var(--br-mid);min-width:60px"><span>00시</span></button>
+              <select id="dk-occ-hour" onchange="syncTimeSelect('dk-occ-time','dk-occ-hour','dk-occ-min');refreshCselBtn('dk-occ-hour')" style="display:none"></select>
+              <span style="color:var(--tx-3)">:</span>
+              <button type="button" class="csel-btn" onclick="openCsel('dk-occ-min')" style="padding:8px 8px;font-size:13px;background:var(--bg-card);color:var(--tx);border:1.5px solid var(--br-mid);min-width:60px"><span>00분</span></button>
+              <select id="dk-occ-min" onchange="syncTimeSelect('dk-occ-time','dk-occ-hour','dk-occ-min');refreshCselBtn('dk-occ-min')" style="display:none"></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;justify-content:space-between">접수일시 <button type="button" class="report-timenow-btn" onclick="setDocketTimeNow('dk-recv')" style="font-size:11px;padding:3px 8px">🕐 현재</button></label>
+            <div class="rdm-datetime-row" style="display:flex;gap:6px;align-items:center">
+              <div class="rdm-date-wrap" style="position:relative;display:flex;flex-shrink:0">
+                <input type="text" id="dk-recv-date" placeholder="2026-04-29" maxlength="10" oninput="autoFormatDate(this)" style="padding:8px 10px;border:1.5px solid var(--br-mid);border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:130px;color:var(--tx);background:var(--bg-card)" />
+                <div style="position:relative"><input type="date" id="dk-recv-date-picker" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" oninput="document.getElementById('dk-recv-date').value=this.value" /><button type="button" style="padding:8px 10px;border:1.5px solid var(--br-mid);border-left:none;border-radius:0 8px 8px 0;background:var(--bg-card);color:var(--tx-3);cursor:pointer;font-size:14px">📅</button></div>
+              </div>
+              <input type="time" id="dk-recv-time" style="display:none" />
+              <button type="button" class="csel-btn" onclick="openCsel('dk-recv-hour')" style="padding:8px 8px;font-size:13px;background:var(--bg-card);color:var(--tx);border:1.5px solid var(--br-mid);min-width:60px"><span>00시</span></button>
+              <select id="dk-recv-hour" onchange="syncTimeSelect('dk-recv-time','dk-recv-hour','dk-recv-min');refreshCselBtn('dk-recv-hour')" style="display:none"></select>
+              <span style="color:var(--tx-3)">:</span>
+              <button type="button" class="csel-btn" onclick="openCsel('dk-recv-min')" style="padding:8px 8px;font-size:13px;background:var(--bg-card);color:var(--tx);border:1.5px solid var(--br-mid);min-width:60px"><span>00분</span></button>
+              <select id="dk-recv-min" onchange="syncTimeSelect('dk-recv-time','dk-recv-hour','dk-recv-min');refreshCselBtn('dk-recv-min')" style="display:none"></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;justify-content:space-between">도착일시 <button type="button" class="report-timenow-btn" onclick="setDocketTimeNow('dk-arr')" style="font-size:11px;padding:3px 8px">🕐 현재</button></label>
+            <div class="rdm-datetime-row" style="display:flex;gap:6px;align-items:center">
+              <div class="rdm-date-wrap" style="position:relative;display:flex;flex-shrink:0">
+                <input type="text" id="dk-arr-date" placeholder="2026-04-29" maxlength="10" oninput="autoFormatDate(this)" style="padding:8px 10px;border:1.5px solid var(--br-mid);border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:130px;color:var(--tx);background:var(--bg-card)" />
+                <div style="position:relative"><input type="date" id="dk-arr-date-picker" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" oninput="document.getElementById('dk-arr-date').value=this.value" /><button type="button" style="padding:8px 10px;border:1.5px solid var(--br-mid);border-left:none;border-radius:0 8px 8px 0;background:var(--bg-card);color:var(--tx-3);cursor:pointer;font-size:14px">📅</button></div>
+              </div>
+              <input type="time" id="dk-arr-time" style="display:none" />
+              <button type="button" class="csel-btn" onclick="openCsel('dk-arr-hour')" style="padding:8px 8px;font-size:13px;background:var(--bg-card);color:var(--tx);border:1.5px solid var(--br-mid);min-width:60px"><span>00시</span></button>
+              <select id="dk-arr-hour" onchange="syncTimeSelect('dk-arr-time','dk-arr-hour','dk-arr-min');refreshCselBtn('dk-arr-hour')" style="display:none"></select>
+              <span style="color:var(--tx-3)">:</span>
+              <button type="button" class="csel-btn" onclick="openCsel('dk-arr-min')" style="padding:8px 8px;font-size:13px;background:var(--bg-card);color:var(--tx);border:1.5px solid var(--br-mid);min-width:60px"><span>00분</span></button>
+              <select id="dk-arr-min" onchange="syncTimeSelect('dk-arr-time','dk-arr-hour','dk-arr-min');refreshCselBtn('dk-arr-min')" style="display:none"></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;justify-content:space-between">구출일시 (갇힘시) <button type="button" class="report-timenow-btn" onclick="setDocketTimeNow('dk-resc')" style="font-size:11px;padding:3px 8px">🕐 현재</button></label>
+            <div class="rdm-datetime-row" style="display:flex;gap:6px;align-items:center">
+              <div class="rdm-date-wrap" style="position:relative;display:flex;flex-shrink:0">
+                <input type="text" id="dk-resc-date" placeholder="2026-04-29" maxlength="10" oninput="autoFormatDate(this)" style="padding:8px 10px;border:1.5px solid var(--br-mid);border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:130px;color:var(--tx);background:var(--bg-card)" />
+                <div style="position:relative"><input type="date" id="dk-resc-date-picker" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" oninput="document.getElementById('dk-resc-date').value=this.value" /><button type="button" style="padding:8px 10px;border:1.5px solid var(--br-mid);border-left:none;border-radius:0 8px 8px 0;background:var(--bg-card);color:var(--tx-3);cursor:pointer;font-size:14px">📅</button></div>
+              </div>
+              <input type="time" id="dk-resc-time" style="display:none" />
+              <button type="button" class="csel-btn" onclick="openCsel('dk-resc-hour')" style="padding:8px 8px;font-size:13px;background:var(--bg-card);color:var(--tx);border:1.5px solid var(--br-mid);min-width:60px"><span>00시</span></button>
+              <select id="dk-resc-hour" onchange="syncTimeSelect('dk-resc-time','dk-resc-hour','dk-resc-min');refreshCselBtn('dk-resc-hour')" style="display:none"></select>
+              <span style="color:var(--tx-3)">:</span>
+              <button type="button" class="csel-btn" onclick="openCsel('dk-resc-min')" style="padding:8px 8px;font-size:13px;background:var(--bg-card);color:var(--tx);border:1.5px solid var(--br-mid);min-width:60px"><span>00분</span></button>
+              <select id="dk-resc-min" onchange="syncTimeSelect('dk-resc-time','dk-resc-hour','dk-resc-min');refreshCselBtn('dk-resc-min')" style="display:none"></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;justify-content:space-between">수리완료일시 <button type="button" class="report-timenow-btn" onclick="setDocketTimeNow('dk-comp')" style="font-size:11px;padding:3px 8px">🕐 현재</button></label>
+            <div class="rdm-datetime-row" style="display:flex;gap:6px;align-items:center">
+              <div class="rdm-date-wrap" style="position:relative;display:flex;flex-shrink:0">
+                <input type="text" id="dk-comp-date" placeholder="2026-04-29" maxlength="10" oninput="autoFormatDate(this)" style="padding:8px 10px;border:1.5px solid var(--br-mid);border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:130px;color:var(--tx);background:var(--bg-card)" />
+                <div style="position:relative"><input type="date" id="dk-comp-date-picker" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" oninput="document.getElementById('dk-comp-date').value=this.value" /><button type="button" style="padding:8px 10px;border:1.5px solid var(--br-mid);border-left:none;border-radius:0 8px 8px 0;background:var(--bg-card);color:var(--tx-3);cursor:pointer;font-size:14px">📅</button></div>
+              </div>
+              <input type="time" id="dk-comp-time" style="display:none" />
+              <button type="button" class="csel-btn" onclick="openCsel('dk-comp-hour')" style="padding:8px 8px;font-size:13px;background:var(--bg-card);color:var(--tx);border:1.5px solid var(--br-mid);min-width:60px"><span>00시</span></button>
+              <select id="dk-comp-hour" onchange="syncTimeSelect('dk-comp-time','dk-comp-hour','dk-comp-min');refreshCselBtn('dk-comp-hour')" style="display:none"></select>
+              <span style="color:var(--tx-3)">:</span>
+              <button type="button" class="csel-btn" onclick="openCsel('dk-comp-min')" style="padding:8px 8px;font-size:13px;background:var(--bg-card);color:var(--tx);border:1.5px solid var(--br-mid);min-width:60px"><span>00분</span></button>
+              <select id="dk-comp-min" onchange="syncTimeSelect('dk-comp-time','dk-comp-hour','dk-comp-min');refreshCselBtn('dk-comp-min')" style="display:none"></select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 고장 내용 -->
+      <div style="display:grid;gap:12px;margin-bottom:16px">
+        <div class="form-group">
+          <label>고장부위</label>
+          <input id="dk-fault-area" type="text" placeholder="예: 도어 장치, 제어반..." style="padding:10px 14px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:14px;font-family:inherit;color:var(--tx);background:var(--bg-card)" />
+        </div>
+        <div class="form-group">
+          <label>고장원인</label>
+          <textarea id="dk-fault-cause" rows="2" placeholder="고장 원인 입력..." style="padding:10px 14px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:14px;font-family:inherit;color:var(--tx);background:var(--bg-card);resize:vertical"></textarea>
+        </div>
+        <div class="form-group">
+          <label>수리내용</label>
+          <textarea id="dk-repair" rows="3" placeholder="수리 내용 입력..." style="padding:10px 14px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:14px;font-family:inherit;color:var(--tx);background:var(--bg-card);resize:vertical"></textarea>
+        </div>
+      </div>
+
+      <!-- 체크항목 -->
+      <div style="display:flex;gap:20px;margin-bottom:16px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx)">
+          <input type="checkbox" id="dk-trapped" style="width:16px;height:16px;cursor:pointer"> 탑승객 갇힘 발생
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx)">
+          <input type="checkbox" id="dk-normal-on-arrival" style="width:16px;height:16px;cursor:pointer"> 도착 시 정상 운행
+        </label>
+      </div>
+
+      <!-- 부품 정보 -->
+      <div style="background:var(--bg-high);border-radius:10px;padding:14px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:700;color:var(--tx-3)">🔩 사용 부품</span>
+          <div style="display:flex;align-items:center;gap:12px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--tx);cursor:pointer">
+              <input type="checkbox" id="dk-parts-free" checked style="width:14px;height:14px;cursor:pointer"> 무상
+            </label>
+            <button onclick="addDocketPart()" style="padding:5px 12px;background:var(--btn-bg);color:var(--btn-tx);border:none;border-radius:6px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">+ 추가</button>
+          </div>
+        </div>
+        <div id="dk-parts-rows" style="display:grid;gap:8px">
+          <!-- 부품 행들이 여기 동적으로 추가됨 -->
+        </div>
+        <div id="dk-parts-empty" style="text-align:center;color:var(--tx-4);font-size:13px;padding:12px">사용 부품 없음</div>
+      </div>
+
+      <!-- 담당 기사 -->
+      <div class="form-group" style="margin-bottom:16px">
+        <label>담당 기사</label>
+        <select id="dk-inspector" style="padding:10px 14px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:14px;font-family:inherit;color:var(--tx);background:var(--bg-card)">
+          <option value="">선택</option>
+        </select>
+      </div>
+
+      <!-- 고객 서명 -->
+      <div style="background:var(--bg-high);border-radius:10px;padding:14px;margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:13px;font-weight:700;color:var(--tx-3)">✍️ 고객 서명</span>
+          <button onclick="clearDocketSignature()" style="padding:4px 10px;background:none;border:1px solid var(--br-mid);border-radius:6px;font-size:12px;color:var(--tx-3);cursor:pointer">지우기</button>
+        </div>
+        <canvas id="dk-sig-canvas" width="600" height="150" style="width:100%;border:1.5px solid var(--br-mid);border-radius:8px;background:#ffffff;touch-action:none;cursor:crosshair"></canvas>
+      </div>
+
+      <!-- 저장/PDF 버튼 -->
+      <div style="display:flex;gap:10px">
+        <button id="dk-save-btn" onclick="saveDocket()" style="flex:1;padding:13px;background:var(--btn-bg);color:var(--btn-tx);border:none;border-radius:8px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">💾 저장</button>
+        <button id="dk-pdf-btn" onclick="saveDocket(true)" style="flex:1;padding:13px;background:#2b6cb0;color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">📄 저장 + PDF</button>
       </div>
     </div>
   </div>
@@ -1828,7 +2036,7 @@
   updateClock(); setInterval(updateClock, 1000);
 
   /* ── NAV MENU (사이드 드로어) ── */
-  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', gongsa:'📸 공사팀 사진철', holiday:'📅 휴일 관리', 'insp-calendar':'🗓️ 검사일정' };
+  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', gongsa:'📸 공사팀 사진철', holiday:'📅 휴일 관리', 'insp-calendar':'🗓️ 검사일정', docket:'📝 서비스다켓' };
   function toggleNavMenu() {
     if (!currentUser) return;
     document.getElementById('side-drawer').classList.toggle('open');
@@ -1971,6 +2179,7 @@
     if (tab === 'jungong') initJungong();
     if (tab === 'gongsa') initGongsa();
     if (tab === 'insp-calendar') loadInspCalendar();
+    if (tab === 'docket') initDocketTab();
     const lbl = document.getElementById('current-tab-label');
     if (lbl) lbl.textContent = TAB_LABELS[tab] || '';
   }
@@ -2076,7 +2285,7 @@
     const idx = reports.findIndex(x => x.id === id);
     if (idx !== -1) reports[idx] = r;
     currentReportId = id;
-    const canEdit = currentRole === '관리자' || currentRole === '마스터' || (currentRole === '직원' && r.status !== '완료');
+    const canEdit = r.status !== '완료';
 
     document.getElementById('rdm-title').textContent = r.building + ' · ' + r.elevator;
 
@@ -2107,7 +2316,7 @@
     if (canEdit) {
       editSec.style.display = '';
       saveBtn.style.display = '';
-      delBtn.style.display = currentRole === '관리자' || currentRole === '마스터' ? '' : 'none';
+      delBtn.style.display = currentRole === '마스터' ? '' : 'none';
 
       let roSec = document.getElementById('rdm-readonly-section');
       if (!roSec) { roSec = document.createElement('div'); roSec.id = 'rdm-readonly-section'; editSec.parentNode.insertBefore(roSec, editSec); }
@@ -2118,7 +2327,7 @@
       } else { roSec.style.display = 'none'; }
 
       document.getElementById('rdm-status').value = r.status || '접수중';
-      document.getElementById('rdm-status').disabled = currentRole !== '관리자' && currentRole !== '마스터';
+      document.getElementById('rdm-status').disabled = true;
       const { data: handlerAccs } = await db.from('accounts').select('username').in('role', ['직원', '마스터']).order('username');
       const handlerSel = document.getElementById('rdm-handler');
       handlerSel.innerHTML = (handlerAccs || []).map(a => `<option value="${escHtml(a.username)}">${escHtml(a.username)}</option>`).join('');
@@ -2649,6 +2858,7 @@
     document.getElementById('tab-duty-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-jungong-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-gongsa-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
+    document.getElementById('tab-docket-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     // 홈 그리드 아이콘 표시
     const giDuty = document.getElementById('home-gi-duty');
     const giMgmt = document.getElementById('home-gi-mgmt');
@@ -2656,6 +2866,8 @@
     if (giDuty) giDuty.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     if (giMgmt) giMgmt.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     if (giJungong) giJungong.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
+    const giDocket = document.getElementById('home-gi-docket');
+    if (giDocket) giDocket.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     const giInspCal = document.getElementById('home-gi-insp-calendar');
     if (giInspCal) giInspCal.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('sub-tab-done-btn').style.display = 'inline-block';
@@ -2677,7 +2889,7 @@
     currentRole = null; currentSite = null; currentUser = null;
     localStorage.removeItem('daesol_autologin');
     db.auth.signOut();
-    ['tab-sites-btn','tab-mgmt-btn','tab-duty-btn','tab-jungong-btn','tab-gongsa-btn'].forEach(id => {
+    ['tab-sites-btn','tab-mgmt-btn','tab-duty-btn','tab-jungong-btn','tab-gongsa-btn','tab-docket-btn'].forEach(id => {
       const el = document.getElementById(id); if (el) el.style.display = 'none';
     });
     updateSiteBadge();
@@ -5726,7 +5938,12 @@
       { h: 'f-report-hour', m: 'f-report-min' },
       { h: 'rdm-hour',      m: 'rdm-min'      },
       { h: 'rdm-arr-hour',  m: 'rdm-arr-min'  },
-      { h: 'rdm-rescue-hour', m: 'rdm-rescue-min' }
+      { h: 'rdm-rescue-hour', m: 'rdm-rescue-min' },
+      { h: 'dk-occ-hour',  m: 'dk-occ-min'  },
+      { h: 'dk-recv-hour', m: 'dk-recv-min' },
+      { h: 'dk-arr-hour',  m: 'dk-arr-min'  },
+      { h: 'dk-resc-hour', m: 'dk-resc-min' },
+      { h: 'dk-comp-hour', m: 'dk-comp-min' },
     ];
     pairs.forEach(({ h, m }) => {
       const hEl = document.getElementById(h);
@@ -6358,6 +6575,497 @@
       _pdfGenerating = false;
     }
   }
+
+  /* ═══════════════════════════════════════════
+     서비스다켓 (Service Docket)
+  ═══════════════════════════════════════════ */
+  let _docketCurrentId = null;
+  let _docketType = 'TKE';
+  let _docketSigDrawing = false;
+  let _docketSigCtx = null;
+  let _docketManagedSites = [];
+  let _docketStaffList = [];
+
+  async function initDocketTab() {
+    await Promise.all([loadDocketSites(), loadDocketStaff()]);
+    renderDocketList();
+  }
+
+  async function loadDocketSites() {
+    const { data } = await db.from('managed_sites').select('site_name, elevator_count').order('site_name');
+    _docketManagedSites = data || [];
+  }
+
+  async function loadDocketStaff() {
+    const { data } = await db.from('accounts').select('username, position').in('role', ['직원', '관리자', '마스터']).order('username');
+    _docketStaffList = data || [];
+  }
+
+  async function renderDocketList() {
+    const listEl = document.getElementById('docket-list');
+    if (!listEl) return;
+    listEl.innerHTML = '<div style="text-align:center;color:var(--tx-4);padding:24px">불러오는 중...</div>';
+
+    const typeFilter = document.getElementById('docket-filter-type')?.value || '';
+    const siteFilter = (document.getElementById('docket-filter-site')?.value || '').trim();
+
+    let q = db.from('service_dockets').select('*').order('created_at', { ascending: false }).limit(100);
+    if (typeFilter) q = q.eq('type', typeFilter);
+    if (siteFilter) q = q.ilike('site_name', `%${siteFilter}%`);
+
+    const { data, error } = await q;
+    if (error) { listEl.innerHTML = '<div style="color:#e53e3e;padding:16px">목록 불러오기 실패</div>'; return; }
+    if (!data?.length) { listEl.innerHTML = '<div style="text-align:center;color:var(--tx-4);padding:40px">등록된 서비스다켓이 없습니다.</div>'; return; }
+
+    listEl.innerHTML = data.map(d => {
+      const dateStr = d.completed_at ? new Date(d.completed_at).toLocaleDateString('ko-KR') : (d.created_at ? new Date(d.created_at).toLocaleDateString('ko-KR') : '-');
+      const typeBadge = d.type === 'TKE' ? 'background:#2b6cb0;color:#fff' : 'background:#276749;color:#fff';
+      return `<div onclick="openDocketModal('${d.id}')" style="background:var(--bg-card);border:1px solid var(--br);border-radius:12px;padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--br-hi)'" onmouseout="this.style.borderColor='var(--br)'">
+        <span style="padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;${typeBadge};white-space:nowrap">${d.type}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:700;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.site_name || '현장 미입력'} ${d.elevator ? `· ${d.elevator}` : ''}</div>
+          <div style="font-size:12px;color:var(--tx-3);margin-top:3px">${dateStr} · ${d.fault_area || '고장부위 미입력'} · 담당: ${d.inspector || '-'}</div>
+        </div>
+        <span style="font-size:20px">${d.customer_signature ? '✅' : '⬜'}</span>
+      </div>`;
+    }).join('');
+  }
+
+  async function openDocketModal(id) {
+    _docketCurrentId = id;
+    document.getElementById('docket-modal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+
+    // 담당자 로드
+    const { data: staff } = await db.from('accounts').select('username, position').in('role', ['직원', '관리자', '마스터']).order('username');
+    _docketStaffList = staff || [];
+
+    // 현장 드롭다운: 이미 로드된 SITES 배열 사용
+    if (!SITES.length) await loadSiteNames();
+    const siteEl = document.getElementById('dk-site');
+    siteEl.innerHTML = '<option value="">현장 선택</option>' + SITES.map(s => `<option value="${s}">${s}</option>`).join('');
+
+    const inspEl = document.getElementById('dk-inspector');
+    inspEl.innerHTML = '<option value="">선택</option>' + _docketStaffList.map(s => {
+      const label = s.position ? `${s.position} ${s.username}` : s.username;
+      return `<option value="${s.username}">${label}</option>`;
+    }).join('');
+
+    // 서명 캔버스 초기화
+    initDocketCanvas();
+
+    if (!id) {
+      // 새 다켓
+      document.getElementById('docket-modal-title').textContent = '서비스다켓 작성';
+      setDocketType('TKE');
+      ['dk-occ','dk-recv','dk-arr','dk-resc','dk-comp'].forEach(p => {
+        ['date','hour','min','time'].forEach(s => { const el = document.getElementById(`${p}-${s}`); if (el) el.value = ''; });
+        const btn = document.querySelector(`#dk-${p}-hour`)?.closest('.rdm-datetime-row')?.querySelector('.csel-btn span');
+      });
+      ['dk-occ-hour','dk-recv-hour','dk-arr-hour','dk-resc-hour','dk-comp-hour',
+       'dk-occ-min','dk-recv-min','dk-arr-min','dk-resc-min','dk-comp-min'].forEach(id => refreshCselBtn(id));
+      ['dk-fault-area','dk-repair'].forEach(i => { const el = document.getElementById(i); if (el) el.value = ''; });
+      const fc = document.getElementById('dk-fault-cause'); if (fc) fc.value = '';
+      document.getElementById('dk-trapped').checked = false;
+      document.getElementById('dk-normal-on-arrival').checked = false;
+      document.getElementById('dk-parts-free').checked = true;
+      document.getElementById('dk-parts-rows').innerHTML = '';
+      document.getElementById('dk-parts-empty').style.display = '';
+      clearDocketSignature();
+      // 신고건 드롭다운 채우기
+      await loadRecentReportsForDocket();
+      // 기본 담당자: 현재 로그인 사용자
+      if (currentUser) {
+        const opt = [...inspEl.options].find(o => o.value === currentUser.username);
+        if (opt) inspEl.value = currentUser.username;
+      }
+    } else {
+      // 기존 다켓 불러오기
+      document.getElementById('docket-modal-title').textContent = '서비스다켓 수정';
+      const { data: d } = await db.from('service_dockets').select('*').eq('id', id).single();
+      if (!d) { alert('불러오기 실패'); closeDocketModal(); return; }
+      setDocketType(d.type || 'TKE');
+      siteEl.value = d.site_name || '';
+      await onDocketSiteChange(d.elevator);
+      document.getElementById('dk-elevator').value = d.elevator || '';
+      document.getElementById('dk-fault-area').value = d.fault_area || '';
+      document.getElementById('dk-fault-cause').value = d.fault_cause || '';
+      document.getElementById('dk-repair').value = d.repair_content || '';
+      document.getElementById('dk-trapped').checked = !!d.passenger_trapped;
+      document.getElementById('dk-normal-on-arrival').checked = !!d.normal_on_arrival;
+      document.getElementById('dk-parts-free').checked = d.parts_free !== false;
+      document.getElementById('dk-inspector').value = d.inspector || '';
+      setDocketDateTime('dk-occ', d.occurred_at);
+      setDocketDateTime('dk-recv', d.received_at);
+      setDocketDateTime('dk-arr', d.arrived_at);
+      setDocketDateTime('dk-resc', d.rescued_at);
+      setDocketDateTime('dk-comp', d.completed_at);
+      // 부품
+      const parts = Array.isArray(d.parts) ? d.parts : [];
+      document.getElementById('dk-parts-rows').innerHTML = '';
+      parts.forEach(p => addDocketPart(p));
+      document.getElementById('dk-parts-empty').style.display = parts.length ? 'none' : '';
+      // 서명 복원
+      if (d.customer_signature) {
+        const canvas = document.getElementById('dk-sig-canvas');
+        const img = new Image();
+        img.onload = () => { _docketSigCtx.drawImage(img, 0, 0); };
+        img.src = d.customer_signature;
+      }
+      await loadRecentReportsForDocket(d.report_id);
+    }
+  }
+
+  function setDocketDateTime(prefix, isoStr) {
+    if (!isoStr) return;
+    const d = new Date(isoStr);
+    const dateStr = d.toLocaleDateString('sv');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    const dateEl = document.getElementById(`${prefix}-date`);
+    const hourEl = document.getElementById(`${prefix}-hour`);
+    const minEl  = document.getElementById(`${prefix}-min`);
+    const timeEl = document.getElementById(`${prefix}-time`);
+    if (dateEl) dateEl.value = dateStr;
+    if (hourEl) { hourEl.value = hh; refreshCselBtn(`${prefix}-hour`); }
+    if (minEl)  { minEl.value  = mm; refreshCselBtn(`${prefix}-min`);  }
+    if (timeEl) timeEl.value = `${hh}:${mm}`;
+  }
+
+  function setDocketTimeNow(prefix) {
+    const now = new Date();
+    setDocketDateTime(prefix, now.toISOString());
+  }
+
+  async function loadRecentReportsForDocket(selectedId) {
+    const reportEl = document.getElementById('dk-report');
+    const { data } = await db.from('reports').select('id, building, elevator, created_at').in('status', ['완료', '처리중']).order('created_at', { ascending: false }).limit(50);
+    reportEl.innerHTML = '<option value="">연결 안함</option>' + (data || []).map(r => {
+      const d = new Date(r.created_at).toLocaleDateString('ko-KR');
+      return `<option value="${r.id}">${d} · ${r.building} ${r.elevator || ''}</option>`;
+    }).join('');
+    if (selectedId) reportEl.value = selectedId;
+  }
+
+  async function onDocketReportChange() {
+    const reportId = document.getElementById('dk-report').value;
+    if (!reportId) return;
+    const { data: r } = await db.from('reports').select('building, elevator, created_at, completed_at, completion_handler').eq('id', reportId).single();
+    if (!r) return;
+    document.getElementById('dk-site').value = r.building || '';
+    await onDocketSiteChange(r.elevator);
+    document.getElementById('dk-elevator').value = r.elevator || '';
+    if (r.created_at) setDocketDateTime('dk-occ', r.created_at);
+    if (r.completion_handler) document.getElementById('dk-inspector').value = r.completion_handler;
+  }
+
+  async function onDocketSiteChange(presetElevator) {
+    const siteName = document.getElementById('dk-site').value;
+    const elevEl = document.getElementById('dk-elevator');
+    elevEl.innerHTML = '<option value="">호기 선택</option>';
+    if (!siteName) return;
+    const { data: site } = await db.from('managed_sites').select('id').eq('site_name', siteName).single();
+    if (!site) return;
+    const { data: elevs } = await db.from('site_elevators').select('unit_name').eq('site_id', site.id).order('id');
+    (elevs || []).forEach(e => {
+      if (e.unit_name) elevEl.innerHTML += `<option value="${e.unit_name}">${e.unit_name}</option>`;
+    });
+    if (presetElevator) elevEl.value = presetElevator;
+  }
+
+  function setDocketType(type) {
+    _docketType = type;
+    const btnTke = document.getElementById('dk-type-tke');
+    const btnDs = document.getElementById('dk-type-daesol');
+    if (type === 'TKE') {
+      btnTke.style.background = '#2b6cb0'; btnTke.style.color = '#fff'; btnTke.style.borderColor = '#2b6cb0';
+      btnDs.style.background = 'var(--bg-card)'; btnDs.style.color = 'var(--tx-3)'; btnDs.style.borderColor = 'var(--br-mid)';
+    } else {
+      btnDs.style.background = '#276749'; btnDs.style.color = '#fff'; btnDs.style.borderColor = '#276749';
+      btnTke.style.background = 'var(--bg-card)'; btnTke.style.color = 'var(--tx-3)'; btnTke.style.borderColor = 'var(--br-mid)';
+    }
+  }
+
+  function addDocketPart(part) {
+    const rows = document.getElementById('dk-parts-rows');
+    document.getElementById('dk-parts-empty').style.display = 'none';
+    const idx = rows.children.length;
+    const div = document.createElement('div');
+    div.style.cssText = 'display:grid;grid-template-columns:1fr 80px 80px 32px;gap:6px;align-items:center';
+    div.innerHTML = `
+      <input type="text" placeholder="부품명" value="${part?.name || ''}" style="padding:7px 10px;border:1.5px solid var(--br-mid);border-radius:7px;font-size:13px;font-family:inherit;color:var(--tx);background:var(--bg-card)" data-dk-part="name" />
+      <input type="number" placeholder="수량" value="${part?.qty || ''}" min="1" style="padding:7px 10px;border:1.5px solid var(--br-mid);border-radius:7px;font-size:13px;font-family:inherit;color:var(--tx);background:var(--bg-card);text-align:right" data-dk-part="qty" />
+      <input type="number" placeholder="단가" value="${part?.price || ''}" min="0" style="padding:7px 10px;border:1.5px solid var(--br-mid);border-radius:7px;font-size:13px;font-family:inherit;color:var(--tx);background:var(--bg-card);text-align:right" data-dk-part="price" />
+      <button onclick="this.parentElement.remove();if(!document.getElementById('dk-parts-rows').children.length)document.getElementById('dk-parts-empty').style.display=''" style="background:none;border:1px solid var(--br-mid);border-radius:6px;font-size:14px;color:var(--tx-3);cursor:pointer;height:32px;width:32px">✕</button>
+    `;
+    rows.appendChild(div);
+  }
+
+  function getDocketParts() {
+    const rows = document.getElementById('dk-parts-rows');
+    return [...rows.children].map(div => ({
+      name: div.querySelector('[data-dk-part="name"]')?.value || '',
+      qty: parseInt(div.querySelector('[data-dk-part="qty"]')?.value) || 0,
+      price: parseInt(div.querySelector('[data-dk-part="price"]')?.value) || 0,
+    })).filter(p => p.name);
+  }
+
+  /* ── 서명 캔버스 ── */
+  function initDocketCanvas() {
+    const canvas = document.getElementById('dk-sig-canvas');
+    _docketSigCtx = canvas.getContext('2d');
+    _docketSigCtx.clearRect(0, 0, canvas.width, canvas.height);
+    _docketSigCtx.fillStyle = '#ffffff';
+    _docketSigCtx.fillRect(0, 0, canvas.width, canvas.height);
+    _docketSigCtx.strokeStyle = '#000';
+    _docketSigCtx.lineWidth = 2;
+    _docketSigCtx.lineCap = 'round';
+    _docketSigCtx.lineJoin = 'round';
+
+    const getPos = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const src = e.touches ? e.touches[0] : e;
+      return { x: (src.clientX - rect.left) * scaleX, y: (src.clientY - rect.top) * scaleY };
+    };
+    canvas.onmousedown = canvas.ontouchstart = (e) => {
+      e.preventDefault();
+      _docketSigDrawing = true;
+      const p = getPos(e);
+      _docketSigCtx.beginPath();
+      _docketSigCtx.moveTo(p.x, p.y);
+    };
+    canvas.onmousemove = canvas.ontouchmove = (e) => {
+      e.preventDefault();
+      if (!_docketSigDrawing) return;
+      const p = getPos(e);
+      _docketSigCtx.lineTo(p.x, p.y);
+      _docketSigCtx.stroke();
+    };
+    canvas.onmouseup = canvas.ontouchend = () => { _docketSigDrawing = false; };
+    canvas.onmouseleave = () => { _docketSigDrawing = false; };
+  }
+
+  function clearDocketSignature() {
+    const canvas = document.getElementById('dk-sig-canvas');
+    if (!_docketSigCtx) return;
+    _docketSigCtx.clearRect(0, 0, canvas.width, canvas.height);
+    _docketSigCtx.fillStyle = '#ffffff';
+    _docketSigCtx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function isCanvasBlank() {
+    const canvas = document.getElementById('dk-sig-canvas');
+    const ctx = canvas.getContext('2d');
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i] < 250 || data[i+1] < 250 || data[i+2] < 250) return false;
+    }
+    return true;
+  }
+
+  async function saveDocket(withPDF = false) {
+    const site = document.getElementById('dk-site').value;
+    if (!site) { alert('현장을 선택해주세요.'); return; }
+
+    const canvas = document.getElementById('dk-sig-canvas');
+    const sigData = isCanvasBlank() ? null : canvas.toDataURL('image/png');
+
+    const toISO = (prefix) => {
+      const date = document.getElementById(`${prefix}-date`)?.value;
+      const time = document.getElementById(`${prefix}-time`)?.value || '00:00';
+      return date && date.length === 10 ? new Date(`${date}T${time}`).toISOString() : null;
+    };
+
+    const payload = {
+      type: _docketType,
+      site_name: site,
+      elevator: document.getElementById('dk-elevator').value || null,
+      report_id: document.getElementById('dk-report').value || null,
+      fault_area: document.getElementById('dk-fault-area').value || null,
+      fault_cause: document.getElementById('dk-fault-cause').value || null,
+      repair_content: document.getElementById('dk-repair').value || null,
+      passenger_trapped: document.getElementById('dk-trapped').checked,
+      normal_on_arrival: document.getElementById('dk-normal-on-arrival').checked,
+      parts: getDocketParts(),
+      parts_free: document.getElementById('dk-parts-free').checked,
+      inspector: document.getElementById('dk-inspector').value || null,
+      customer_signature: sigData,
+      occurred_at: toISO('dk-occ'),
+      received_at: toISO('dk-recv'),
+      arrived_at: toISO('dk-arr'),
+      rescued_at: toISO('dk-resc'),
+      completed_at: toISO('dk-comp'),
+      created_by: currentUser?.username || null,
+    };
+
+    const saveBtn = document.getElementById('dk-save-btn');
+    const pdfBtn = document.getElementById('dk-pdf-btn');
+    [saveBtn, pdfBtn].forEach(b => { if (b) { b.disabled = true; b.style.opacity = '0.6'; } });
+
+    let docketId = _docketCurrentId;
+    let saveError;
+    if (docketId) {
+      const { error } = await db.from('service_dockets').update(payload).eq('id', docketId);
+      saveError = error;
+    } else {
+      const { data, error } = await db.from('service_dockets').insert(payload).select('id').single();
+      saveError = error;
+      if (data) docketId = data.id;
+    }
+
+    [saveBtn, pdfBtn].forEach(b => { if (b) { b.disabled = false; b.style.opacity = ''; } });
+
+    if (saveError) { alert('저장 실패: ' + saveError.message); return; }
+
+    if (withPDF) {
+      try {
+        await generateDocketPDF({ ...payload, id: docketId });
+      } catch(e) {
+        alert('PDF 생성 오류: ' + e.message);
+      }
+    } else {
+      showToast('서비스다켓이 저장되었습니다.');
+    }
+    closeDocketModal();
+    renderDocketList();
+  }
+
+  function closeDocketModal() {
+    document.getElementById('docket-modal').style.display = 'none';
+    document.body.style.overflow = '';
+    _docketCurrentId = null;
+  }
+
+  async function generateDocketPDF(d) {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const isTKE = (d.type === 'TKE');
+    const W = 210, H = 297;
+    const L = 14, R = W - 14;
+    let y = 16;
+
+    const fmtDT = (iso) => {
+      if (!iso) return '-';
+      const dt = new Date(iso);
+      return dt.toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    };
+
+    // 헤더
+    pdf.setFillColor(isTKE ? 33 : 39, isTKE ? 102 : 103, isTKE ? 176 : 73);
+    pdf.rect(0, 0, W, 24, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(18);
+    pdf.setFont(undefined, 'bold');
+    pdf.text(isTKE ? 'TK Elevator Korea — Service Docket' : '대솔이엘 서비스다켓', W / 2, 14, { align: 'center' });
+    pdf.setFontSize(9);
+    pdf.setFont(undefined, 'normal');
+    pdf.text(`작성일: ${new Date().toLocaleDateString('ko-KR')}`, R, 20, { align: 'right' });
+
+    pdf.setTextColor(30, 30, 30);
+    y = 32;
+
+    const row = (label, value, col2label, col2value) => {
+      pdf.setFontSize(9); pdf.setFont(undefined, 'bold'); pdf.setTextColor(80,80,80);
+      pdf.text(label, L, y);
+      pdf.setFont(undefined, 'normal'); pdf.setTextColor(30,30,30);
+      pdf.text(String(value || '-'), L + 28, y);
+      if (col2label) {
+        pdf.setFont(undefined, 'bold'); pdf.setTextColor(80,80,80);
+        pdf.text(col2label, W / 2 + 4, y);
+        pdf.setFont(undefined, 'normal'); pdf.setTextColor(30,30,30);
+        pdf.text(String(col2value || '-'), W / 2 + 32, y);
+      }
+      y += 8;
+    };
+
+    const section = (title) => {
+      y += 2;
+      pdf.setFillColor(230, 235, 245);
+      pdf.rect(L, y - 5, R - L, 7, 'F');
+      pdf.setFontSize(10); pdf.setFont(undefined, 'bold'); pdf.setTextColor(40,40,80);
+      pdf.text(title, L + 2, y); y += 6;
+      pdf.setTextColor(30,30,30);
+    };
+
+    section('기본 정보');
+    row('현장명', d.site_name, '호기', d.elevator);
+    row('담당기사', d.inspector);
+    row('탑승객 갇힘', d.passenger_trapped ? '예' : '아니오', '도착시 정상', d.normal_on_arrival ? '예' : '아니오');
+
+    section('시간 정보');
+    row('고장발생', fmtDT(d.occurred_at), '접수', fmtDT(d.received_at));
+    row('도착', fmtDT(d.arrived_at), '구출', d.rescued_at ? fmtDT(d.rescued_at) : '-');
+    row('완료', fmtDT(d.completed_at));
+
+    section('고장 내용');
+    row('고장부위', d.fault_area);
+    pdf.setFontSize(9); pdf.setFont(undefined, 'bold'); pdf.setTextColor(80,80,80);
+    pdf.text('고장원인', L, y);
+    pdf.setFont(undefined, 'normal'); pdf.setTextColor(30,30,30);
+    const causeLines = pdf.splitTextToSize(d.fault_cause || '-', R - L - 28);
+    pdf.text(causeLines, L + 28, y); y += causeLines.length * 5 + 3;
+
+    pdf.setFont(undefined, 'bold'); pdf.setTextColor(80,80,80);
+    pdf.text('수리내용', L, y);
+    pdf.setFont(undefined, 'normal'); pdf.setTextColor(30,30,30);
+    const repairLines = pdf.splitTextToSize(d.repair_content || '-', R - L - 28);
+    pdf.text(repairLines, L + 28, y); y += repairLines.length * 5 + 3;
+
+    // 부품 테이블
+    if (d.parts?.length) {
+      section(`사용 부품 (${d.parts_free ? '무상' : '유상'})`);
+      pdf.setFontSize(8.5); pdf.setFont(undefined, 'bold'); pdf.setTextColor(80,80,80);
+      pdf.text('품명', L, y); pdf.text('수량', L + 90, y); pdf.text('단가', L + 115, y); pdf.text('금액', L + 145, y);
+      y += 5;
+      pdf.setFont(undefined, 'normal'); pdf.setTextColor(30,30,30);
+      d.parts.forEach(p => {
+        const total = (p.qty || 0) * (p.price || 0);
+        pdf.text(p.name || '', L, y);
+        pdf.text(String(p.qty || ''), L + 90, y);
+        pdf.text(p.price ? p.price.toLocaleString() : '-', L + 115, y);
+        pdf.text(total ? total.toLocaleString() : '-', L + 145, y);
+        y += 6;
+      });
+      const totalAmount = d.parts.reduce((s, p) => s + (p.qty || 0) * (p.price || 0), 0);
+      if (totalAmount) {
+        pdf.setFont(undefined, 'bold');
+        pdf.text('합계', L, y);
+        pdf.text(totalAmount.toLocaleString(), L + 145, y);
+        y += 6;
+      }
+    }
+
+    // 서명
+    y += 6;
+    section('고객 서명');
+    if (d.customer_signature) {
+      try {
+        pdf.addImage(d.customer_signature, 'PNG', L, y, 80, 30);
+        y += 34;
+      } catch(e) {}
+    } else {
+      pdf.setFontSize(9); pdf.setTextColor(150,150,150);
+      pdf.text('(서명 없음)', L, y + 10);
+      y += 18;
+    }
+
+    // 하단 서명란
+    y = Math.max(y + 4, H - 38);
+    pdf.setDrawColor(180,180,180);
+    pdf.line(L, y, W/2 - 4, y);
+    pdf.line(W/2 + 4, y, R, y);
+    pdf.setFontSize(9); pdf.setTextColor(100,100,100);
+    pdf.text('고객 확인', (L + W/2 - 4) / 2, y + 5, { align: 'center' });
+    pdf.text('담당기사 확인', (W/2 + 4 + R) / 2, y + 5, { align: 'center' });
+
+    const filename = `서비스다켓_${d.site_name || '현장'}_${d.elevator || ''}_${new Date().toLocaleDateString('sv')}.pdf`;
+    pdf.save(filename);
+    showToast('PDF가 다운로드되었습니다.');
+  }
+
 </script>
 
 </body>
