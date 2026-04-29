@@ -3116,7 +3116,7 @@
         _tmapBtn +
         '<div class=report-left>' +
         repeatNotice +
-        '<div class=report-header>' +
+        '<div class=report-header' + (_isMob ? ' style="padding-right:36px"' : '') + '>' +
         '<span class=report-id>' + r.id + '</span>' +
         '<span class=report-title>' + escHtml(r.building||'') + ' · ' + escHtml(r.elevator||'') + '</span>' +
         '<span class=status-badge status-PLACEHOLDER>' + r.status + '</span>'.replace('status-PLACEHOLDER', 'status-'+r.status) +
@@ -6686,6 +6686,14 @@
     _docketStaffList = data || [];
   }
 
+  async function deleteDocket(id) {
+    if (!confirm('이 서비스다켓을 삭제하시겠습니까?\n삭제하면 복구할 수 없습니다.')) return;
+    const { error } = await db.from('service_dockets').delete().eq('id', id);
+    if (error) { showToast('❌ 삭제 실패: ' + error.message); return; }
+    showToast('삭제되었습니다.');
+    renderDocketList();
+  }
+
   async function renderDocketList() {
     const listEl = document.getElementById('docket-list');
     if (!listEl) return;
@@ -6705,6 +6713,7 @@
     listEl.innerHTML = data.map(d => {
       const dateStr = d.completed_at ? new Date(d.completed_at).toLocaleDateString('ko-KR') : (d.created_at ? new Date(d.created_at).toLocaleDateString('ko-KR') : '-');
       const typeBadge = d.type === 'TKE' ? 'background:#2b6cb0;color:#fff' : 'background:#276749;color:#fff';
+      const delBtn = currentRole === '마스터' ? `<button onclick="event.stopPropagation();deleteDocket('${d.id}')" style="padding:5px 12px;background:#e53e3e;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">삭제</button>` : '';
       return `<div onclick="openDocketModal('${d.id}')" style="background:var(--bg-card);border:1px solid var(--br);border-radius:12px;padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--br-hi)'" onmouseout="this.style.borderColor='var(--br)'">
         <span style="padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;${typeBadge};white-space:nowrap">${d.type}</span>
         <div style="flex:1;min-width:0">
@@ -6712,6 +6721,7 @@
           <div style="font-size:12px;color:var(--tx-3);margin-top:3px">${dateStr} · ${d.fault_area || '고장부위 미입력'} · 담당: ${d.inspector || '-'}</div>
         </div>
         <span style="font-size:20px">${d.customer_signature ? '✅' : '⬜'}</span>
+        ${delBtn}
       </div>`;
     }).join('');
   }
@@ -7251,7 +7261,7 @@
       const supply = (p.price||0) * (p.qty||0);
       const t = 498 + i * 29;
       partsHtml += field(59,  t,  69, 29, esc(p.dong_ho||''), 'justify-content:center')
-        + field(168, t, 195, 29, esc(p.name||''))
+        + field(143, t, 220, 29, esc(p.name||''))
         + field(363, t,  97, 29, esc(p.spec||''), 'justify-content:center')
         + field(460, t,  62, 29, String(p.qty||''), 'justify-content:center')
         + field(522, t, 113, 29, (p.price ? p.price.toLocaleString() : ''), 'justify-content:flex-end;padding-right:3px')
@@ -7262,9 +7272,9 @@
       + field(155, 119, 440, 25, esc(d.site_name))
       + field(601, 119, 147, 25, esc(d.inspector))
       + field(165, 196, 240, 25, fmtDate(d.occurred_at))
-      + field(358, 196,  65, 25, esc(d.elevator), 'justify-content:center')
-      + field(490, 196,  28, 25, fmtHour(d.received_at), 'justify-content:center')
-      + field(548, 196,  28, 25, fmtMin(d.received_at),  'justify-content:center')
+      + field(318, 196,  65, 25, esc(d.elevator), 'justify-content:center')
+      + field(510, 196,  28, 25, fmtHour(d.received_at), 'justify-content:center')
+      + field(528, 196,  28, 25, fmtMin(d.received_at),  'justify-content:center')
       + field(678, 196,  25, 25, fmtHour(d.arrived_at), 'justify-content:center')
       + field(710, 196,  25, 25, fmtMin(d.arrived_at),  'justify-content:center')
       + field(304, 222,  28, 29, chk(d.passenger_trapped===true),  'justify-content:center;font-size:13px')
@@ -7276,7 +7286,7 @@
       + field(155, 282, 590, 25, esc(d.fault_cause))
       + field(155, 311, 420, 25, esc(d.repair_content), 'align-items:flex-start;padding-top:3px;white-space:pre-wrap;font-size:9px')
       + field(675, 311,  25, 25, fmtHour(d.completed_at), 'justify-content:center')
-      + field(705, 311,  25, 25, fmtMin(d.completed_at),  'justify-content:center')
+      + field(735, 311,  25, 25, fmtMin(d.completed_at),  'justify-content:center')
       + field(256, 367,  28, 22, chk(d.parts_free===false), 'justify-content:center;font-size:13px')
       + field(311, 367,  28, 22, chk(d.parts_free===true),  'justify-content:center;font-size:13px')
       + partsHtml
@@ -7286,8 +7296,8 @@
       + field(242, 829,  69, 27, fmtYear(approvedAt), 'justify-content:center')
       + field(342, 829,  48, 27, fmtMonth(approvedAt), 'justify-content:center')
       + field(423, 829,  47, 27, fmtDay(approvedAt), 'justify-content:center')
-      + field(211, 863, 272, 26, esc(d.inspector))
-      + field(185, 896, 296, 24, sigImg, 'align-items:center')
+      + field(241, 828, 272, 26, esc(d.inspector))
+      + field(285, 848, 296, 24, sigImg, 'align-items:center')
       + field(225, 928, 257, 40, esc(d.customer_phone||''))
       + '</div>';
   }
