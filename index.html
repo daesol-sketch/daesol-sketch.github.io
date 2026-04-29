@@ -6953,143 +6953,191 @@
   }
 
   function buildTKEDocketHTML(d) {
-    const fmtDT = (iso) => {
-      if (!iso) return '';
+    const fmtTimeOnly = (iso) => {
+      if (!iso) return '--:--';
       const dt = new Date(iso);
-      return `${dt.getFullYear()}. ${String(dt.getMonth()+1).padStart(2,'0')}. ${String(dt.getDate()).padStart(2,'0')}  ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
-    };
-    const fmtTime = (iso) => {
-      if (!iso) return '';
-      const dt = new Date(iso);
-      return `오${dt.getHours()<12?'전':'후'} ${String(dt.getHours()>12?dt.getHours()-12:dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+      return `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
     };
     const esc = (s) => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const parts = d.parts || [];
-    const emptyRows = Math.max(0, 6 - parts.length);
+    const emptyRows = Math.max(0, 5 - parts.length);
     let partsRows = '';
     parts.forEach(p => {
       const supply = (p.price||0)*(p.qty||1);
-      const vat = Math.round(supply*0.1);
-      partsRows += `<tr style="height:28px"><td style="border:1px solid #aaa;padding:2px 4px;font-size:10px">${esc(p.name)}</td><td style="border:1px solid #aaa"></td><td style="border:1px solid #aaa"></td><td style="border:1px solid #aaa;text-align:center;font-size:10px">${p.qty||''}</td><td style="border:1px solid #aaa;text-align:right;font-size:10px;padding:2px 3px">${supply?supply.toLocaleString():''}</td><td style="border:1px solid #aaa;text-align:right;font-size:10px;padding:2px 3px">${vat?vat.toLocaleString():''}</td><td style="border:1px solid #aaa;text-align:right;font-size:10px;padding:2px 3px">${(supply+vat)?(supply+vat).toLocaleString():''}</td><td style="border:1px solid #aaa"></td></tr>`;
+      partsRows += `<tr style="height:24px">
+        <td style="border:1px solid #999;padding:2px 4px;font-size:9.5px">${esc(p.part_no||'')}</td>
+        <td style="border:1px solid #999;padding:2px 4px;font-size:9.5px">${esc(p.name)}</td>
+        <td style="border:1px solid #999;padding:2px 4px;font-size:9.5px">${esc(p.spec||'')}</td>
+        <td style="border:1px solid #999;text-align:center;font-size:9.5px">${p.qty||''}</td>
+        <td style="border:1px solid #999;text-align:right;font-size:9.5px;padding:2px 4px">${supply?supply.toLocaleString():''}</td>
+        <td style="border:1px solid #999;padding:2px 4px;font-size:9.5px">${esc(p.dong_ho||'')}</td>
+      </tr>`;
     });
-    for (let i=0;i<emptyRows;i++) partsRows += `<tr style="height:28px"><td style="border:1px solid #aaa"></td><td style="border:1px solid #aaa"></td><td style="border:1px solid #aaa"></td><td style="border:1px solid #aaa"></td><td style="border:1px solid #aaa"></td><td style="border:1px solid #aaa"></td><td style="border:1px solid #aaa"></td><td style="border:1px solid #aaa"></td></tr>`;
+    for (let i=0;i<emptyRows;i++) partsRows += `<tr style="height:24px">
+      <td style="border:1px solid #999"></td><td style="border:1px solid #999"></td>
+      <td style="border:1px solid #999"></td><td style="border:1px solid #999"></td>
+      <td style="border:1px solid #999"></td><td style="border:1px solid #999"></td>
+    </tr>`;
     const totalSupply = parts.reduce((s,p)=>s+(p.price||0)*(p.qty||1),0);
     const totalVat = Math.round(totalSupply*0.1);
-    const totalAmt = totalSupply+totalVat;
-    const sigImg = d.customer_signature?`<img src="${d.customer_signature}" style="max-width:160px;max-height:55px;object-fit:contain" />`:'';
-    const B = 'border:1px solid #aaa;', BL = 'border-bottom:1px solid #ddd;';
-    return `<div style="width:794px;font-family:'맑은 고딕',sans-serif;font-size:11px;color:#000;border:1.5px solid #000;box-sizing:border-box">
+    const sigImg = d.customer_signature?`<img src="${d.customer_signature}" style="max-width:120px;max-height:36px;object-fit:contain" />`:'';
+    const B = 'border:1px solid #999;';
+    const HD = 'background:#4a4a4a;color:#fff;font-weight:700;font-size:11px;padding:3px 8px;';
+    return `<div style="width:794px;font-family:'맑은 고딕',sans-serif;font-size:11px;color:#000;border:2px solid #000;box-sizing:border-box">
       <!-- 헤더 -->
-      <div style="display:flex;border-bottom:1.5px solid #000">
-        <div style="padding:8px 12px;border-right:1px solid #000;width:165px;flex-shrink:0">
-          <div style="font-size:28px;font-weight:900;color:#1a4a9c;letter-spacing:2px;line-height:1.1">TKE</div>
-          <div style="font-size:9px;color:#444;margin-top:1px">TK Elevator Korea</div>
-          <div style="font-size:15px;font-weight:700;margin-top:5px;letter-spacing:0.5px">SERVICE DOCKET</div>
+      <div style="display:flex;align-items:stretch;border-bottom:2px solid #000">
+        <!-- 좌측 인증배지 -->
+        <div style="width:62px;flex-shrink:0;border-right:1px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:6px 4px">
+          <div style="border:1.5px solid #1a4a9c;padding:3px 5px;text-align:center;font-size:7px;font-weight:700;color:#1a4a9c;line-height:1.4">KS-QEI<br>인증</div>
+          <div style="border:1.5px solid #888;padding:3px 5px;text-align:center;font-size:7px;font-weight:700;color:#555;line-height:1.4">WINNER<br>2025</div>
         </div>
-        <div style="flex:1;padding:5px 8px;border-right:1px solid #000">
-          <table style="width:100%;border-collapse:collapse;font-size:11px">
-            <tr>
-              <td style="${B}background:#e0e0e0;padding:3px 5px;font-weight:700;white-space:nowrap;width:46px">현장명</td>
-              <td style="${B}padding:3px 6px">${esc(d.site_name)}</td>
-              <td style="${B}background:#e0e0e0;padding:3px 5px;font-weight:700;white-space:nowrap;width:44px">감자자</td>
-              <td style="${B}padding:3px 6px;width:80px">${esc(d.inspector)}</td>
-              <td style="${B}background:#e0e0e0;padding:3px 5px;font-weight:700;width:34px">사번</td>
-              <td style="${B}padding:3px 6px;width:55px"></td>
-            </tr>
-          </table>
-          <div style="font-size:10px;margin-top:4px;padding-left:2px">고객번호 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 발생호기 : ${esc(d.elevator)}</div>
+        <!-- 중앙 회사명+제목 -->
+        <div style="flex:1;padding:10px 18px;display:flex;flex-direction:column;justify-content:center">
+          <div style="display:flex;align-items:baseline;gap:10px">
+            <div style="font-size:34px;font-weight:900;color:#1a4a9c;letter-spacing:3px;line-height:1">TKE</div>
+            <div style="font-size:10.5px;color:#333;font-weight:600">TK Elevator Korea</div>
+          </div>
+          <div style="font-size:17px;font-weight:700;letter-spacing:1px;margin-top:3px">SERVICE DOCKET</div>
         </div>
-        <div style="width:90px;flex-shrink:0;padding:5px 6px;display:flex;flex-direction:column;align-items:center;gap:5px">
-          <div style="border:1.5px solid #000;padding:3px 12px;font-size:12px;font-weight:700">고객용</div>
-          <table style="border-collapse:collapse;font-size:10px;width:100%">
-            <tr><td style="${B}background:#e0e0e0;padding:2px 4px;font-weight:600">승인</td><td style="${B}padding:2px 8px"></td></tr>
-            <tr><td style="${B}background:#e0e0e0;padding:2px 4px;font-weight:600">담당</td><td style="${B}padding:2px 8px"></td></tr>
-            <tr><td style="${B}background:#e0e0e0;padding:2px 4px;font-weight:600">채</td><td style="${B}padding:2px 8px"></td></tr>
-            <tr><td style="${B}background:#e0e0e0;padding:2px 4px;font-weight:600">채</td><td style="${B}padding:2px 8px"></td></tr>
+        <!-- 우측 고객용+결재란 -->
+        <div style="width:115px;flex-shrink:0;border-left:1px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 6px;gap:5px">
+          <div style="border:1.5px solid #000;padding:3px 16px;font-size:11px;font-weight:700">고객용</div>
+          <table style="border-collapse:collapse;font-size:9px;width:100%">
+            <tr><td style="${B}background:#ddd;padding:2px 5px;font-weight:600;text-align:center;width:28px">담당</td><td style="${B}width:34px;padding:2px"></td><td style="${B}width:34px;padding:2px"></td></tr>
+            <tr><td style="${B}background:#ddd;padding:2px 5px;font-weight:600;text-align:center">승인</td><td style="${B}padding:2px"></td><td style="${B}padding:2px"></td></tr>
+            <tr><td style="${B}background:#ddd;padding:2px 5px;text-align:center">/</td><td style="${B}padding:2px"></td><td style="${B}padding:2px"></td></tr>
+            <tr><td style="${B}background:#ddd;padding:2px 5px;text-align:center">/</td><td style="${B}padding:2px"></td><td style="${B}padding:2px"></td></tr>
           </table>
         </div>
       </div>
-      <!-- 본문 -->
-      <div style="display:flex">
-        <!-- 왼쪽 -->
-        <div style="flex:1;border-right:1.5px solid #000;min-width:0">
-          <div style="background:#555;color:#fff;font-weight:700;font-size:11px;padding:3px 8px">□ 고장처리내역</div>
-          <table style="width:100%;border-collapse:collapse">
-            <tr><td style="${BL}padding:4px 8px;background:#efefef;font-weight:600;width:78px;white-space:nowrap">발생일자</td><td style="${BL}padding:4px 8px">${fmtDT(d.occurred_at)}</td></tr>
-            <tr><td style="${BL}padding:4px 8px;background:#efefef;font-weight:600;white-space:nowrap">접수시간</td><td style="${BL}padding:4px 8px">${fmtDT(d.received_at)}</td></tr>
-            <tr><td style="${BL}padding:4px 8px;background:#efefef;font-weight:600;white-space:nowrap">도착시간</td><td style="${BL}padding:4px 8px">${fmtDT(d.arrived_at)}</td></tr>
-            <tr><td style="${BL}padding:4px 8px;background:#efefef;font-weight:600;white-space:nowrap">승객구출시간</td><td style="${BL}padding:4px 8px">${fmtDT(d.rescued_at)}</td></tr>
-            <tr><td style="${BL}padding:4px 8px;background:#efefef;font-weight:600;white-space:nowrap">완료시간</td><td style="${BL}padding:4px 8px">${fmtDT(d.completed_at)}</td></tr>
-            <tr><td colspan="2" style="${BL}padding:4px 8px;font-size:10px">도착 시 승객 간힘이 발생되었는가?&nbsp;&nbsp; ${d.passenger_trapped?'☑':'□'} 예 &nbsp;&nbsp; ${d.passenger_trapped?'□':'☑'} 아니오</td></tr>
-            <tr><td colspan="2" style="${BL}padding:4px 8px;font-size:10px">도착 시 동작상태는 정상인가?&nbsp;&nbsp; ${d.normal_on_arrival?'☑':'□'} 예 &nbsp;&nbsp; ${d.normal_on_arrival?'□':'☑'} 아니오</td></tr>
-            <tr><td style="${BL}padding:4px 8px;background:#efefef;font-weight:600">고장부위</td><td style="${BL}padding:4px 8px">${esc(d.fault_area)}</td></tr>
-            <tr><td style="${BL}padding:3px 8px;background:#efefef;font-size:10px">Code No</td><td style="${BL}padding:3px 8px"></td></tr>
-            <tr><td style="${BL}padding:3px 8px;background:#efefef;font-size:10px">Code No</td><td style="${BL}padding:3px 8px"></td></tr>
-            <tr><td style="${BL}padding:3px 8px;background:#efefef;font-size:10px">Code No</td><td style="${BL}padding:3px 8px"></td></tr>
-            <tr><td style="${BL}padding:4px 8px;background:#efefef;font-weight:600;vertical-align:top">처리내역</td><td style="${BL}padding:4px 8px;font-size:10px;min-height:32px;white-space:pre-wrap">${esc(d.fault_cause)}</td></tr>
-            <tr><td style="padding:4px 8px;background:#efefef;font-weight:600;vertical-align:top">조치내용</td><td style="padding:4px 8px;font-size:10px;min-height:40px;white-space:pre-wrap">${esc(d.repair_content)}</td></tr>
-          </table>
-          <div style="background:#555;color:#fff;font-weight:700;font-size:11px;padding:3px 8px;border-top:1.5px solid #000">${d.parts_free?'☑ 무상 &nbsp; □ 유상':'□ 무상 &nbsp; ☑ 유상'} &nbsp; 부품교체승인서</div>
-          <table style="width:100%;border-collapse:collapse;font-size:10px">
-            <thead><tr style="background:#e8e8e8">
-              <th style="${B}padding:3px 2px">품명</th>
-              <th style="${B}padding:3px 2px;width:54px">PART No.</th>
-              <th style="${B}padding:3px 2px;width:33px">규격</th>
-              <th style="${B}padding:3px 2px;width:28px">수량</th>
-              <th style="${B}padding:3px 2px;width:60px">공급가액</th>
-              <th style="${B}padding:3px 2px;width:52px">부가세액</th>
-              <th style="${B}padding:3px 2px;width:60px">합계금액</th>
-              <th style="${B}padding:3px 2px;width:60px">계약금액</th>
-            </tr></thead>
-            <tbody>${partsRows}</tbody>
-            <tfoot><tr style="background:#efefef;font-weight:700">
-              <td colspan="4" style="${B}padding:3px 4px;text-align:right">합 계</td>
-              <td style="${B}padding:3px 3px;text-align:right">${totalSupply?totalSupply.toLocaleString():''}</td>
-              <td style="${B}padding:3px 3px;text-align:right">${totalVat?totalVat.toLocaleString():''}</td>
-              <td style="${B}padding:3px 3px;text-align:right">${totalAmt?totalAmt.toLocaleString():''}</td>
-              <td style="${B}"></td>
-            </tr></tfoot>
-          </table>
-          <div style="font-size:9px;padding:2px 8px;border-top:1px solid #ccc">자재청구 No.</div>
-        </div>
-        <!-- 오른쪽 -->
-        <div style="width:210px;flex-shrink:0;display:flex;flex-direction:column">
-          <div style="padding:6px 8px;font-size:8px;line-height:1.7;color:#333;flex:1;border-bottom:1px solid #ccc">
-            <b>[특이사항]</b><br>
-            1. 발주자(관리자)체를 원활한 부품교체 작업을 위해 당사가·'공동수급체'를 구성하여 부품교체를 수행하는 것에 대해 동의합니다.<br>
-            2. 공동수급체 구성원의 업무 내용은 다음과 같습니다.<br>
-            &nbsp;구성원 : 자재공급, 안전감사, 안전전관리, 현장안전교육비<br>
-            &nbsp;(공동수급체 구성) (대금분배비율 : &nbsp;&nbsp;%)<br>
-            3. 산업폐기물에 의한 환경오염 방지와 안전메뉴얼에 따른 교체부품을 당규내역과 같이 유상 처리하오니 이를 양지하시기 바랍니다.<br>
-            4. 부품 보호의 보호은 부품교체 완료일로부터 &nbsp;&nbsp; 년 입니다.<br>
-            ※ 발주자(관리자)제는 위 특이사항에 대해 계약담당자로부터 충분하게 설명을 들었습니다.
-          </div>
-          <div style="padding:6px 8px;border-bottom:1px solid #ccc">
-            <div style="font-size:10px;font-weight:700">티케이엘리베이터코리아(주)</div>
-            <div style="font-size:10px;margin-top:2px">대표이사 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ㊞</div>
-            <div style="height:36px"></div>
-            <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:2px">
-              <tr><td style="${B}background:#efefef;padding:3px 5px;font-weight:600;white-space:nowrap">작업시작시간</td><td style="${B}padding:3px 5px">${fmtTime(d.arrived_at)}</td></tr>
-              <tr><td style="${B}background:#efefef;padding:3px 5px;font-weight:600;white-space:nowrap">작업종료시간</td><td style="${B}padding:3px 5px">${fmtTime(d.completed_at)}</td></tr>
-            </table>
-            <div style="text-align:right;font-size:10px;font-weight:600;margin-top:3px">TK Elevator Korea</div>
-          </div>
-          <div style="padding:6px 8px">
-            <div style="font-size:10px;margin-bottom:3px">고객확인</div>
-            <div style="border:1px solid #ccc;min-height:55px;display:flex;align-items:center;justify-content:center">${sigImg}</div>
-            <div style="font-size:10px;margin-top:5px">고 객 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (인)</div>
-          </div>
+      <!-- 현장정보 -->
+      <table style="width:100%;border-collapse:collapse;font-size:11px;border-bottom:1px solid #000">
+        <tr>
+          <td style="${B}background:#ddd;padding:4px 8px;font-weight:700;width:60px;white-space:nowrap">현장명</td>
+          <td style="${B}padding:4px 8px">${esc(d.site_name)}</td>
+          <td style="${B}background:#ddd;padding:4px 8px;font-weight:700;width:72px;white-space:nowrap">승강기번호</td>
+          <td style="${B}padding:4px 8px;width:90px">${esc(d.elevator)}</td>
+        </tr>
+        <tr>
+          <td style="${B}background:#ddd;padding:4px 8px;font-weight:700;white-space:nowrap">점검자</td>
+          <td style="${B}padding:4px 8px">${esc(d.inspector)}</td>
+          <td style="${B}background:#ddd;padding:4px 8px;font-weight:700;white-space:nowrap">사번</td>
+          <td style="${B}padding:4px 8px"></td>
+        </tr>
+        <tr>
+          <td style="${B}background:#ddd;padding:4px 8px;font-weight:700;white-space:nowrap">고객번호</td>
+          <td colspan="3" style="${B}padding:4px 8px"></td>
+        </tr>
+      </table>
+      <!-- 고장처리내역 헤더 -->
+      <div style="${HD}border-top:1px solid #000">□ 고장처리내역</div>
+      <!-- 시간 행 -->
+      <table style="width:100%;border-collapse:collapse;font-size:10px">
+        <tr>
+          <td style="${B}background:#ddd;padding:3px 6px;font-weight:600;white-space:nowrap;width:58px">발생호기</td>
+          <td style="${B}padding:3px 6px;width:64px">${esc(d.elevator)}</td>
+          <td style="${B}background:#ddd;padding:3px 6px;font-weight:600;white-space:nowrap;width:56px">접수시간</td>
+          <td style="${B}padding:3px 6px;width:52px">${fmtTimeOnly(d.received_at)}</td>
+          <td style="${B}background:#ddd;padding:3px 6px;font-weight:600;white-space:nowrap;width:56px">도착시간</td>
+          <td style="${B}padding:3px 6px;width:52px">${fmtTimeOnly(d.arrived_at)}</td>
+          <td style="${B}background:#ddd;padding:3px 6px;font-weight:600;white-space:nowrap;width:70px">승객구출시간</td>
+          <td style="${B}padding:3px 6px">${fmtTimeOnly(d.rescued_at)}</td>
+        </tr>
+        <tr>
+          <td colspan="4" style="${B}padding:4px 8px">도착시 승객 간힘이 발생되었는가? &nbsp; ${d.passenger_trapped?'☑':'□'} 예 &nbsp; ${d.passenger_trapped?'□':'☑'} 아니오</td>
+          <td colspan="4" style="${B}padding:4px 8px">도착시 동작상태는 정상인가? &nbsp; ${d.normal_on_arrival?'☑':'□'} 예 &nbsp; ${d.normal_on_arrival?'□':'☑'} 아니오</td>
+        </tr>
+        <tr>
+          <td style="${B}background:#ddd;padding:4px 6px;font-weight:600;white-space:nowrap">고장부위</td>
+          <td style="${B}background:#ebebeb;padding:4px 5px;font-size:9px;color:#555;white-space:nowrap">Code No</td>
+          <td colspan="6" style="${B}padding:4px 6px">${esc(d.fault_area)}</td>
+        </tr>
+        <tr>
+          <td style="${B}background:#ddd;padding:4px 6px;font-weight:600;white-space:nowrap">고장원인</td>
+          <td style="${B}background:#ebebeb;padding:4px 5px;font-size:9px;color:#555;white-space:nowrap">Code No</td>
+          <td colspan="6" style="${B}padding:4px 6px">${esc(d.fault_cause)}</td>
+        </tr>
+        <tr>
+          <td style="${B}background:#ddd;padding:4px 6px;font-weight:600;white-space:nowrap">조치내용</td>
+          <td style="${B}background:#ebebeb;padding:4px 5px;font-size:9px;color:#555;white-space:nowrap">Code No</td>
+          <td colspan="6" style="${B}padding:4px 6px;min-height:28px;white-space:pre-wrap">${esc(d.repair_content)}</td>
+        </tr>
+        <tr>
+          <td colspan="8" style="${B}padding:3px 8px;font-size:9.5px">처리내역 :</td>
+        </tr>
+        <tr>
+          <td style="${B}background:#ddd;padding:4px 6px;font-weight:600;white-space:nowrap">완료시간</td>
+          <td colspan="3" style="${B}padding:4px 6px">${fmtTimeOnly(d.completed_at)}</td>
+          <td colspan="4" style="${B}padding:4px 6px">작업 완료 후 동작상태는 정상인가? &nbsp; ${d.normal_after_work?'☑':'□'} 예 &nbsp; ${d.normal_after_work?'□':'☑'} 아니오</td>
+        </tr>
+      </table>
+      <!-- 부품교체승인서 헤더 -->
+      <div style="display:flex;align-items:stretch;border-top:1px solid #000">
+        <div style="${HD}flex:1">${d.parts_free?'□ 유상 &nbsp; ☑ 무상':'☑ 유상 &nbsp; □ 무상'} &nbsp; 부품교체승인서</div>
+        <div style="padding:3px 10px;font-size:10px;font-weight:600;background:#3a3a3a;color:#fff;border-left:1px solid #666;white-space:nowrap">자재청구 No.</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px">
+        <thead><tr style="background:#ddd;text-align:center">
+          <th style="${B}padding:3px;width:80px">PART No.</th>
+          <th style="${B}padding:3px">품명</th>
+          <th style="${B}padding:3px;width:60px">규격</th>
+          <th style="${B}padding:3px;width:32px">수량</th>
+          <th style="${B}padding:3px;width:76px">금액</th>
+          <th style="${B}padding:3px;width:64px">동/호기</th>
+        </tr></thead>
+        <tbody>${partsRows}</tbody>
+        <tfoot><tr style="background:#efefef;font-size:9.5px">
+          <td colspan="2" style="${B}padding:3px 6px;font-weight:700">공급가액 W&nbsp;${totalSupply?totalSupply.toLocaleString():''}</td>
+          <td colspan="2" style="${B}padding:3px 6px;font-weight:700">부가세액 W&nbsp;${totalVat?totalVat.toLocaleString():''}</td>
+          <td colspan="2" style="${B}padding:3px 6px;font-weight:700">계약금액 W&nbsp;${(totalSupply+totalVat)?(totalSupply+totalVat).toLocaleString():''}</td>
+        </tr></tfoot>
+      </table>
+      <!-- 특이사항 -->
+      <div style="border-top:1px solid #000;padding:5px 10px;font-size:8.5px;line-height:1.8;color:#222;background:#f5f5f5">
+        [특이사항]<br>
+        1. 발주자(관리자)는 원활한 부품교체 작업을 위해 당사가 '공동수급체'를 구성하여 부품교체를 수행하는 것에 대해 동의합니다.<br>
+        2. 공동수급체 구성원의 업무 내용은 다음과 같습니다. &nbsp; 구성원 : 자재공급, 안전감리, 안전관리, 현장안전교육비 &nbsp; (공동수급체 구성) (대금분배비율 :&nbsp;&nbsp;&nbsp;%)<br>
+        3. 산업폐기물에 의한 환경오염 방지와 안전매뉴얼에 따른 당규내역과 같이 유상 처리하오니 이를 양지하시기 바랍니다.<br>
+        4. 부품 보증의 보증기간은 부품교체 완료일로부터&nbsp;&nbsp;&nbsp;년 입니다. &nbsp;&nbsp; ※ 발주자(관리자)는 위 특이사항에 대해 계약담당자로부터 충분하게 설명을 들었습니다.
+      </div>
+      <!-- 부품교체 승인 -->
+      <div style="border-top:1px solid #000;display:flex;align-items:center;justify-content:space-between;padding:4px 10px;font-size:10px">
+        <span>상기 내용에 대하여 부품교체를 승인합니다. &nbsp;&nbsp; 20&nbsp;&nbsp;년 &nbsp;&nbsp;월 &nbsp;&nbsp;일 &nbsp;&nbsp;&nbsp; 고객확인 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (인)</span>
+        <span style="font-size:9.5px;font-weight:700;white-space:nowrap">티케이엘리베이터코리아(주) &nbsp; 대표이사 조 영 조 ㊞</span>
+      </div>
+      <!-- 보수작업내용 헤더 -->
+      <div style="display:flex;align-items:stretch;border-top:2px solid #000">
+        <div style="${HD}flex:1">□ 보수작업내용</div>
+        <div style="padding:3px 10px;font-size:9.5px;background:#3a3a3a;color:#fff;border-left:1px solid #666;white-space:nowrap">
+          작업시작시간 : ${fmtTimeOnly(d.arrived_at)} &nbsp;&nbsp; 작업종료시간 : ${fmtTimeOnly(d.completed_at)}
         </div>
       </div>
-      <!-- 푸터 -->
-      <div style="border-top:1.5px solid #000;padding:3px 8px;font-size:9px;display:flex;justify-content:space-between">
-        <span>□ 고장처리내역 &nbsp; □ 부품교체 &nbsp; □ 문제점(하자)처리 &nbsp; □ 기타 &nbsp;&nbsp; 고객확인 :</span>
-        <span style="font-weight:700;font-size:10px">TK Elevator Korea</span>
+      <table style="width:100%;border-collapse:collapse;font-size:10px">
+        <thead><tr style="background:#ddd;text-align:center">
+          <th style="${B}padding:3px">세부작업내용</th>
+          <th style="${B}padding:3px;width:44px">대수</th>
+          <th style="${B}padding:3px;width:84px">동/호기</th>
+        </tr></thead>
+        <tbody>
+          <tr style="height:28px"><td style="${B}padding:2px 6px">${esc(d.work_detail||'')}</td><td style="${B}"></td><td style="${B}"></td></tr>
+          <tr style="height:28px"><td style="${B}"></td><td style="${B}"></td><td style="${B}"></td></tr>
+          <tr style="height:28px"><td style="${B}"></td><td style="${B}"></td><td style="${B}"></td></tr>
+        </tbody>
+      </table>
+      <!-- 고객 요청사항 -->
+      <div style="border-top:1px solid #999;padding:5px 8px;font-size:10px;min-height:30px">고객 요청사항 :</div>
+      <!-- 최하단 확인문구 -->
+      <div style="border-top:1px solid #000;padding:4px 8px;font-size:9.5px">
+        상기 내용에 대하여 다음(□고장처리내역, □부품교체승인서, □보수작업내용)과 같이 완료하였음을 확인합니다.
       </div>
-      <div style="border-top:1px solid #ccc;padding:2px 8px;font-size:8.5px;display:flex;gap:8px">
-        <span>요청사항</span>
-        <span>고 : &nbsp;&nbsp;&nbsp; 년 &nbsp;&nbsp;&nbsp; 월 &nbsp;&nbsp;&nbsp; 일 &nbsp;&nbsp;&nbsp;&nbsp; 고객확인: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (인)</span>
-        <span style="margin-left:auto;color:#888;font-size:8px">2020.01가정(Ver.1)</span>
+      <div style="border-top:1px solid #ccc;padding:4px 10px;font-size:10px;display:flex;align-items:center;gap:16px">
+        <span>20&nbsp;&nbsp;년 &nbsp;&nbsp;월 &nbsp;&nbsp;일 &nbsp;&nbsp;&nbsp; 고객확인 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (인)</span>
+        ${sigImg}
+      </div>
+      <!-- 버전표기 -->
+      <div style="border-top:1px solid #ccc;padding:2px 10px;font-size:8px;display:flex;justify-content:space-between;color:#555">
+        <span>2020.01개정(Ver.1)</span>
+        <span style="font-weight:700">TK Elevator Korea</span>
       </div>
     </div>`;
   }
