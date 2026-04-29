@@ -3899,16 +3899,24 @@
     document.getElementById('elevator-modal-add-btn').style.display = currentRole === '관리자' || currentRole === '마스터' ? 'inline-block' : 'none';
 
     // 현장 상세정보 표시
+    const epKeys = ['emergency_phone','emergency_phone2','emergency_phone3','emergency_phone4','emergency_phone5','emergency_phone6','emergency_phone7','emergency_phone8','emergency_phone9','emergency_phone10'];
+    const epEntries = epKeys.map(k => m[k] || '').filter(Boolean);
     const fields = [
       ['계약구분', m.contract_type], ['주점검자', m.main_inspector], ['보조점검자', m.sub_inspector],
       ['계약일자', m.contract_date], ['계약시작', m.contract_start], ['계약만료', m.contract_end],
       ['현장전화', m.site_phone], ['현장연락처2', m.site_phone2],
-      ...['emergency_phone','emergency_phone2','emergency_phone3','emergency_phone4','emergency_phone5','emergency_phone6','emergency_phone7','emergency_phone8','emergency_phone9','emergency_phone10'].map((k,i)=>[i===0?'비상통화장치':`비상통화장치${i+1}`,m[k]]).filter(([,v])=>v),
       ['담당자 메일', m.manager_email],
       ['팩스', m.fax], ['승강기 소재지', m.elevator_address],
       ['비고', m.notes],
     ];
     const _isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    const epHtml = epEntries.length ? `<div style="grid-column:1/-1;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-top:2px">
+      <div onclick="const b=this.nextElementSibling;const a=this.querySelector('.ep-arr');b.style.display=b.style.display==='none'?'block':'none';a.textContent=b.style.display==='none'?'▼':'▲';" style="padding:8px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:#f7fafc;user-select:none">
+        <span style="color:#718096;font-weight:700;font-size:12px">비상통화장치</span>
+        <span style="font-size:12px;color:#718096"><span class="ep-arr">▼</span> ${epEntries.length}개</span>
+      </div>
+      <div style="display:none;padding:8px 12px;border-top:1px solid #e2e8f0">${epEntries.map(v => `<div style="font-size:13px;color:#1a202c;font-weight:500;padding:3px 0">${escHtml(v)}</div>`).join('')}</div>
+    </div>` : '';
     document.getElementById('elevator-modal-site-info').innerHTML = `<div class="site-info-grid">${fields.map(([k,v]) => {
         const extra = k === '비고' ? 'grid-column:1/-1' : k === '승강기 소재지' ? 'grid-column:span 2' : '';
         let val;
@@ -3918,7 +3926,7 @@
           val = v ? escHtml(String(v)) : '<span style="color:#cbd5e0">-</span>';
         }
         return `<div style="font-size:14px${extra ? ';' + extra : ''}"><span style="color:#718096;font-weight:700;font-size:12px">${k}</span><br><span style="color:#1a202c;font-weight:500">${val}</span></div>`;
-      }).join('')}</div>`;
+      }).join('')}${epHtml}</div>`;
 
     openModal('elevator-modal');
     await loadElevators();
@@ -4333,19 +4341,33 @@
     'mgmt-main-inspector','mgmt-sub-inspector','mgmt-site-phone','mgmt-site-phone2',
     'mgmt-fax','mgmt-manager-email','mgmt-notes'
   ];
+  function parseEmergencyValue(val) {
+    if (!val) return { label: '', phone: '' };
+    const idx = val.indexOf(': ');
+    if (idx > 0) return { label: val.slice(0, idx), phone: val.slice(idx + 2) };
+    return { label: '', phone: val };
+  }
   function addEmergencyPhoneField(value) {
     const list = document.getElementById('mgmt-emergency-phone-list');
     if (list.children.length >= 10) return showToast('최대 10개까지 추가 가능합니다.');
+    const parsed = parseEmergencyValue(value);
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px';
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'modal-input normal';
-    input.placeholder = '02-0000-0000';
-    input.style.cssText = 'margin-bottom:0;flex:1';
-    input.value = value || '';
-    input.oninput = () => autoFormatPhone(input);
-    row.appendChild(input);
+    const labelInput = document.createElement('input');
+    labelInput.type = 'text';
+    labelInput.className = 'modal-input normal';
+    labelInput.placeholder = '구분 (예: 1호기)';
+    labelInput.style.cssText = 'margin-bottom:0;width:120px;flex-shrink:0';
+    labelInput.value = parsed.label;
+    row.appendChild(labelInput);
+    const phoneInput = document.createElement('input');
+    phoneInput.type = 'text';
+    phoneInput.className = 'modal-input normal';
+    phoneInput.placeholder = '02-0000-0000';
+    phoneInput.style.cssText = 'margin-bottom:0;flex:1';
+    phoneInput.value = parsed.phone;
+    phoneInput.oninput = () => autoFormatPhone(phoneInput);
+    row.appendChild(phoneInput);
     const delBtn = document.createElement('button');
     delBtn.type = 'button';
     delBtn.textContent = '✕';
@@ -4380,8 +4402,14 @@
   function getEmergencyPhoneValues() {
     const list = document.getElementById('mgmt-emergency-phone-list');
     if (!list) return Array(10).fill(null);
-    const vals = Array.from(list.querySelectorAll('input')).map(inp => inp.value.trim());
-    return Array.from({length:10}, (_, i) => vals[i] || null);
+    const result = Array(10).fill(null);
+    Array.from(list.children).forEach((row, i) => {
+      const inputs = row.querySelectorAll('input');
+      const label = inputs[0]?.value.trim() || '';
+      const phone = inputs[1]?.value.trim() || '';
+      if (phone) result[i] = label ? label + ': ' + phone : phone;
+    });
+    return result;
   }
 
   function mgmtEnterNext(e, el) {
@@ -7201,6 +7229,8 @@
   function buildDaesolDocketHTML(d) {
     const fmtDate = (iso) => { if (!iso) return ''; const dt = new Date(iso); return dt.getFullYear() + '.' + String(dt.getMonth()+1).padStart(2,'0') + '.' + String(dt.getDate()).padStart(2,'0'); };
     const fmtTime = (iso) => { if (!iso) return ''; const dt = new Date(iso); return String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0'); };
+    const fmtHour = (iso) => { if (!iso) return ''; return String(new Date(iso).getHours()).padStart(2,'0'); };
+    const fmtMin  = (iso) => { if (!iso) return ''; return String(new Date(iso).getMinutes()).padStart(2,'0'); };
     const fmtYear = (iso) => { if (!iso) return ''; return String(new Date(iso).getFullYear()); };
     const fmtMonth = (iso) => { if (!iso) return ''; return String(new Date(iso).getMonth()+1).padStart(2,'0'); };
     const fmtDay = (iso) => { if (!iso) return ''; return String(new Date(iso).getDate()).padStart(2,'0'); };
@@ -7221,7 +7251,7 @@
       const supply = (p.price||0) * (p.qty||0);
       const t = 498 + i * 29;
       partsHtml += field(59,  t,  69, 29, esc(p.dong_ho||''), 'justify-content:center')
-        + field(128, t, 235, 29, esc(p.name||''))
+        + field(168, t, 195, 29, esc(p.name||''))
         + field(363, t,  97, 29, esc(p.spec||''), 'justify-content:center')
         + field(460, t,  62, 29, String(p.qty||''), 'justify-content:center')
         + field(522, t, 113, 29, (p.price ? p.price.toLocaleString() : ''), 'justify-content:flex-end;padding-right:3px')
@@ -7229,21 +7259,24 @@
     }
     return '<div style="position:relative;width:794px;height:1122px;overflow:hidden;display:block">'
       + '<img src="data:image/png;base64,' + DAESOL_FORM_B64 + '" style="width:794px;height:1122px;display:block" />'
-      + field(104, 119, 418, 25, esc(d.site_name))
+      + field(155, 119, 440, 25, esc(d.site_name))
       + field(601, 119, 147, 25, esc(d.inspector))
-      + field(115, 196, 280, 25, fmtDate(d.occurred_at))
-      + field(448, 196,  37, 25, esc(d.elevator), 'justify-content:center')
-      + field(525, 196,  52, 25, fmtTime(d.received_at), 'justify-content:center')
-      + field(622, 196, 100, 25, fmtTime(d.arrived_at), 'justify-content:center;font-size:9px')
+      + field(165, 196, 240, 25, fmtDate(d.occurred_at))
+      + field(358, 196,  65, 25, esc(d.elevator), 'justify-content:center')
+      + field(490, 196,  28, 25, fmtHour(d.received_at), 'justify-content:center')
+      + field(548, 196,  28, 25, fmtMin(d.received_at),  'justify-content:center')
+      + field(678, 196,  25, 25, fmtHour(d.arrived_at), 'justify-content:center')
+      + field(710, 196,  25, 25, fmtMin(d.arrived_at),  'justify-content:center')
       + field(304, 222,  28, 29, chk(d.passenger_trapped===true),  'justify-content:center;font-size:13px')
       + field(334, 222,  28, 29, chk(d.passenger_trapped===false), 'justify-content:center;font-size:13px')
       + field(622, 222,  90, 29, fmtTime(d.rescued_at), 'justify-content:center')
-      + field(104, 254, 252, 25, esc(d.fault_area))
+      + field(155, 254, 200, 25, esc(d.fault_area))
       + field(653, 254,  28, 25, chk(d.normal_on_arrival===true),  'justify-content:center;font-size:13px')
       + field(686, 254,  28, 25, chk(d.normal_on_arrival===false), 'justify-content:center;font-size:13px')
-      + field(104, 282, 640, 25, esc(d.fault_cause))
-      + field(104, 311, 469, 25, esc(d.repair_content), 'align-items:flex-start;padding-top:3px;white-space:pre-wrap;font-size:9px')
-      + field(617, 311, 125, 25, fmtTime(d.completed_at), 'justify-content:center')
+      + field(155, 282, 590, 25, esc(d.fault_cause))
+      + field(155, 311, 420, 25, esc(d.repair_content), 'align-items:flex-start;padding-top:3px;white-space:pre-wrap;font-size:9px')
+      + field(675, 311,  25, 25, fmtHour(d.completed_at), 'justify-content:center')
+      + field(705, 311,  25, 25, fmtMin(d.completed_at),  'justify-content:center')
       + field(256, 367,  28, 22, chk(d.parts_free===false), 'justify-content:center;font-size:13px')
       + field(311, 367,  28, 22, chk(d.parts_free===true),  'justify-content:center;font-size:13px')
       + partsHtml
