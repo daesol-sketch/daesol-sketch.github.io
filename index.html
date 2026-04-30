@@ -3935,7 +3935,7 @@
       <tbody>${list.map((m,i) => {
         const expired = m.site_type !== '상실' && isAlreadyExpired(m.contract_end);
         const expiresSoon = m.site_type !== '상실' && isExpireThisMonth(m.contract_end);
-        return `<tr style="cursor:pointer" class="${rowClass}" onclick="showMgmtDetail(${m.id})">
+        return `<tr style="cursor:pointer" onclick="showMgmtDetail(${m.id})">
         ${showCheck ? `<td onclick="event.stopPropagation()" style="text-align:center"><input type="checkbox" class="mgmt-row-check" data-id="${m.id}" onchange="handleMgmtCheck(${m.id},this.checked)" ${selectedMgmtIds.has(m.id)?'checked':''} /></td>` : ''}
         <td>${i+1}</td>
         <td><strong style="${m.site_type==='상실'?'color:#e53e3e':''}">${escHtml(m.site_name||'')}</strong>${m.site_type==='무상'?` <span style="background:#c6f6d5;color:#276749;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">무상</span>`:''}${m.defect_count > 0 ? ` <span style="background:#fefcbf;color:#744210;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">하자 ${m.defect_count}대</span>` : ''}</td>
