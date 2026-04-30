@@ -949,6 +949,7 @@
             <option value="상주">상주</option>
           </select>
           <button id="btn-sync-all-inspection" onclick="syncAllInspectionDates()" style="display:none;padding:7px 14px;background:#38a169;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">🔄 검사만료일 갱신</button>
+          <button id="btn-sync-all-api" onclick="syncAllElevatorApi()" style="display:none;padding:7px 14px;background:#6b46c1;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">📡 전체 API 갱신</button>
           <button onclick="exportMgmtExcel()" style="padding:7px 14px;background:#1d6f42;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">📥 엑셀</button>
         </div>
       </div>
@@ -3660,6 +3661,7 @@
     const isAdmin = currentRole === '관리자' || currentRole === '마스터';
     document.getElementById('btn-add-mgmt').style.display = isAdmin ? 'inline-flex' : 'none';
     document.getElementById('btn-sync-all-inspection').style.display = isAdmin ? 'inline-block' : 'none';
+    document.getElementById('btn-sync-all-api').style.display = isAdmin ? 'inline-block' : 'none';
 
     // 마지막 갱신일 확인 (30일 초과 시 알림)
     if (isAdmin) {
@@ -7226,13 +7228,13 @@
       + '<img src="data:image/png;base64,' + TKE_FORM_B64 + '" style="width:794px;display:block" />'
       + field(109, 135, 365, 22, esc(d.site_name||''))
       + field(109, 159, 150, 22, esc(d.inspector||''))
-      + field(141, 217,  88, 22, esc(d.elevator||''))
-      + field(312, 217,  30, 22, fmtHour(d.received_at), 'justify-content:center')
-      + field(346, 217,  30, 22, fmtMin(d.received_at),  'justify-content:center')
-      + field(484, 217,  30, 22, fmtHour(d.arrived_at),  'justify-content:center')
-      + field(518, 217,  30, 22, fmtMin(d.arrived_at),   'justify-content:center')
-      + field(659, 217,  30, 22, fmtHour(d.rescued_at),  'justify-content:center')
-      + field(693, 217,  30, 22, fmtMin(d.rescued_at),   'justify-content:center')
+      + field(141, 216,  88, 22, esc(d.elevator||''))
+      + field(312, 216,  30, 22, fmtHour(d.received_at), 'justify-content:center')
+      + field(346, 216,  30, 22, fmtMin(d.received_at),  'justify-content:center')
+      + field(484, 216,  30, 22, fmtHour(d.arrived_at),  'justify-content:center')
+      + field(518, 216,  30, 22, fmtMin(d.arrived_at),   'justify-content:center')
+      + field(659, 216,  30, 22, fmtHour(d.rescued_at),  'justify-content:center')
+      + field(693, 216,  30, 22, fmtMin(d.rescued_at),   'justify-content:center')
       + field(228, 252,  28, 20, chk(d.passenger_trapped===true),  'justify-content:center;font-size:16px;font-weight:900')
       + field(278, 252,  28, 20, chk(d.passenger_trapped===false), 'justify-content:center;font-size:16px;font-weight:900')
       + field(598, 252,  28, 20, chk(d.normal_on_arrival===true),  'justify-content:center;font-size:16px;font-weight:900')
