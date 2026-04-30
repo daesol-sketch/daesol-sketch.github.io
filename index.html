@@ -948,8 +948,7 @@
             <option value="3팀">3팀</option>
             <option value="상주">상주</option>
           </select>
-          <button id="btn-sync-all-inspection" onclick="syncAllInspectionDates()" style="display:none;padding:7px 14px;background:#38a169;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">🔄 검사만료일 갱신</button>
-          <button id="btn-sync-all-api" onclick="syncAllElevatorApi()" style="display:none;padding:7px 14px;background:#6b46c1;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">📡 전체 API 갱신</button>
+          <button id="btn-sync-all-inspection" onclick="syncAllInspectionDates()" style="display:none;padding:7px 14px;background:#38a169;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">🔄 전체 정보 갱신</button>
           <button onclick="exportMgmtExcel()" style="padding:7px 14px;background:#1d6f42;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">📥 엑셀</button>
         </div>
       </div>
@@ -3661,7 +3660,6 @@
     const isAdmin = currentRole === '관리자' || currentRole === '마스터';
     document.getElementById('btn-add-mgmt').style.display = isAdmin ? 'inline-flex' : 'none';
     document.getElementById('btn-sync-all-inspection').style.display = isAdmin ? 'inline-block' : 'none';
-    document.getElementById('btn-sync-all-api').style.display = isAdmin ? 'inline-block' : 'none';
 
     // 마지막 갱신일 확인 (30일 초과 시 알림)
     if (isAdmin) {
@@ -4101,7 +4099,7 @@
   }
 
   async function syncAllInspectionDates() {
-    if (!confirm('전체 현장 검사만료일을 갱신합니다. 시간이 걸릴 수 있어요.')) return;
+    if (!confirm('전체 호기 정보(모델명·검사만료일·검사결과·설치일)를 갱신합니다. 시간이 걸릴 수 있어요.')) return;
     const btn = document.getElementById('btn-sync-all-inspection');
     btn.textContent = '⏳ 갱신 중...';
     btn.disabled = true;
@@ -4113,108 +4111,13 @@
       });
       const data = await res.json();
       localStorage.setItem('insp_last_sync', new Date().toISOString());
-      showToast(`✅ ${data.updated}개 호기 만료일 갱신 완료`);
+      showToast(`✅ ${data.updated}개 호기 정보 갱신 완료`);
       loadMgmt();
     } catch(e) {
       showToast('❌ 갱신 실패');
     } finally {
-      btn.textContent = '🔄 검사만료일 갱신';
+      btn.textContent = '🔄 전체 정보 갱신';
       btn.disabled = false;
-    }
-  }
-
-  let _apiSyncCancelled = false;
-
-  async function syncAllElevatorApi() {
-    if (!confirm('전체 호기의 API 정보(모델명·검사만료일·검사결과·최초설치일)를 일괄 갱신합니다.\n승강기 수에 따라 수 분이 걸릴 수 있어요.')) return;
-
-    _apiSyncCancelled = false;
-    const btn = document.getElementById('btn-sync-all-api');
-    btn.disabled = true;
-
-    const overlay = document.createElement('div');
-    overlay.id = 'api-sync-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center';
-    overlay.innerHTML = `
-      <div style="background:#1a1a2e;border:1px solid #444;border-radius:16px;padding:32px 40px;min-width:320px;text-align:center;color:#e2e8f0">
-        <div style="font-size:18px;font-weight:700;margin-bottom:16px">📡 전체 API 갱신 중</div>
-        <div style="background:#333;border-radius:20px;height:10px;margin-bottom:14px;overflow:hidden">
-          <div id="api-sync-bar" style="background:#6b46c1;height:100%;width:0%;transition:width 0.2s"></div>
-        </div>
-        <div id="api-sync-status" style="font-size:14px;color:#a0aec0">준비 중...</div>
-        <div id="api-sync-result" style="font-size:13px;color:#68d391;margin-top:8px"></div>
-        <button onclick="_apiSyncCancelled=true;this.textContent='취소 중...';this.disabled=true" style="margin-top:20px;padding:7px 20px;background:#e53e3e;color:white;border:none;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer">중단</button>
-      </div>`;
-    document.body.appendChild(overlay);
-
-    const setStatus = (cur, tot, ok, fail) => {
-      const pct = tot > 0 ? Math.round(cur / tot * 100) : 0;
-      document.getElementById('api-sync-bar').style.width = pct + '%';
-      document.getElementById('api-sync-status').textContent = `${cur} / ${tot} 처리 중... (${pct}%)`;
-      if (ok + fail > 0) document.getElementById('api-sync-result').textContent = `✅ ${ok}건 갱신 · ⚠️ ${fail}건 실패`;
-    };
-
-    try {
-      let all = [], offset = 0;
-      while (true) {
-        const { data } = await db.from('site_elevators')
-          .select('id,elevator_number')
-          .not('elevator_number', 'is', null)
-          .range(offset, offset + 999);
-        if (!data || data.length === 0) break;
-        all = all.concat(data);
-        if (data.length < 1000) break;
-        offset += 1000;
-      }
-
-      const total = all.length;
-      let ok = 0, fail = 0;
-      const fmtDate = (v) => {
-        if (!v) return null;
-        if (/^\d{8}$/.test(v)) return v.slice(0,4)+'-'+v.slice(4,6)+'-'+v.slice(6,8);
-        return v;
-      };
-
-      for (let i = 0; i < total; i++) {
-        if (_apiSyncCancelled) break;
-        setStatus(i, total, ok, fail);
-        const el = all[i];
-        const no = el.elevator_number.replace(/-/g, '');
-        try {
-          const res = await fetch(`${SUPABASE_URL}/functions/v1/elevator-info?elevator_no=${no}`, {
-            headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` }
-          });
-          const json = await res.json();
-          if (json.item) {
-            const d = json.item;
-            const update = {};
-            if (d.elvtrModel)                  update.elevator_model         = d.elvtrModel;
-            if (fmtDate(d.applcEnDt))          update.inspection_due_date    = fmtDate(d.applcEnDt);
-            if (d.resultNm)                    update.last_inspection_result = d.resultNm;
-            if (fmtDate(d.frstInstallationDe)) update.install_date           = fmtDate(d.frstInstallationDe);
-            if (Object.keys(update).length > 0) {
-              await db.from('site_elevators').update(update).eq('id', el.id);
-            }
-            ok++;
-          } else {
-            fail++;
-          }
-        } catch(e) {
-          fail++;
-        }
-        await new Promise(r => setTimeout(r, 80));
-      }
-
-      setStatus(total, total, ok, fail);
-      document.getElementById('api-sync-status').textContent = _apiSyncCancelled ? '중단됨' : '완료!';
-      showToast(`✅ API 갱신 완료: ${ok}건 갱신, ${fail}건 실패`);
-      loadMgmt();
-    } catch(e) {
-      showToast('❌ 갱신 중 오류 발생');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = '📡 전체 API 갱신';
-      setTimeout(() => { overlay.remove(); }, 2500);
     }
   }
 
