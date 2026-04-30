@@ -104,6 +104,11 @@
     .filter-btn { padding: 7px 18px; border: 1.5px solid var(--br-mid); background: var(--bg-card); border-radius: 20px; font-size: 13px; font-family: inherit; color: var(--tx-3); cursor: pointer; font-weight: 500; transition: all 0.2s; }
     .filter-btn:hover { border-color: var(--tx-5); color: var(--tx); }
     .filter-btn.active { background: var(--btn-bg); border-color: var(--tx-head); color: var(--btn-tx); font-weight: 700; }
+    .mgmt-fopt { padding: 10px 16px; font-size: 13px; font-family: inherit; color: var(--tx-2); cursor: pointer; transition: background 0.15s; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .mgmt-fopt:hover { background: var(--bg-high); color: var(--tx); }
+    .mgmt-fopt.active { color: var(--tx-head); font-weight: 700; background: var(--bg-high); }
+    .mgmt-fopt .fopt-badge { background: #e53e3e; color: #fff; border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 700; }
+    .mgmt-fopt .fopt-badge.yellow { background: #d69e2e; }
     .search-input { margin-left: auto; padding: 7px 14px; border: 1.5px solid var(--br-mid); border-radius: 20px; font-size: 13px; font-family: inherit; width: 220px; background: var(--bg-card); color: var(--tx); }
     .search-input:focus { outline: none; border-color: var(--tx-5); }
 
@@ -922,12 +927,18 @@
         <button class="btn-add-site" id="btn-add-mgmt" onclick="showAddMgmtModal()" style="display:none">+ 현장 추가</button>
       </h2>
       <div class="filters" style="margin-bottom:16px">
-        <select id="mgmt-filter-select" onchange="setMgmtFilter(this.value)" style="padding:7px 14px;border:1.5px solid #333;border-radius:20px;font-size:13px;font-family:inherit;color:var(--tx);background:var(--bg-card);cursor:pointer;appearance:none;-webkit-appearance:none;padding-right:30px;background-image:url(\"data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Ctext x='0' y='10' font-size='10' fill='%23888888'%3E%E2%96%BC%3C/text%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 10px center;background-size:12px">
-          <option value="all">전체</option>
-          <option value="expire" id="mgmt-opt-expire">⚠️ 계약만료</option>
-          <option value="insp_expire" id="mgmt-opt-insp-expire">🔍 검사만료</option>
-          <option value="defect" id="mgmt-opt-defect">🏗️ 하자</option>
-        </select>
+        <div id="mgmt-filter-dropdown" style="position:relative;display:inline-block">
+          <button onclick="toggleMgmtFilterDropdown(event)" style="display:flex;align-items:center;gap:8px;padding:7px 14px;border:1.5px solid var(--br-mid);border-radius:20px;font-size:13px;font-family:inherit;color:var(--tx);background:var(--bg-card);cursor:pointer;white-space:nowrap;min-width:110px;justify-content:space-between">
+            <span id="mgmt-filter-label">전체</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="flex-shrink:0;transition:transform 0.2s" id="mgmt-filter-arrow"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div id="mgmt-filter-menu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;min-width:180px;background:var(--bg-card);border:1.5px solid var(--br-mid);border-radius:12px;box-shadow:0 8px 24px var(--sh2);z-index:300;overflow:hidden">
+            <div class="mgmt-fopt active" data-val="all" onclick="selectMgmtFilter('all')">전체</div>
+            <div class="mgmt-fopt" id="mgmt-opt-expire" data-val="expire" onclick="selectMgmtFilter('expire')">⚠️ 계약만료</div>
+            <div class="mgmt-fopt" id="mgmt-opt-insp-expire" data-val="insp_expire" onclick="selectMgmtFilter('insp_expire')">🔍 검사만료</div>
+            <div class="mgmt-fopt" id="mgmt-opt-defect" data-val="defect" onclick="selectMgmtFilter('defect')">🏗️ 하자</div>
+          </div>
+        </div>
         <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span id="mgmt-total-stats" style="font-size:15px;color:#e2e8f0;white-space:nowrap"></span>
           <select id="mgmt-team-filter" onchange="renderMgmtList()" style="padding:7px 12px;border:1.5px solid #333;border-radius:20px;font-size:13px;font-family:inherit;color:#e2e8f0;background:#1a1a1a;cursor:pointer">
@@ -3794,6 +3805,30 @@
     loadMgmt();
   }
 
+  function toggleMgmtFilterDropdown(e) {
+    e.stopPropagation();
+    const menu = document.getElementById('mgmt-filter-menu');
+    const arrow = document.getElementById('mgmt-filter-arrow');
+    const open = menu.style.display === 'none';
+    menu.style.display = open ? 'block' : 'none';
+    if (arrow) arrow.style.transform = open ? 'rotate(180deg)' : '';
+  }
+
+  document.addEventListener('click', () => {
+    const menu = document.getElementById('mgmt-filter-menu');
+    const arrow = document.getElementById('mgmt-filter-arrow');
+    if (menu) menu.style.display = 'none';
+    if (arrow) arrow.style.transform = '';
+  });
+
+  const MGMT_FILTER_LABELS = { all: '전체', expire: '⚠️ 계약만료', insp_expire: '🔍 검사만료', defect: '🏗️ 하자' };
+
+  function selectMgmtFilter(type) {
+    document.getElementById('mgmt-filter-menu').style.display = 'none';
+    document.getElementById('mgmt-filter-arrow').style.transform = '';
+    setMgmtFilter(type);
+  }
+
   function setMgmtFilter(type) {
     mgmtFilter = type;
     if (type !== 'expire') {
@@ -3804,8 +3839,11 @@
       const searchEl = document.getElementById('mgmt-search');
       if (searchEl) searchEl.value = '';
     }
-    const sel = document.getElementById('mgmt-filter-select');
-    if (sel) sel.value = type;
+    const label = document.getElementById('mgmt-filter-label');
+    if (label) label.textContent = MGMT_FILTER_LABELS[type] || '전체';
+    document.querySelectorAll('.mgmt-fopt').forEach(el => {
+      el.classList.toggle('active', el.dataset.val === type);
+    });
     renderMgmtList();
   }
 
@@ -3846,12 +3884,8 @@
     // 계약만료 건수 업데이트 (만료됨 + 이번달 만료)
     const expireCount = mgmtData.filter(m => isAlreadyExpired(m.contract_end) || isExpireThisMonth(m.contract_end)).length;
     const optExpire = document.getElementById('mgmt-opt-expire');
-    if (optExpire) optExpire.textContent = expireCount > 0 ? `⚠️ 계약만료 (${expireCount})` : '⚠️ 계약만료';
-    const badge2 = null; // 드롭다운으로 대체
+    if (optExpire) optExpire.innerHTML = `⚠️ 계약만료${expireCount > 0 ? ` <span class="fopt-badge">${expireCount}</span>` : ''}`;
     if (false) {
-      if (badge2) { badge2.textContent = expireCount; badge2.style.display = ''; }
-    } else {
-      if (badge2) badge2.style.display = 'none';
     }
 
     if (mgmtFilter === 'expire') {
@@ -3866,10 +3900,10 @@
     // 검사만료 건수 배지
     const inspCount = mgmtData.filter(m => m.insp_expired > 0 || m.insp_soon > 0).length;
     const optInsp = document.getElementById('mgmt-opt-insp-expire');
-    if (optInsp) optInsp.textContent = inspCount > 0 ? `🔍 검사만료 (${inspCount})` : '🔍 검사만료';
+    if (optInsp) optInsp.innerHTML = `🔍 검사만료${inspCount > 0 ? ` <span class="fopt-badge">${inspCount}</span>` : ''}`;
     const defectSiteCount = mgmtData.filter(m => m.defect_count > 0).length;
     const optDefect = document.getElementById('mgmt-opt-defect');
-    if (optDefect) optDefect.textContent = defectSiteCount > 0 ? `🏗️ 하자 (${defectSiteCount})` : '🏗️ 하자';
+    if (optDefect) optDefect.innerHTML = `🏗️ 하자${defectSiteCount > 0 ? ` <span class="fopt-badge yellow">${defectSiteCount}</span>` : ''}`;
 
 
     // 필터 적용 후 현장수 / 대수 표시
