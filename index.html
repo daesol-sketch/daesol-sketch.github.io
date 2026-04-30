@@ -1590,6 +1590,15 @@
         <input type="text" class="modal-input normal" id="mgmt-elevator-address" placeholder="주소" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
       </div>
       <div>
+        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">현장 유형</label>
+        <select class="modal-input normal" id="mgmt-site-type" style="margin-bottom:0;letter-spacing:0" onkeydown="mgmtEnterNext(event,this)">
+          <option value="">일반</option>
+          <option value="무상">무상</option>
+          <option value="하자">하자</option>
+          <option value="상실">상실</option>
+        </select>
+      </div>
+      <div>
         <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">계약 구분 <span style="color:#e53e3e">*</span></label>
         <select class="modal-input normal" id="mgmt-contract-type" style="margin-bottom:0;letter-spacing:0" onkeydown="mgmtEnterNext(event,this)">
           <option value="">-- 선택 --</option>
@@ -3698,6 +3707,7 @@
         '현장명': m.site_name || '',
         '호기명': unitName,
         '승강기번호': elevNo,
+        '현장유형': m.site_type || '',
         '계약구분': m.contract_type || '',
         '계약일자': m.contract_date || '',
         '계약시작': m.contract_start || '',
@@ -3873,7 +3883,7 @@
         return `<tr style="cursor:pointer" class="${rowClass}" onclick="showMgmtDetail(${m.id})">
         ${showCheck ? `<td onclick="event.stopPropagation()" style="text-align:center"><input type="checkbox" class="mgmt-row-check" data-id="${m.id}" onchange="handleMgmtCheck(${m.id},this.checked)" ${selectedMgmtIds.has(m.id)?'checked':''} /></td>` : ''}
         <td>${i+1}</td>
-        <td><strong>${escHtml(m.site_name||'')}</strong></td>
+        <td><strong style="${m.site_type==='상실'?'color:#e53e3e':''}">${escHtml(m.site_name||'')}</strong>${m.site_type==='무상'?` <span style="background:#c6f6d5;color:#276749;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">무상</span>`:m.site_type==='하자'?` <span style="background:#fefcbf;color:#744210;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">하자</span>`:''}</td>
         <td style="text-align:center">${m.elev_count > 0 ? `<span style="background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:700">${m.elev_count}대</span>` : '<span style="color:#a0aec0;font-size:12px">-</span>'}</td>
         <td><span style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;border-radius:12px;padding:2px 8px;font-size:11px;white-space:nowrap">${escHtml(m.contract_type||'-')}</span></td>
         <td>${escHtml(m.main_inspector||'-')}</td>
@@ -3902,6 +3912,7 @@
     const epKeys = ['emergency_phone','emergency_phone2','emergency_phone3','emergency_phone4','emergency_phone5','emergency_phone6','emergency_phone7','emergency_phone8','emergency_phone9','emergency_phone10'];
     const epEntries = epKeys.map(k => m[k] || '').filter(Boolean);
     const fields = [
+      ...(m.site_type ? [['현장유형', m.site_type]] : []),
       ['계약구분', m.contract_type], ['주점검자', m.main_inspector], ['보조점검자', m.sub_inspector],
       ['계약일자', m.contract_date], ['계약시작', m.contract_start], ['계약만료', m.contract_end],
       ['현장전화', m.site_phone], ['현장연락처2', m.site_phone2],
@@ -4337,7 +4348,7 @@
   }
 
   const MGMT_FIELD_ORDER = [
-    'mgmt-name','mgmt-elevator-address','mgmt-contract-type','mgmt-contract-date','mgmt-contract-start','mgmt-contract-end',
+    'mgmt-name','mgmt-elevator-address','mgmt-site-type','mgmt-contract-type','mgmt-contract-date','mgmt-contract-start','mgmt-contract-end',
     'mgmt-main-inspector','mgmt-sub-inspector','mgmt-site-phone','mgmt-site-phone2',
     'mgmt-fax','mgmt-manager-email','mgmt-notes'
   ];
@@ -4425,7 +4436,7 @@
   function showAddMgmtModal() {
     editingMgmtId = null;
     document.getElementById('mgmt-modal-title').textContent = '현장 추가';
-    ['mgmt-name','mgmt-contract-type','mgmt-contract-date','mgmt-contract-start','mgmt-contract-end',
+    ['mgmt-name','mgmt-site-type','mgmt-contract-type','mgmt-contract-date','mgmt-contract-start','mgmt-contract-end',
      'mgmt-main-inspector','mgmt-sub-inspector','mgmt-site-phone','mgmt-site-phone2','mgmt-fax',
      'mgmt-manager-email','mgmt-elevator-address','mgmt-notes'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';
@@ -4444,6 +4455,7 @@
     editingMgmtId = id;
     document.getElementById('mgmt-modal-title').textContent = '현장 수정';
     document.getElementById('mgmt-name').value = m.site_name || '';
+    document.getElementById('mgmt-site-type').value = m.site_type || '';
     document.getElementById('mgmt-contract-type').value = m.contract_type || '';
     document.getElementById('mgmt-contract-date').value = m.contract_date || '';
     document.getElementById('mgmt-contract-date-picker').value = m.contract_date || '';
@@ -4478,6 +4490,7 @@
 
     const payload = {
       site_name:         name,
+      site_type:         document.getElementById('mgmt-site-type').value || null,
       contract_type:     ctype,
       contract_date:     document.getElementById('mgmt-contract-date').value || null,
       contract_start:    document.getElementById('mgmt-contract-start').value.trim() || null,
