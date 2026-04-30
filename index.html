@@ -7243,10 +7243,10 @@
       const t = 437 + i * 25;
       const supply = (p.price||0) * (p.qty||0);
       partsHtml += field(18,  t, 105, 25, esc(p.part_no||''), 'justify-content:center')
-        + field(113, t+3, 230, 25, esc(p.name||''))
+        + field(108, t+5, 230, 25, esc(p.name||''))
         + field(353, t,  90, 25, esc(p.spec||''), 'justify-content:center')
-        + field(447, t+3,  58, 25, String(p.qty||''), 'justify-content:center')
-        + field(501, t+3, 155, 25, (supply ? supply.toLocaleString() : ''), 'justify-content:flex-end;padding-right:3px')
+        + field(451, t+5,  58, 25, String(p.qty||''), 'justify-content:center')
+        + field(496, t+5, 155, 25, (supply ? supply.toLocaleString() : ''), 'justify-content:flex-end;padding-right:3px')
         + field(656, t, 120, 25, esc(p.dong_ho||''), 'justify-content:center');
     }
 
@@ -7272,7 +7272,7 @@
       + field(181, 362,  30, 22, fmtMin(d.completed_at),  'justify-content:center')
       + field(598, 382,  28, 22, chk(d.normal_after_work===true),  'justify-content:center;font-size:16px;font-weight:900')
       + field(648, 382,  28, 22, chk(d.normal_after_work===false), 'justify-content:center;font-size:16px;font-weight:900')
-      + field(43,  395,  28, 20, chk(d.parts_free===false), 'justify-content:center;font-size:16px;font-weight:900')
+      + field(51,  392,  28, 20, chk(d.parts_free===false), 'justify-content:center;font-size:16px;font-weight:900')
       + field(98,  410,  28, 20, chk(d.parts_free===true),  'justify-content:center;font-size:16px;font-weight:900')
       + partsHtml
       + field(108, 562, 170, 25, (totalSupply ? totalSupply.toLocaleString()+'원' : ''), 'justify-content:flex-end;padding-right:3px')
