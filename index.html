@@ -2974,6 +2974,14 @@
     const btn = document.getElementById('submit-btn');
     btn.disabled = true; btn.textContent = '접수 중...';
     try {
+      const building = document.getElementById('f-building').value.trim();
+      if (SITES.length === 0) await loadSiteNames();
+      if (!SITES.includes(building)) {
+        document.getElementById('f-building').style.borderColor = '#e53e3e';
+        showToast('⚠️ 등록되지 않은 현장명입니다. 목록에서 선택해 주세요.');
+        btn.disabled = false; btn.textContent = '✅ 신고 접수하기';
+        return;
+      }
       const id = await generateId();
       const selectedTeam = document.getElementById('f-team')?.value || null;
       let assignedHandler = null;
@@ -5825,15 +5833,22 @@
   let acMatches = [];
   function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  function acInput(inp) {
+  async function acInput(inp) {
+    if (SITES.length === 0) await loadSiteNames();
     const q = inp.value.trim().toLowerCase(), dd = document.getElementById('ac-dropdown');
-    if (!q) { dd.style.display='none'; acMatches=[]; resetElevatorInput(); return; }
+    if (!q) { dd.style.display='none'; acMatches=[]; resetElevatorInput(); inp.style.borderColor=''; return; }
     acMatches = SITES.filter(s => s.toLowerCase().includes(q));
-    if (!acMatches.length) { dd.style.display='none'; return; }
+    if (!acMatches.length) {
+      dd.style.display='none';
+      inp.style.borderColor = '#e53e3e';
+      return;
+    }
+    inp.style.borderColor = '';
     dd.innerHTML = acMatches.map((s,i) => { const sl=s.toLowerCase(),idx=sl.indexOf(q); return `<div class="ac-item" data-i="${i}" onmousedown="acPick(${i})">${escHtml(s.slice(0,idx))}<mark>${escHtml(s.slice(idx,idx+q.length))}</mark>${escHtml(s.slice(idx+q.length))}</div>`; }).join('') + `<div class="ac-count">총 ${acMatches.length}건</div>`;
     dd.style.display='block';
   }
-  function acToggleAll() {
+  async function acToggleAll() {
+    if (SITES.length === 0) await loadSiteNames();
     const dd=document.getElementById('ac-dropdown');
     if (dd.style.display!=='none'){dd.style.display='none';return;}
     acMatches=[...SITES];
@@ -5842,7 +5857,9 @@
   }
   function acPick(i){
     const name = acMatches[i];
-    document.getElementById('f-building').value = name;
+    const inp = document.getElementById('f-building');
+    inp.value = name;
+    inp.style.borderColor = '';
     document.getElementById('ac-dropdown').style.display = 'none';
     acMatches = [];
     loadElevatorsForSite(name);
