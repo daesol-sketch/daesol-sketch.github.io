@@ -922,10 +922,12 @@
         <button class="btn-add-site" id="btn-add-mgmt" onclick="showAddMgmtModal()" style="display:none">+ 현장 추가</button>
       </h2>
       <div class="filters" style="margin-bottom:16px">
-        <button class="filter-btn active" id="mgmt-filter-all" onclick="setMgmtFilter('all',this)">전체</button>
-        <button class="filter-btn" id="mgmt-filter-expire" onclick="setMgmtFilter('expire',this)">⚠️ 계약만료 <span id="mgmt-expire-badge2" style="background:#e53e3e;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;display:none"></span></button>
-        <button class="filter-btn" id="mgmt-filter-insp-expire" onclick="setMgmtFilter('insp_expire',this)">🔍 검사만료 <span id="mgmt-insp-expire-badge" style="background:#e53e3e;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;display:none"></span></button>
-        <button class="filter-btn" id="mgmt-filter-defect" onclick="setMgmtFilter('defect',this)">🏗️ 하자 <span id="mgmt-defect-badge" style="background:#d69e2e;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;display:none"></span></button>
+        <select id="mgmt-filter-select" onchange="setMgmtFilter(this.value)" style="padding:7px 14px;border:1.5px solid #333;border-radius:20px;font-size:13px;font-family:inherit;color:var(--tx);background:var(--bg-card);cursor:pointer;appearance:none;-webkit-appearance:none;padding-right:30px;background-image:url(\"data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Ctext x='0' y='10' font-size='10' fill='%23888888'%3E%E2%96%BC%3C/text%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 10px center;background-size:12px">
+          <option value="all">전체</option>
+          <option value="expire" id="mgmt-opt-expire">⚠️ 계약만료</option>
+          <option value="insp_expire" id="mgmt-opt-insp-expire">🔍 검사만료</option>
+          <option value="defect" id="mgmt-opt-defect">🏗️ 하자</option>
+        </select>
         <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span id="mgmt-total-stats" style="font-size:15px;color:#e2e8f0;white-space:nowrap"></span>
           <select id="mgmt-team-filter" onchange="renderMgmtList()" style="padding:7px 12px;border:1.5px solid #333;border-radius:20px;font-size:13px;font-family:inherit;color:#e2e8f0;background:#1a1a1a;cursor:pointer">
@@ -3792,7 +3794,7 @@
     loadMgmt();
   }
 
-  function setMgmtFilter(type, btn) {
+  function setMgmtFilter(type) {
     mgmtFilter = type;
     if (type !== 'expire') {
       selectedMgmtIds.clear();
@@ -3802,8 +3804,8 @@
       const searchEl = document.getElementById('mgmt-search');
       if (searchEl) searchEl.value = '';
     }
-    document.querySelectorAll('#mgmt-filter-all,#mgmt-filter-expire,#mgmt-filter-insp-expire').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    const sel = document.getElementById('mgmt-filter-select');
+    if (sel) sel.value = type;
     renderMgmtList();
   }
 
@@ -3843,8 +3845,10 @@
 
     // 계약만료 건수 업데이트 (만료됨 + 이번달 만료)
     const expireCount = mgmtData.filter(m => isAlreadyExpired(m.contract_end) || isExpireThisMonth(m.contract_end)).length;
-    const badge2 = document.getElementById('mgmt-expire-badge2');
-    if (expireCount > 0) {
+    const optExpire = document.getElementById('mgmt-opt-expire');
+    if (optExpire) optExpire.textContent = expireCount > 0 ? `⚠️ 계약만료 (${expireCount})` : '⚠️ 계약만료';
+    const badge2 = null; // 드롭다운으로 대체
+    if (false) {
       if (badge2) { badge2.textContent = expireCount; badge2.style.display = ''; }
     } else {
       if (badge2) badge2.style.display = 'none';
@@ -3861,17 +3865,11 @@
     }
     // 검사만료 건수 배지
     const inspCount = mgmtData.filter(m => m.insp_expired > 0 || m.insp_soon > 0).length;
-    const inspBadge = document.getElementById('mgmt-insp-expire-badge');
-    if (inspBadge) {
-      if (inspCount > 0) { inspBadge.textContent = inspCount; inspBadge.style.display = ''; }
-      else { inspBadge.style.display = 'none'; }
-    }
-    const defectCount = mgmtData.filter(m => m.defect_count > 0).length;
-    const defectBadge = document.getElementById('mgmt-defect-badge');
-    if (defectBadge) {
-      if (defectCount > 0) { defectBadge.textContent = defectCount; defectBadge.style.display = ''; }
-      else { defectBadge.style.display = 'none'; }
-    }
+    const optInsp = document.getElementById('mgmt-opt-insp-expire');
+    if (optInsp) optInsp.textContent = inspCount > 0 ? `🔍 검사만료 (${inspCount})` : '🔍 검사만료';
+    const defectSiteCount = mgmtData.filter(m => m.defect_count > 0).length;
+    const optDefect = document.getElementById('mgmt-opt-defect');
+    if (optDefect) optDefect.textContent = defectSiteCount > 0 ? `🏗️ 하자 (${defectSiteCount})` : '🏗️ 하자';
 
 
     // 필터 적용 후 현장수 / 대수 표시
