@@ -925,6 +925,7 @@
         <button class="filter-btn active" id="mgmt-filter-all" onclick="setMgmtFilter('all',this)">전체</button>
         <button class="filter-btn" id="mgmt-filter-expire" onclick="setMgmtFilter('expire',this)">⚠️ 계약만료 <span id="mgmt-expire-badge2" style="background:#e53e3e;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;display:none"></span></button>
         <button class="filter-btn" id="mgmt-filter-insp-expire" onclick="setMgmtFilter('insp_expire',this)">🔍 검사만료 <span id="mgmt-insp-expire-badge" style="background:#e53e3e;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;display:none"></span></button>
+        <button class="filter-btn" id="mgmt-filter-defect" onclick="setMgmtFilter('defect',this)">🏗️ 하자 <span id="mgmt-defect-badge" style="background:#d69e2e;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;display:none"></span></button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span id="mgmt-total-stats" style="font-size:15px;color:#e2e8f0;white-space:nowrap"></span>
           <select id="mgmt-team-filter" onchange="renderMgmtList()" style="padding:7px 12px;border:1.5px solid #333;border-radius:20px;font-size:13px;font-family:inherit;color:#e2e8f0;background:#1a1a1a;cursor:pointer">
@@ -3855,12 +3856,21 @@
     if (mgmtFilter === 'insp_expire') {
       list = list.filter(m => m.insp_expired > 0 || m.insp_soon > 0);
     }
+    if (mgmtFilter === 'defect') {
+      list = list.filter(m => m.defect_count > 0);
+    }
     // 검사만료 건수 배지
     const inspCount = mgmtData.filter(m => m.insp_expired > 0 || m.insp_soon > 0).length;
     const inspBadge = document.getElementById('mgmt-insp-expire-badge');
     if (inspBadge) {
       if (inspCount > 0) { inspBadge.textContent = inspCount; inspBadge.style.display = ''; }
       else { inspBadge.style.display = 'none'; }
+    }
+    const defectCount = mgmtData.filter(m => m.defect_count > 0).length;
+    const defectBadge = document.getElementById('mgmt-defect-badge');
+    if (defectBadge) {
+      if (defectCount > 0) { defectBadge.textContent = defectCount; defectBadge.style.display = ''; }
+      else { defectBadge.style.display = 'none'; }
     }
 
 
