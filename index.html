@@ -1588,7 +1588,7 @@
     <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">호기명 <span style="color:#e53e3e">*</span></label>
     <input type="text" class="modal-input normal" id="elev-unit-name" placeholder="예: 1호기, B동 2호기" style="margin-bottom:10px" />
     <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">승강기번호</label>
-    <input type="text" class="modal-input normal" id="elev-number" placeholder="예: 2134-859" maxlength="8" style="margin-bottom:10px" oninput="autoFormatElevNum(this)" onblur="autoFillElevModelSingle(this.value)" />
+    <input type="text" class="modal-input normal" id="elev-number" placeholder="예: 2134859" maxlength="7" style="margin-bottom:10px" onblur="autoFillElevModelSingle(this.value)" />
     <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">엘리베이터 모델</label>
     <input type="text" class="modal-input normal" id="elev-model" placeholder="모델명" style="margin-bottom:10px" />
     <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">비고</label>
@@ -3441,13 +3441,6 @@
     showToast('✅ 비밀번호가 변경되었습니다.');
   }
 
-  /* ── 승강기번호 자동 포맷 (0000-000) ── */
-  function autoFormatElevNum(input) {
-    let v = input.value.replace(/[^0-9]/g, '').slice(0, 7);
-    if (v.length > 4) v = v.slice(0, 4) + '-' + v.slice(4);
-    input.value = v;
-  }
-
   /* ── 전화번호 자동 포맷 ── */
   function autoFormatPhone(input) {
     let v = input.value.replace(/[^0-9]/g, '');
@@ -3552,7 +3545,7 @@
       return;
     }
     const inp = (v,ph,cb) => `<input type="text" value="${escHtml(v||'')}" placeholder="${ph}" oninput="${cb}" style="width:100%;padding:5px 7px;border:1.5px solid #cbd5e0;border-radius:6px;font-size:12px;font-family:inherit" />`;
-    const inpElev = (v,i) => `<input type="text" value="${escHtml(v||'')}" placeholder="2134-859" maxlength="8" oninput="autoFormatElevNum(this);pendingElevators[${i}].elevator_number=this.value" onblur="autoFillElevModel(${i},this.value)" style="width:100%;padding:5px 7px;border:1.5px solid #cbd5e0;border-radius:6px;font-size:12px;font-family:inherit" />`;
+    const inpElev = (v,i) => `<input type="text" value="${escHtml(v||'')}" placeholder="2134859" maxlength="7" oninput="pendingElevators[${i}].elevator_number=this.value" onblur="autoFillElevModel(${i},this.value)" style="width:100%;padding:5px 7px;border:1.5px solid #cbd5e0;border-radius:6px;font-size:12px;font-family:inherit" />`;
     container.innerHTML = `<table style="width:100%;border-collapse:collapse">
       <thead><tr style="background:#f7fafc">
         <th style="padding:6px 8px;font-size:12px;font-weight:700;color:#4a5568;text-align:left;border-bottom:1.5px solid #e2e8f0;white-space:nowrap">호기명 *</th>
@@ -7235,15 +7228,15 @@
 
     return '<div style="position:relative;width:794px">'
       + '<img src="data:image/png;base64,' + TKE_FORM_B64 + '" style="width:794px;display:block" />'
-      + field(109, 135, 365, 22, esc(d.site_name||''))
+      + field(109, 135, 365, 22, esc(d.site_name||''))
       + field(109, 159, 150, 22, esc(d.inspector||''))
-      + field(131, 217,  88, 22, esc(d.elevator||''))
-      + field(279, 217,  30, 22, fmtHour(d.received_at), 'justify-content:center')
-      + field(313, 217,  30, 22, fmtMin(d.received_at),  'justify-content:center')
-      + field(451, 217,  30, 22, fmtHour(d.arrived_at),  'justify-content:center')
-      + field(485, 217,  30, 22, fmtMin(d.arrived_at),   'justify-content:center')
-      + field(649, 217,  30, 22, fmtHour(d.rescued_at),  'justify-content:center')
-      + field(683, 217,  30, 22, fmtMin(d.rescued_at),   'justify-content:center')
+      + field(141, 217,  88, 22, esc(d.elevator||''))
+      + field(289, 217,  30, 22, fmtHour(d.received_at), 'justify-content:center')
+      + field(323, 217,  30, 22, fmtMin(d.received_at),  'justify-content:center')
+      + field(461, 217,  30, 22, fmtHour(d.arrived_at),  'justify-content:center')
+      + field(495, 217,  30, 22, fmtMin(d.arrived_at),   'justify-content:center')
+      + field(659, 217,  30, 22, fmtHour(d.rescued_at),  'justify-content:center')
+      + field(693, 217,  30, 22, fmtMin(d.rescued_at),   'justify-content:center')
       + field(228, 252,  28, 20, chk(d.passenger_trapped===true),  'justify-content:center;font-size:16px;font-weight:900')
       + field(278, 252,  28, 20, chk(d.passenger_trapped===false), 'justify-content:center;font-size:16px;font-weight:900')
       + field(598, 252,  28, 20, chk(d.normal_on_arrival===true),  'justify-content:center;font-size:16px;font-weight:900')
