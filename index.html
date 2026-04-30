@@ -3873,7 +3873,7 @@
         return `<tr style="cursor:pointer" class="${rowClass}" onclick="showMgmtDetail(${m.id})">
         ${showCheck ? `<td onclick="event.stopPropagation()" style="text-align:center"><input type="checkbox" class="mgmt-row-check" data-id="${m.id}" onchange="handleMgmtCheck(${m.id},this.checked)" ${selectedMgmtIds.has(m.id)?'checked':''} /></td>` : ''}
         <td>${i+1}</td>
-        <td><strong>${escHtml(m.site_name||'')}</strong>${m.insp_expired > 0 ? ` <span style="background:#e53e3e;color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">검사만료 ${m.insp_expired}대</span>` : m.insp_soon > 0 ? ` <span style="background:#dd6b20;color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">만료임박 ${m.insp_soon}대</span>` : ''}</td>
+        <td><strong>${escHtml(m.site_name||'')}</strong></td>
         <td style="text-align:center">${m.elev_count > 0 ? `<span style="background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:700">${m.elev_count}대</span>` : '<span style="color:#a0aec0;font-size:12px">-</span>'}</td>
         <td><span style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;border-radius:12px;padding:2px 8px;font-size:11px;white-space:nowrap">${escHtml(m.contract_type||'-')}</span></td>
         <td>${escHtml(m.main_inspector||'-')}</td>
@@ -6686,6 +6686,46 @@
     _docketStaffList = data || [];
   }
 
+
+  async function previewDocket(id) {
+    const { data: d, error } = await db.from('service_dockets').select('*').eq('id', id).single();
+    if (error || !d) { showToast('❌ 불러오기 실패'); return; }
+
+    const isTKE = d.type === 'TKE';
+    const html = isTKE ? buildTKEDocketHTML(d) : buildDaesolDocketHTML(d);
+
+    let overlay = document.getElementById('docket-preview-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'docket-preview-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;overflow-y:auto';
+      document.body.appendChild(overlay);
+    }
+
+    const editBtnHtml = currentRole === '마스터'
+      ? `<button onclick="closeDocketPreview();openDocketModal('${id}')" style="padding:8px 20px;background:#4a5568;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">편집</button>`
+      : '';
+
+    overlay.innerHTML = `
+      <div style="position:sticky;top:0;z-index:1;width:100%;background:rgba(0,0,0,0.9);display:flex;justify-content:space-between;align-items:center;padding:10px 20px;box-sizing:border-box;gap:12px">
+        <span style="color:#fff;font-size:15px;font-weight:700">${d.site_name || ''} ${d.elevator ? '· ' + d.elevator : ''} 서비스다켓</span>
+        <div style="display:flex;gap:10px;align-items:center">
+          ${editBtnHtml}
+          <button onclick="generateDocketPDF(window._previewDocketData)" style="padding:8px 20px;background:#276749;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">PDF 저장</button>
+          <button onclick="closeDocketPreview()" style="padding:8px 16px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">✕ 닫기</button>
+        </div>
+      </div>
+      <div style="margin:20px auto;box-shadow:0 4px 32px rgba(0,0,0,0.5)">${html}</div>
+    `;
+    window._previewDocketData = d;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDocketPreview() {
+    const overlay = document.getElementById('docket-preview-overlay');
+    if (overlay) overlay.remove();
+    document.body.style.overflow = '';
+  }
   async function deleteDocket(id) {
     if (!confirm('이 서비스다켓을 삭제하시겠습니까?\n삭제하면 복구할 수 없습니다.')) return;
     const { error } = await db.from('service_dockets').delete().eq('id', id);
@@ -6713,14 +6753,16 @@
     listEl.innerHTML = data.map(d => {
       const dateStr = d.completed_at ? new Date(d.completed_at).toLocaleDateString('ko-KR') : (d.created_at ? new Date(d.created_at).toLocaleDateString('ko-KR') : '-');
       const typeBadge = d.type === 'TKE' ? 'background:#2b6cb0;color:#fff' : 'background:#276749;color:#fff';
+      const editBtn = currentRole === '마스터' ? `<button onclick="event.stopPropagation();openDocketModal('${d.id}')" style="padding:5px 12px;background:#4a5568;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">편집</button>` : '';
       const delBtn = currentRole === '마스터' ? `<button onclick="event.stopPropagation();deleteDocket('${d.id}')" style="padding:5px 12px;background:#e53e3e;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">삭제</button>` : '';
-      return `<div onclick="openDocketModal('${d.id}')" style="background:var(--bg-card);border:1px solid var(--br);border-radius:12px;padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--br-hi)'" onmouseout="this.style.borderColor='var(--br)'">
+      return `<div onclick="previewDocket('${d.id}')" style="background:var(--bg-card);border:1px solid var(--br);border-radius:12px;padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--br-hi)'" onmouseout="this.style.borderColor='var(--br)'">
         <span style="padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;${typeBadge};white-space:nowrap">${d.type}</span>
         <div style="flex:1;min-width:0">
           <div style="font-size:15px;font-weight:700;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.site_name || '현장 미입력'} ${d.elevator ? `· ${d.elevator}` : ''}</div>
           <div style="font-size:12px;color:var(--tx-3);margin-top:3px">${dateStr} · ${d.fault_area || '고장부위 미입력'} · 담당: ${d.inspector || '-'}</div>
         </div>
         <span style="font-size:20px">${d.customer_signature ? '✅' : '⬜'}</span>
+        ${editBtn}
         ${delBtn}
       </div>`;
     }).join('');
@@ -7245,7 +7287,7 @@
     const fmtMonth = (iso) => { if (!iso) return ''; return String(new Date(iso).getMonth()+1).padStart(2,'0'); };
     const fmtDay = (iso) => { if (!iso) return ''; return String(new Date(iso).getDate()).padStart(2,'0'); };
     const esc = (s) => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const chk = (v) => v ? '☑' : '□';
+    const chk = (v) => v ? '✓' : '';
     const parts = d.parts || [];
     const totalSupply = parts.reduce((s,p) => s + (p.price||0)*(p.qty||0), 0);
     const totalVat = Math.round(totalSupply * 0.1);
@@ -7273,20 +7315,20 @@
       + field(601, 119, 147, 25, esc(d.inspector))
       + field(165, 196, 240, 25, fmtDate(d.occurred_at))
       + field(318, 196,  65, 25, esc(d.elevator), 'justify-content:center')
-      + field(510, 196,  28, 25, fmtHour(d.received_at), 'justify-content:center')
+      + field(507, 196,  28, 25, fmtHour(d.received_at), 'justify-content:center')
       + field(528, 196,  28, 25, fmtMin(d.received_at),  'justify-content:center')
-      + field(678, 196,  25, 25, fmtHour(d.arrived_at), 'justify-content:center')
-      + field(710, 196,  25, 25, fmtMin(d.arrived_at),  'justify-content:center')
-      + field(304, 222,  28, 29, chk(d.passenger_trapped===true),  'justify-content:center;font-size:13px')
+      + field(684, 196,  25, 25, fmtHour(d.arrived_at), 'justify-content:center')
+      + field(706, 196,  25, 25, fmtMin(d.arrived_at),  'justify-content:center')
+      + field(354, 222,  28, 29, chk(d.passenger_trapped===true),  'justify-content:center;font-size:13px')
       + field(334, 222,  28, 29, chk(d.passenger_trapped===false), 'justify-content:center;font-size:13px')
       + field(622, 222,  90, 29, fmtTime(d.rescued_at), 'justify-content:center')
       + field(155, 254, 200, 25, esc(d.fault_area))
-      + field(653, 254,  28, 25, chk(d.normal_on_arrival===true),  'justify-content:center;font-size:13px')
+      + field(618, 254,  28, 25, chk(d.normal_on_arrival===true),  'justify-content:center;font-size:13px')
       + field(686, 254,  28, 25, chk(d.normal_on_arrival===false), 'justify-content:center;font-size:13px')
       + field(155, 282, 590, 25, esc(d.fault_cause))
       + field(155, 311, 420, 25, esc(d.repair_content), 'align-items:flex-start;padding-top:3px;white-space:pre-wrap;font-size:9px')
-      + field(675, 311,  25, 25, fmtHour(d.completed_at), 'justify-content:center')
-      + field(735, 311,  25, 25, fmtMin(d.completed_at),  'justify-content:center')
+      + field(684, 311,  25, 25, fmtHour(d.completed_at), 'justify-content:center')
+      + field(706, 311,  25, 25, fmtMin(d.completed_at),  'justify-content:center')
       + field(256, 367,  28, 22, chk(d.parts_free===false), 'justify-content:center;font-size:13px')
       + field(311, 367,  28, 22, chk(d.parts_free===true),  'justify-content:center;font-size:13px')
       + partsHtml
