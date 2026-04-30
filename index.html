@@ -7245,8 +7245,8 @@
       partsHtml += field(18,  t, 105, 25, esc(p.part_no||''), 'justify-content:center')
         + field(108, t+5, 230, 25, esc(p.name||''))
         + field(353, t,  90, 25, esc(p.spec||''), 'justify-content:center')
-        + field(451, t+5,  58, 25, String(p.qty||''), 'justify-content:center')
-        + field(496, t+5, 155, 25, (supply ? supply.toLocaleString() : ''), 'justify-content:flex-end;padding-right:3px')
+        + field(451, t+7,  58, 25, String(p.qty||''), 'justify-content:center')
+        + field(496, t+7, 155, 25, (supply ? supply.toLocaleString() : ''), 'justify-content:flex-end;padding-right:3px')
         + field(656, t, 120, 25, esc(p.dong_ho||''), 'justify-content:center');
     }
 
