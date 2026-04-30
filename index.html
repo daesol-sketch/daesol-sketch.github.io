@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -1222,6 +1222,21 @@
         </select>
       </div>
 
+      <!-- 고객 정보 -->
+      <div style="background:var(--bg-high);border-radius:10px;padding:14px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;color:var(--tx-3);margin-bottom:10px">👤 고객 정보</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--tx-3);display:block;margin-bottom:5px">고객 이름</label>
+            <input id="dk-customer-name" type="text" placeholder="고객 이름" style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:14px;font-family:inherit;color:var(--tx);background:var(--bg-card)" />
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--tx-3);display:block;margin-bottom:5px">고객 연락처</label>
+            <input id="dk-customer-phone" type="tel" placeholder="010-0000-0000" oninput="this.value=this.value.replace(/[^0-9]/g,\`\`).replace(/(^02.{0}|^01.{1}|[0-9]{3})([0-9]+)([0-9]{4})/,`$1-$2-$3`)" maxlength="13" style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:14px;font-family:inherit;color:var(--tx);background:var(--bg-card)" />
+          </div>
+        </div>
+      </div>
+
       <!-- 고객 서명 -->
       <div style="background:var(--bg-high);border-radius:10px;padding:14px;margin-bottom:20px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -1594,7 +1609,6 @@
         <select class="modal-input normal" id="mgmt-site-type" style="margin-bottom:0;letter-spacing:0" onkeydown="mgmtEnterNext(event,this)">
           <option value="">일반</option>
           <option value="무상">무상</option>
-          <option value="하자">하자</option>
           <option value="상실">상실</option>
         </select>
       </div>
@@ -6814,7 +6828,7 @@
       });
       ['dk-occ-hour','dk-recv-hour','dk-arr-hour','dk-resc-hour','dk-comp-hour',
        'dk-occ-min','dk-recv-min','dk-arr-min','dk-resc-min','dk-comp-min'].forEach(id => refreshCselBtn(id));
-      ['dk-fault-area','dk-repair'].forEach(i => { const el = document.getElementById(i); if (el) el.value = ''; });
+      ['dk-fault-area','dk-repair','dk-customer-name','dk-customer-phone'].forEach(i => { const el = document.getElementById(i); if (el) el.value = ''; });
       const fc = document.getElementById('dk-fault-cause'); if (fc) fc.value = '';
       document.getElementById('dk-trapped').checked = false;
       document.getElementById('dk-normal-on-arrival').checked = false;
@@ -6845,6 +6859,8 @@
       document.getElementById('dk-normal-on-arrival').checked = !!d.normal_on_arrival;
       setDocketPartsFree(d.parts_free !== false);
       document.getElementById('dk-inspector').value = d.inspector || '';
+      document.getElementById('dk-customer-name').value = d.customer_name || '';
+      document.getElementById('dk-customer-phone').value = d.customer_phone || '';
       setDocketDateTime('dk-occ', d.occurred_at);
       setDocketDateTime('dk-recv', d.received_at);
       setDocketDateTime('dk-arr', d.arrived_at);
@@ -6977,8 +6993,6 @@
     const canvas = document.getElementById('dk-sig-canvas');
     _docketSigCtx = canvas.getContext('2d');
     _docketSigCtx.clearRect(0, 0, canvas.width, canvas.height);
-    _docketSigCtx.fillStyle = '#ffffff';
-    _docketSigCtx.fillRect(0, 0, canvas.width, canvas.height);
     _docketSigCtx.strokeStyle = '#000';
     _docketSigCtx.lineWidth = 2;
     _docketSigCtx.lineCap = 'round';
@@ -7013,16 +7027,14 @@
     const canvas = document.getElementById('dk-sig-canvas');
     if (!_docketSigCtx) return;
     _docketSigCtx.clearRect(0, 0, canvas.width, canvas.height);
-    _docketSigCtx.fillStyle = '#ffffff';
-    _docketSigCtx.fillRect(0, 0, canvas.width, canvas.height);
-  }
+      }
 
   function isCanvasBlank() {
     const canvas = document.getElementById('dk-sig-canvas');
     const ctx = canvas.getContext('2d');
     const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
     for (let i = 0; i < data.length; i += 4) {
-      if (data[i] < 250 || data[i+1] < 250 || data[i+2] < 250) return false;
+      if (data[i+3] > 10) return false;
     }
     return true;
   }
@@ -7053,6 +7065,8 @@
       parts: getDocketParts(),
       parts_free: document.getElementById('dk-parts-free').value === 'true',
       inspector: document.getElementById('dk-inspector').value || null,
+      customer_name: document.getElementById('dk-customer-name').value || null,
+      customer_phone: document.getElementById('dk-customer-phone').value || null,
       customer_signature: sigData,
       occurred_at: toISO('dk-occ'),
       received_at: toISO('dk-recv'),
@@ -7304,10 +7318,10 @@
     const parts = d.parts || [];
     const totalSupply = parts.reduce((s,p) => s + (p.price||0)*(p.qty||0), 0);
     const totalVat = Math.round(totalSupply * 0.1);
-    const sigImg = d.customer_signature ? '<img src="' + d.customer_signature + '" style="max-height:28px;object-fit:contain" />' : '';
+    const sigImg = d.customer_signature ? '<img src="' + d.customer_signature + '" style="max-height:28px;object-fit:contain;mix-blend-mode:multiply" />' : '';
     const field = (l, t, w, h, content, extra) => {
       const ex = extra || '';
-      return '<div style="position:absolute;left:' + l + 'px;top:' + t + 'px;width:' + w + 'px;height:' + h + 'px;display:flex;align-items:center;font-family:\'맑은 고딕\',sans-serif;font-size:10px;color:#000;overflow:hidden;' + ex + '">' + content + '</div>';
+      return '<div style="position:absolute;left:' + l + 'px;top:' + t + 'px;width:' + w + 'px;height:' + h + 'px;display:flex;align-items:center;font-family:\'맑은 고딕\',sans-serif;font-size:15px;color:#000;overflow:hidden;' + ex + '">' + content + '</div>';
     };
     const approvedAt = d.completed_at || null;
     let partsHtml = '';
@@ -7318,42 +7332,44 @@
       partsHtml += field(59,  t,  69, 29, esc(p.dong_ho||''), 'justify-content:center')
         + field(143, t, 220, 29, esc(p.name||''))
         + field(363, t,  97, 29, esc(p.spec||''), 'justify-content:center')
-        + field(460, t,  62, 29, String(p.qty||''), 'justify-content:center')
-        + field(522, t, 113, 29, (p.price ? p.price.toLocaleString() : ''), 'justify-content:flex-end;padding-right:3px')
+        + field(430, t,  62, 29, String(p.qty||''), 'justify-content:center')
+        + field(494, t, 113, 29, (p.price ? p.price.toLocaleString() : ''), 'justify-content:flex-end;padding-right:3px')
         + field(635, t, 113, 29, (supply ? supply.toLocaleString() : ''), 'justify-content:flex-end;padding-right:3px');
     }
     return '<div style="position:relative;width:794px;height:1122px;overflow:hidden;display:block">'
       + '<img src="data:image/png;base64,' + DAESOL_FORM_B64 + '" style="width:794px;height:1122px;display:block" />'
       + field(155, 119, 440, 25, esc(d.site_name))
       + field(601, 119, 147, 25, esc(d.inspector))
-      + field(165, 196, 240, 25, fmtDate(d.occurred_at))
+      + field(155, 196, 240, 25, fmtDate(d.occurred_at))
       + field(318, 196,  65, 25, esc(d.elevator), 'justify-content:center')
       + field(507, 196,  28, 25, fmtHour(d.received_at), 'justify-content:center')
       + field(528, 196,  28, 25, fmtMin(d.received_at),  'justify-content:center')
       + field(684, 196,  25, 25, fmtHour(d.arrived_at), 'justify-content:center')
       + field(706, 196,  25, 25, fmtMin(d.arrived_at),  'justify-content:center')
-      + field(354, 222,  28, 29, chk(d.passenger_trapped===true),  'justify-content:center;font-size:13px')
-      + field(334, 222,  28, 29, chk(d.passenger_trapped===false), 'justify-content:center;font-size:13px')
-      + field(622, 222,  90, 29, fmtTime(d.rescued_at), 'justify-content:center')
+      + field(407, 219,  28, 29, chk(d.passenger_trapped===true),  'justify-content:center;font-size:16px;font-weight:900')
+      + field(464, 219,  28, 29, chk(d.passenger_trapped===false), 'justify-content:center;font-size:16px;font-weight:900')
+      + field(675, 222,  40, 29, fmtHour(d.rescued_at), 'justify-content:center')
+      + field(699, 222,  40, 29, fmtMin(d.rescued_at),  'justify-content:center')
       + field(155, 254, 200, 25, esc(d.fault_area))
-      + field(618, 254,  28, 25, chk(d.normal_on_arrival===true),  'justify-content:center;font-size:13px')
-      + field(686, 254,  28, 25, chk(d.normal_on_arrival===false), 'justify-content:center;font-size:13px')
+      + field(605, 250,  28, 25, chk(d.normal_on_arrival===true),  'justify-content:center;font-size:16px;font-weight:900')
+      + field(656, 250,  28, 25, chk(d.normal_on_arrival===false), 'justify-content:center;font-size:16px;font-weight:900')
       + field(155, 282, 590, 25, esc(d.fault_cause))
-      + field(155, 311, 420, 25, esc(d.repair_content), 'align-items:flex-start;padding-top:3px;white-space:pre-wrap;font-size:9px')
+      + field(155, 311, 420, 25, esc(d.repair_content), 'align-items:flex-start;padding-top:3px;white-space:pre-wrap;font-size:15px')
       + field(684, 311,  25, 25, fmtHour(d.completed_at), 'justify-content:center')
       + field(706, 311,  25, 25, fmtMin(d.completed_at),  'justify-content:center')
-      + field(256, 367,  28, 22, chk(d.parts_free===false), 'justify-content:center;font-size:13px')
-      + field(311, 367,  28, 22, chk(d.parts_free===true),  'justify-content:center;font-size:13px')
+      + field(225, 347,  28, 22, chk(d.parts_free===false), 'justify-content:center;font-size:16px;font-weight:900')
+      + field(293, 347,  28, 22, chk(d.parts_free===true),  'justify-content:center;font-size:16px;font-weight:900')
       + partsHtml
-      + field(526, 677, 222, 31, (totalSupply ? totalSupply.toLocaleString() : ''), 'justify-content:flex-end;padding-right:3px')
-      + field(526, 708, 222, 31, (totalVat ? totalVat.toLocaleString() : ''), 'justify-content:flex-end;padding-right:3px')
-      + field(526, 739, 222, 27, ((totalSupply+totalVat) ? (totalSupply+totalVat).toLocaleString() : ''), 'justify-content:flex-end;padding-right:3px')
-      + field(242, 829,  69, 27, fmtYear(approvedAt), 'justify-content:center')
-      + field(342, 829,  48, 27, fmtMonth(approvedAt), 'justify-content:center')
-      + field(423, 829,  47, 27, fmtDay(approvedAt), 'justify-content:center')
-      + field(241, 828, 272, 26, esc(d.inspector))
-      + field(285, 848, 296, 24, sigImg, 'align-items:center')
-      + field(225, 928, 257, 40, esc(d.customer_phone||''))
+      + field(526, 647, 222, 31, (totalSupply ? totalSupply.toLocaleString() + '원' : ''), 'justify-content:flex-end;padding-right:3px')
+      + field(526, 678, 222, 31, (totalVat ? totalVat.toLocaleString() + '원' : ''), 'justify-content:flex-end;padding-right:3px')
+      + field(526, 709, 222, 27, ((totalSupply+totalVat) ? (totalSupply+totalVat).toLocaleString() + '원' : ''), 'justify-content:flex-end;padding-right:3px')
+      + field(207, 807,  69, 27, fmtYear(approvedAt), 'justify-content:center')
+      + field(282, 807,  48, 27, fmtMonth(approvedAt), 'justify-content:center')
+      + field(338, 807,  47, 27, fmtDay(approvedAt), 'justify-content:center')
+      + field(243, 841, 272, 26, esc(d.inspector))
+      + field(129, 878, 272, 24, esc(d.customer_name||''), 'align-items:center;justify-content:center')
+      + field(285, 878, 296, 24, sigImg, 'align-items:center')
+      + field(225, 903, 257, 40, esc(d.customer_phone||''))
       + '</div>';
   }
 
@@ -7370,7 +7386,34 @@
     el.innerHTML = isTKE ? buildTKEDocketHTML(d) : buildDaesolDocketHTML(d);
     document.body.appendChild(el);
 
-    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    // 서명 이미지 흰 배경 제거
+    if (d.customer_signature) {
+      const sigImgEl = el.querySelector('img[style*="mix-blend-mode"]');
+      if (sigImgEl) {
+        await new Promise(resolve => {
+          const tmpImg = new Image();
+          tmpImg.onload = () => {
+            const c = document.createElement('canvas');
+            c.width = tmpImg.naturalWidth; c.height = tmpImg.naturalHeight;
+            const ctx = c.getContext('2d');
+            ctx.drawImage(tmpImg, 0, 0);
+            const imgData2 = ctx.getImageData(0, 0, c.width, c.height);
+            const data2 = imgData2.data;
+            for (let i = 0; i < data2.length; i += 4) {
+              if (data2[i] > 200 && data2[i+1] > 200 && data2[i+2] > 200) data2[i+3] = 0;
+            }
+            ctx.putImageData(imgData2, 0, 0);
+            sigImgEl.style.mixBlendMode = '';
+            sigImgEl.src = c.toDataURL('image/png');
+            resolve();
+          };
+          tmpImg.onerror = resolve;
+          tmpImg.src = d.customer_signature;
+        });
+      }
+    }
+
+        const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
     document.body.removeChild(el);
 
     const { jsPDF } = window.jspdf;
