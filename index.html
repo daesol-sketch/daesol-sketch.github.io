@@ -3935,9 +3935,6 @@
       <tbody>${list.map((m,i) => {
         const expired = m.site_type !== '상실' && isAlreadyExpired(m.contract_end);
         const expiresSoon = m.site_type !== '상실' && isExpireThisMonth(m.contract_end);
-        const rowClass = '';
-        const endStyle = expired ? 'font-size:12px;color:#c53030;font-weight:700' : expiresSoon ? 'font-size:12px;color:#c05621;font-weight:700' : 'font-size:12px';
-        const endSuffix = expired ? ' ⚠️' : expiresSoon ? ' 🔔' : '';
         return `<tr style="cursor:pointer" class="${rowClass}" onclick="showMgmtDetail(${m.id})">
         ${showCheck ? `<td onclick="event.stopPropagation()" style="text-align:center"><input type="checkbox" class="mgmt-row-check" data-id="${m.id}" onchange="handleMgmtCheck(${m.id},this.checked)" ${selectedMgmtIds.has(m.id)?'checked':''} /></td>` : ''}
         <td>${i+1}</td>
