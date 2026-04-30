@@ -6309,7 +6309,7 @@
       const t = 437 + i * 25;
       const supply = (p.price||0) * (p.qty||0);
       partsHtml += field(18,  t, 105, 25, esc(p.part_no||''), 'justify-content:center')
-        + field(171, t+5, 230, 25, esc(p.name||''))
+        + field(221, t+5, 230, 25, esc(p.name||''))
         + field(353, t,  90, 25, esc(p.spec||''), 'justify-content:center')
         + field(458, t+7,  58, 25, String(p.qty||''), 'justify-content:center')
         + field(489, t+7, 155, 25, (supply ? supply.toLocaleString() : ''), 'justify-content:flex-end;padding-right:3px')
@@ -6341,9 +6341,9 @@
       + field(56,  390,  28, 20, chk(d.parts_free===false), 'justify-content:center;font-size:16px;font-weight:900')
       + field(98,  410,  28, 20, chk(d.parts_free===true),  'justify-content:center;font-size:16px;font-weight:900')
       + partsHtml
-      + field(108, 562, 170, 25, (totalSupply ? totalSupply.toLocaleString()+'원' : ''), 'justify-content:flex-end;padding-right:3px')
-      + field(388, 562, 170, 25, (totalVat ? totalVat.toLocaleString()+'원' : ''), 'justify-content:flex-end;padding-right:3px')
-      + field(628, 562, 148, 25, ((totalSupply+totalVat) ? (totalSupply+totalVat).toLocaleString()+'원' : ''), 'justify-content:flex-end;padding-right:3px')
+      + field(108, 542, 170, 25, (totalSupply ? totalSupply.toLocaleString()+'원' : ''), 'justify-content:flex-end;padding-right:3px')
+      + field(388, 542, 170, 25, (totalVat ? totalVat.toLocaleString()+'원' : ''), 'justify-content:flex-end;padding-right:3px')
+      + field(628, 542, 148, 25, ((totalSupply+totalVat) ? (totalSupply+totalVat).toLocaleString()+'원' : ''), 'justify-content:flex-end;padding-right:3px')
       + field(160, 910,  60, 22, fmtYear(approvedAt),  'justify-content:center')
       + field(240, 910,  50, 22, fmtMonth(approvedAt), 'justify-content:center')
       + field(315, 910,  50, 22, fmtDay(approvedAt),   'justify-content:center')
