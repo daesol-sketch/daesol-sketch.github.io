@@ -4096,25 +4096,56 @@
   }
 
   async function syncAllInspectionDates() {
-    if (!confirm('전체 호기 정보(모델명·검사만료일·검사결과·설치일)를 갱신합니다. 시간이 걸릴 수 있어요.')) return;
+    if (!confirm('전체 호기 정보(모델명·검사만료일·검사결과·설치일)를 갱신합니다.\n300대씩 나눠서 처리되며 수 분이 걸릴 수 있어요.')) return;
+
     const btn = document.getElementById('btn-sync-all-inspection');
-    btn.textContent = '⏳ 갱신 중...';
     btn.disabled = true;
+    btn.textContent = '⏳ 갱신 중...';
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center';
+    overlay.innerHTML = `
+      <div style="background:#1a1a2e;border:1px solid #444;border-radius:16px;padding:32px 40px;min-width:320px;text-align:center;color:#e2e8f0">
+        <div style="font-size:18px;font-weight:700;margin-bottom:16px">🔄 전체 정보 갱신 중</div>
+        <div style="background:#333;border-radius:20px;height:10px;margin-bottom:14px;overflow:hidden">
+          <div id="sync-prog-bar" style="background:#38a169;height:100%;width:0%;transition:width 0.4s"></div>
+        </div>
+        <div id="sync-prog-status" style="font-size:14px;color:#a0aec0">준비 중...</div>
+        <div style="font-size:12px;color:#718096;margin-top:6px">탭을 닫지 마세요</div>
+      </div>`;
+    document.body.appendChild(overlay);
+
     try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/inspection-sync`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ all: true })
-      });
-      const data = await res.json();
+      let offset = 0, totalUpdated = 0;
+      const ESTIMATED = 2400;
+      while (true) {
+        const pct = Math.min(Math.round(offset / ESTIMATED * 100), 95);
+        document.getElementById('sync-prog-bar').style.width = pct + '%';
+        document.getElementById('sync-prog-status').textContent = `${offset}대 처리 중... (${pct}%)`;
+
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/inspection-sync`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ offset })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        totalUpdated += data.updated || 0;
+        if (data.done) break;
+        offset = data.next;
+      }
+
+      document.getElementById('sync-prog-bar').style.width = '100%';
+      document.getElementById('sync-prog-status').textContent = '완료!';
       localStorage.setItem('insp_last_sync', new Date().toISOString());
-      showToast(`✅ ${data.updated}개 호기 정보 갱신 완료`);
+      showToast(`✅ ${totalUpdated}개 호기 정보 갱신 완료`);
       loadMgmt();
     } catch(e) {
-      showToast('❌ 갱신 실패');
+      showToast('❌ 갱신 실패: ' + e.message);
     } finally {
       btn.textContent = '🔄 전체 정보 갱신';
       btn.disabled = false;
+      setTimeout(() => overlay.remove(), 2500);
     }
   }
 
