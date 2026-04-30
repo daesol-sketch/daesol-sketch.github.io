@@ -6342,12 +6342,12 @@
       + field(56,  390,  28, 20, chk(d.parts_free===false), 'justify-content:center;font-size:16px;font-weight:900')
       + field(98,  410,  28, 20, chk(d.parts_free===true),  'justify-content:center;font-size:16px;font-weight:900')
       + partsHtml
-      + field(109, 545, 170, 25, (totalSupply ? totalSupply.toLocaleString()+'원' : ''), 'justify-content:flex-end;padding-right:3px')
-      + field(330, 545, 170, 25, (totalVat ? totalVat.toLocaleString()+'원' : ''), 'justify-content:flex-end;padding-right:3px')
+      + field(110, 545, 170, 25, (totalSupply ? totalSupply.toLocaleString()+'원' : ''), 'justify-content:flex-end;padding-right:3px')
+      + field(329, 545, 170, 25, (totalVat ? totalVat.toLocaleString()+'원' : ''), 'justify-content:flex-end;padding-right:3px')
       + field(582, 545, 148, 25, ((totalSupply+totalVat) ? (totalSupply+totalVat).toLocaleString()+'원' : ''), 'justify-content:flex-end;padding-right:3px')
       + field(115, 1016,  60, 22, fmtYear(approvedAt),  'justify-content:center')
       + field(191, 1016,  50, 22, fmtMonth(approvedAt), 'justify-content:center')
-      + field(260, 1016,  50, 22, fmtDay(approvedAt),   'justify-content:center')
+      + field(255, 1016,  50, 22, fmtDay(approvedAt),   'justify-content:center')
       + field(478, 1014, 220, 28, sigImg, 'align-items:center')
       + '</div>';
   }
