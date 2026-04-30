@@ -3659,7 +3659,7 @@
     mgmtData = data.map(m => ({ ...m, elev_count: elevCounts[m.id] || 0, insp_expired: inspExpired[m.id] || 0, insp_soon: inspSoon[m.id] || 0, elev_numbers: elevNumbers[m.id] || [], elev_info: elevInfo[m.id] || [], inspector_team: teamMap[m.main_inspector] || null, defect_count: defectCounts[m.id] || 0 }));
     const isAdmin = currentRole === '관리자' || currentRole === '마스터';
     document.getElementById('btn-add-mgmt').style.display = isAdmin ? 'inline-flex' : 'none';
-    document.getElementById('btn-sync-all-inspection').style.display = isAdmin ? 'inline-block' : 'none';
+    document.getElementById('btn-sync-all-inspection').style.display = currentRole === '마스터' ? 'inline-block' : 'none';
 
     // 마지막 갱신일 확인 (30일 초과 시 알림)
     if (isAdmin) {
