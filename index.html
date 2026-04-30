@@ -4106,7 +4106,7 @@
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center';
     overlay.innerHTML = `
       <div style="background:#1a1a2e;border:1px solid #444;border-radius:16px;padding:32px 40px;min-width:320px;text-align:center;color:#e2e8f0">
-        <div style="font-size:18px;font-weight:700;margin-bottom:16px">🔄 전체 정보 갱신 중</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:16px;color:#e2e8f0">🔄 전체 정보 갱신 중</div>
         <div style="background:#333;border-radius:20px;height:10px;margin-bottom:14px;overflow:hidden">
           <div id="sync-prog-bar" style="background:#38a169;height:100%;width:0%;transition:width 0.4s"></div>
         </div>
@@ -4115,6 +4115,7 @@
       </div>`;
     document.body.appendChild(overlay);
 
+    const BATCH = 300;
     try {
       let offset = 0, totalUpdated = 0;
       const ESTIMATED = 2400;
@@ -4131,7 +4132,7 @@
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         totalUpdated += data.updated || 0;
-        if (data.done) break;
+        if (data.done || typeof data.next !== 'number') break;
         offset = data.next;
       }
 
