@@ -6310,7 +6310,7 @@
       const t = 437 + i * 25;
       const supply = (p.price||0) * (p.qty||0);
       partsHtml += field(18,  t, 105, 25, esc(p.part_no||''), 'justify-content:center')
-        + field(212, t+5, 230, 25, esc(p.name||''))
+        + field(197, t+5, 230, 25, esc(p.name||''))
         + field(353, t,  90, 25, esc(p.spec||''), 'justify-content:center')
         + field(458, t+7,  58, 25, String(p.qty||''), 'justify-content:center')
         + field(489, t+7, 155, 25, (supply ? supply.toLocaleString() : ''), 'justify-content:flex-end;padding-right:3px')
