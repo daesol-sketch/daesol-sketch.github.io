@@ -4014,7 +4014,7 @@
     const isAdmin = currentRole === '관리자' || currentRole === '마스터';
     el.innerHTML = `<div style="overflow-x:auto"><table class="site-table" style="width:100%">
       <thead><tr>
-        <th>#</th><th>호기명</th><th>승강기번호</th><th>엘리베이터 모델</th><th>소재지</th><th>검사만료일</th><th>최근검사결과</th><th>비고</th>
+        <th>#</th><th>호기명</th><th>승강기번호</th><th>엘리베이터 모델</th><th>검사만료일</th><th>최근검사결과</th><th>비고</th>
         ${isAdmin ? '<th>관리</th>' : ''}
       </tr></thead>
       <tbody>${data.map((e,i) => `<tr>
@@ -4022,7 +4022,6 @@
         <td><strong>${escHtml(e.unit_name||'')}</strong>${(() => { if (!e.install_date) return ''; const d = new Date(e.install_date); const t = new Date(); t.setHours(0,0,0,0); const y3 = new Date(t); y3.setFullYear(y3.getFullYear()-3); return d > y3 ? ` <span style="background:#fefcbf;color:#744210;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">하자</span>` : ''; })()}</td>
         <td>${e.elevator_number ? `<a href="#" onclick="openElevatorSearch('${escHtml(e.elevator_number)}',${e.id},'${escHtml(e.unit_name||'')}');return false;" style="color:#2b6cb0;font-weight:600;text-decoration:none" title="API에서 정보 불러오기">${escHtml(e.elevator_number)} 🔍</a>` : '-'}</td>
         <td>${escHtml(e.elevator_model||'-')}</td>
-        <td style="font-size:12px;color:#718096">${escHtml(e.elevator_location||'-')}</td>
         <td>${(() => {
           if (!e.inspection_due_date) return '<span style="color:#a0aec0">-</span>';
           const today = new Date(); today.setHours(0,0,0,0);
