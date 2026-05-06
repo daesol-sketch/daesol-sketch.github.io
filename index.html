@@ -4697,7 +4697,7 @@
         if (fmtDate(d.frstInstallationDe)) { update.install_date   = fmtDate(d.frstInstallationDe); saved.push('최초설치일'); }
         if (d.buldNm && !currentUnitName) { update.unit_name      = d.buldNm;                  saved.push('호기명'); }
         const loc = [d.address1, d.address2].filter(Boolean).join(' ').trim();
-        if (loc && currentSiteForElevator && !currentSiteForElevator.elevator_location) {
+        if (loc && currentSiteForElevator) {
           await db.from('managed_sites').update({ elevator_location: loc }).eq('id', currentSiteForElevator.id);
           currentSiteForElevator.elevator_location = loc;
           saved.push('소재지');
