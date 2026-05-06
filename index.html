@@ -1315,6 +1315,29 @@
       <div style=background:#f7fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:20px>
         <div style=font-size:14px;font-weight:700;color:#e53e3e;letter-spacing:0.5px;margin-bottom:12px>접수 정보</div>
         <div id=rdm-report-info style=font-size:13px></div>
+        <div id="rdm-recv-edit" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0">
+          <div style="font-size:11px;font-weight:700;color:#718096;margin-bottom:10px">✏️ 접수 정보 수정</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="grid-column:1/-1"><label style="font-size:11px;font-weight:600;color:#718096;display:block;margin-bottom:4px">접수일시</label>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input type="text" id="rdm-recv-date" maxlength=10 placeholder="2026-05-06" oninput="autoFormatDate(this)" style="padding:7px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;width:130px;background:#fff;color:#1a202c" />
+                <input type="time" id="rdm-recv-time" style="padding:7px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a202c" />
+              </div>
+            </div>
+            <div style="grid-column:1/-1"><label style="font-size:11px;font-weight:600;color:#718096;display:block;margin-bottom:4px">고장유형</label>
+              <select id="rdm-recv-type" style="width:100%;padding:7px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a202c">
+                <option>정지</option><option>갇힘정지</option><option>OPEN정지</option>
+                <option>도어OP-CL반복</option><option>도어개폐불량</option><option>도어소음</option>
+                <option>층레벨차이</option><option>소음&amp;진동</option><option>버튼불량</option>
+                <option>층표시기불량</option><option>카내부조명미점등</option><option>인터폰불량</option>
+                <option>침수&amp;정전</option><option>기타</option>
+              </select>
+            </div>
+            <div style="grid-column:1/-1"><label style="font-size:11px;font-weight:600;color:#718096;display:block;margin-bottom:4px">신고내용</label>
+              <textarea id="rdm-recv-desc" rows=3 style="width:100%;padding:7px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;background:#fff;color:#1a202c"></textarea>
+            </div>
+          </div>
+        </div>
       </div>
       <div id=rdm-edit-section style=margin-top:24px>
         <div style=font-size:14px;font-weight:700;color:#e53e3e;letter-spacing:0.5px;margin-bottom:14px>처리 정보</div>
@@ -2468,6 +2491,24 @@
         roSec.style.display = 'none';
       }
     }
+    // 관리자/마스터 전용 접수 정보 수정 섹션
+    const recvEdit = document.getElementById('rdm-recv-edit');
+    if (currentRole === '관리자' || currentRole === '마스터') {
+      recvEdit.style.display = '';
+      if (r.created_at) {
+        const ca = new Date(r.created_at);
+        document.getElementById('rdm-recv-date').value = ca.toLocaleDateString('sv');
+        document.getElementById('rdm-recv-time').value = ca.toTimeString().slice(0,5);
+      } else {
+        document.getElementById('rdm-recv-date').value = '';
+        document.getElementById('rdm-recv-time').value = '';
+      }
+      document.getElementById('rdm-recv-type').value = r.type || '정지';
+      document.getElementById('rdm-recv-desc').value = r.description || '';
+    } else {
+      recvEdit.style.display = 'none';
+    }
+
     openModal('report-detail-modal');
   }
 
@@ -2601,6 +2642,13 @@
     }
     if (status === '배치완료' && currentReport?.status !== '배치완료') {
       update.assigned_at = new Date().toISOString();
+    }
+    if (currentRole === '관리자' || currentRole === '마스터') {
+      const recvDateVal = document.getElementById('rdm-recv-date').value;
+      const recvTimeVal = document.getElementById('rdm-recv-time').value;
+      if (recvDateVal && recvTimeVal) update.created_at = new Date(recvDateVal + 'T' + recvTimeVal).toISOString();
+      update.type = document.getElementById('rdm-recv-type').value;
+      update.description = document.getElementById('rdm-recv-desc').value.trim() || null;
     }
     const prevHandler = currentReport?.completion_handler || null;
     const { error } = await db.from('reports').update(update).eq('id', currentReportId);
