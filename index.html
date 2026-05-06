@@ -1839,8 +1839,9 @@
         account_id: String(currentUser.id),
         username: currentUser.username,
         subscription: subJson,
-        is_mobile: isMobile
-      }, { onConflict: 'account_id' });
+        is_mobile: isMobile,
+        endpoint
+      }, { onConflict: 'endpoint' });
     } catch(e) { console.warn('Push 구독 실패:', e); }
   }
 
