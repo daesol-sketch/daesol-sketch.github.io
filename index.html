@@ -2602,9 +2602,20 @@
     if (status === '배치완료' && currentReport?.status !== '배치완료') {
       update.assigned_at = new Date().toISOString();
     }
+    const prevHandler = currentReport?.completion_handler || null;
     const { error } = await db.from('reports').update(update).eq('id', currentReportId);
     btn.disabled = false; btn.textContent = '저장';
     if (error) { showToast('저장 실패: ' + error.message); return; }
+
+    // 처리담당자가 변경된 경우 즉시 알림 발송
+    if (handler && handler !== prevHandler) {
+      fetch(`${SUPABASE_URL}/functions/v1/send-assign-notify`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: handler, building: currentReport?.building || '', elevator: currentReport?.elevator || '', reportId: currentReportId })
+      });
+    }
+
     showToast('저장되었습니다.');
     closeModal('report-detail-modal');
     await loadReports(); updateStats(); updatePendingBadge(); renderList(); if(document.getElementById('page-done').classList.contains('active')) renderDonePage();
