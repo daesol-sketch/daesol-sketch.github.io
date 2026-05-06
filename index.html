@@ -4695,9 +4695,13 @@
         if (fmtDate(d.applcEnDt))   { update.inspection_due_date   = fmtDate(d.applcEnDt);      saved.push('검사만료일'); }
         if (d.resultNm)             { update.last_inspection_result = d.resultNm;               saved.push('검사결과'); }
         if (fmtDate(d.frstInstallationDe)) { update.install_date   = fmtDate(d.frstInstallationDe); saved.push('최초설치일'); }
-        const loc = [d.address1, d.address2].filter(Boolean).join(' ').trim();
-        if (loc)                    { update.elevator_location     = loc;                       saved.push('소재지'); }
         if (d.buldNm && !currentUnitName) { update.unit_name      = d.buldNm;                  saved.push('호기명'); }
+        const loc = [d.address1, d.address2].filter(Boolean).join(' ').trim();
+        if (loc && currentSiteForElevator && !currentSiteForElevator.elevator_location) {
+          await db.from('managed_sites').update({ elevator_location: loc }).eq('id', currentSiteForElevator.id);
+          currentSiteForElevator.elevator_location = loc;
+          saved.push('소재지');
+        }
         if (Object.keys(update).length > 0) {
           await db.from('site_elevators').update(update).eq('id', elevatorId);
           loadElevators();
