@@ -4700,6 +4700,7 @@
         if (loc && currentSiteForElevator) {
           const { error: locErr } = await db.from('managed_sites').update({ elevator_location: loc }).eq('id', currentSiteForElevator.id);
           if (!locErr) { currentSiteForElevator.elevator_location = loc; saved.push('소재지'); }
+          else { showToast('소재지 저장 오류: ' + locErr.message); }
         }
         if (Object.keys(update).length > 0) {
           await db.from('site_elevators').update(update).eq('id', elevatorId);
