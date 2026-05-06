@@ -4698,8 +4698,8 @@
         if (d.buldNm && !currentUnitName) { update.unit_name      = d.buldNm;                  saved.push('호기명'); }
         const loc = [d.address1, d.address2].filter(Boolean).join(' ').trim();
         if (loc && currentSiteForElevator) {
-          const { error: locErr } = await db.from('managed_sites').update({ elevator_location: loc }).eq('id', currentSiteForElevator.id);
-          if (!locErr) { currentSiteForElevator.elevator_location = loc; saved.push('소재지'); }
+          const { error: locErr } = await db.from('managed_sites').update({ elevator_address: loc }).eq('id', currentSiteForElevator.id);
+          if (!locErr) { currentSiteForElevator.elevator_address = loc; saved.push('소재지'); }
           else { showToast('소재지 저장 오류: ' + locErr.message); }
         }
         if (Object.keys(update).length > 0) {
