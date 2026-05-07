@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
 
   const { data: subs } = await db
     .from('push_subscriptions')
-    .select('subscription')
+    .select('subscription, is_mobile')
     .eq('username', username);
 
   if (!subs?.length) {
@@ -41,7 +41,8 @@ Deno.serve(async (req) => {
         JSON.stringify({
           title: '🔧 고장 신고 배정',
           body: `${building} ${elevator} 고장 신고가 배정되었습니다.`,
-          reportId
+          reportId,
+          requireInteraction: sub.is_mobile === true
         })
       );
       sent++;

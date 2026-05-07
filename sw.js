@@ -32,6 +32,8 @@ self.addEventListener('push', event => {
 
   const isCall = data.type === 'call';
 
+  const requireInteraction = data.requireInteraction === true;
+
   event.waitUntil(
     Promise.all([
       self.registration.showNotification(data.title, {
@@ -39,8 +41,16 @@ self.addEventListener('push', event => {
         icon: './icon-192.png',
         badge: './icon-192.png',
         vibrate: [300, 150, 300, 150, 300],
-        requireInteraction: true,
+        requireInteraction,
         data: { reportId: data.reportId || null, type: data.type || null, siteName: data.siteName || null, phone: data.phone || null }
+      }).then(() => {
+        if (!requireInteraction) {
+          return new Promise(resolve => setTimeout(resolve, 40000)).then(() =>
+            self.registration.getNotifications().then(notifications =>
+              notifications.forEach(n => n.close())
+            )
+          );
+        }
       }),
       clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
         list.forEach(client => client.postMessage({ action: 'playSound' }));
