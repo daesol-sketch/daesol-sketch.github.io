@@ -1691,8 +1691,12 @@
         <input type="text" class="modal-input normal" id="mgmt-main-inspector" placeholder="주점검자 이름" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
       </div>
       <div>
-        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">보조점검자</label>
-        <input type="text" class="modal-input normal" id="mgmt-sub-inspector" placeholder="보조점검자 이름" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
+        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">보조점검자1</label>
+        <input type="text" class="modal-input normal" id="mgmt-sub-inspector" placeholder="보조점검자1 이름" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">보조점검자2</label>
+        <input type="text" class="modal-input normal" id="mgmt-sub-inspector2" placeholder="보조점검자2 이름" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
       </div>
       <div>
         <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">현장 전화번호</label>
@@ -3781,6 +3785,7 @@
       return (m.site_name||'').toLowerCase().includes(q) ||
              (m.main_inspector||'').toLowerCase().includes(q) ||
              (m.sub_inspector||'').toLowerCase().includes(q) ||
+             (m.sub_inspector2||'').toLowerCase().includes(q) ||
              (m.elev_numbers||[]).some(n => n.toLowerCase().replace(/-/g,'').includes(qClean)) ||
              (m.site_phone||'').replace(/-/g,'').includes(qClean) ||
              ['emergency_phone','emergency_phone2','emergency_phone3','emergency_phone4','emergency_phone5','emergency_phone6','emergency_phone7','emergency_phone8','emergency_phone9','emergency_phone10'].some(k=>(m[k]||'').replace(/-/g,'').includes(qClean)) ||
@@ -3803,7 +3808,8 @@
         '계약시작': m.contract_start || '',
         '계약만료': m.contract_end || '',
         '주점검자': m.main_inspector || '',
-        '보조점검자': m.sub_inspector || '',
+        '보조점검자1': m.sub_inspector || '',
+        '보조점검자2': m.sub_inspector2 || '',
         '현장전화': m.site_phone || '',
         '현장연락처2': m.site_phone2 || '',
         '팩스': m.fax || '',
@@ -3930,6 +3936,7 @@
       return (m.site_name||'').toLowerCase().includes(q) ||
              (m.main_inspector||'').toLowerCase().includes(q) ||
              (m.sub_inspector||'').toLowerCase().includes(q) ||
+             (m.sub_inspector2||'').toLowerCase().includes(q) ||
              (m.elev_numbers||[]).some(n => n.toLowerCase().replace(/-/g,'').includes(qClean)) ||
              (m.site_phone||'').replace(/-/g,'').includes(qClean) ||
              ['emergency_phone','emergency_phone2','emergency_phone3','emergency_phone4','emergency_phone5','emergency_phone6','emergency_phone7','emergency_phone8','emergency_phone9','emergency_phone10'].some(k=>(m[k]||'').replace(/-/g,'').includes(qClean)) ||
@@ -4028,7 +4035,7 @@
     const epEntries = epKeys.map(k => m[k] || '').filter(Boolean);
     const fields = [
       ...(m.site_type ? [['현장유형', m.site_type]] : []),
-      ['계약구분', m.contract_type], ['주점검자', m.main_inspector], ['보조점검자', m.sub_inspector],
+      ['계약구분', m.contract_type], ['주점검자', m.main_inspector], ['보조점검자1', m.sub_inspector], ['보조점검자2', m.sub_inspector2],
       ['계약일자', m.contract_date], ['계약시작', m.contract_start], ['계약만료', m.contract_end],
       ['현장전화', m.site_phone], ['현장연락처2', m.site_phone2],
       ['담당자 메일', m.manager_email],
@@ -4496,7 +4503,7 @@
 
   const MGMT_FIELD_ORDER = [
     'mgmt-name','mgmt-elevator-address','mgmt-site-type','mgmt-contract-type','mgmt-contract-date','mgmt-contract-start','mgmt-contract-end',
-    'mgmt-main-inspector','mgmt-sub-inspector','mgmt-site-phone','mgmt-site-phone2',
+    'mgmt-main-inspector','mgmt-sub-inspector','mgmt-sub-inspector2','mgmt-site-phone','mgmt-site-phone2',
     'mgmt-fax','mgmt-manager-email','mgmt-notes'
   ];
   function parseEmergencyValue(val) {
@@ -4584,7 +4591,7 @@
     editingMgmtId = null;
     document.getElementById('mgmt-modal-title').textContent = '현장 추가';
     ['mgmt-name','mgmt-site-type','mgmt-contract-type','mgmt-contract-date','mgmt-contract-start','mgmt-contract-end',
-     'mgmt-main-inspector','mgmt-sub-inspector','mgmt-site-phone','mgmt-site-phone2','mgmt-fax',
+     'mgmt-main-inspector','mgmt-sub-inspector','mgmt-sub-inspector2','mgmt-site-phone','mgmt-site-phone2','mgmt-fax',
      'mgmt-manager-email','mgmt-elevator-address','mgmt-notes'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';
     });
@@ -4612,6 +4619,7 @@
     document.getElementById('mgmt-contract-end-picker').value = m.contract_end || '';
     document.getElementById('mgmt-main-inspector').value = m.main_inspector || '';
     document.getElementById('mgmt-sub-inspector').value = m.sub_inspector || '';
+    document.getElementById('mgmt-sub-inspector2').value = m.sub_inspector2 || '';
     document.getElementById('mgmt-site-phone').value = m.site_phone || '';
     document.getElementById('mgmt-site-phone2').value = m.site_phone2 || '';
     document.getElementById('mgmt-fax').value = m.fax || '';
@@ -4644,6 +4652,7 @@
       contract_end:      document.getElementById('mgmt-contract-end').value.trim() || null,
       main_inspector:    document.getElementById('mgmt-main-inspector').value.trim() || null,
       sub_inspector:     document.getElementById('mgmt-sub-inspector').value.trim() || null,
+      sub_inspector2:    document.getElementById('mgmt-sub-inspector2').value.trim() || null,
       site_phone:        document.getElementById('mgmt-site-phone').value.trim() || null,
       site_phone2:       document.getElementById('mgmt-site-phone2').value.trim() || null,
       fax:               document.getElementById('mgmt-fax').value.trim() || null,
