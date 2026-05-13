@@ -131,6 +131,7 @@
     .report-date { font-size: 12px; font-weight: 600; color: var(--tx-3); background: var(--bg-high); border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
 
     .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .status-접수중   { background: #2a1a1a; color: #fc8181; border: 1.5px solid #4a2a2a; }
     .status-배치완료 { background: #1a2a3a; color: #63b3ed; border: 1.5px solid #2c4a6a; }
     .status-처리중   { background: #2a1a0a; color: #f6ad55; border: 1.5px solid #4a2a0a; }
     .status-완료     { background: #0a2a1a; color: #68d391; border: 1.5px solid #0a4a2a; }
@@ -1343,7 +1344,7 @@
         <div style=font-size:14px;font-weight:700;color:#e53e3e;letter-spacing:0.5px;margin-bottom:14px>처리 정보</div>
         <div class="rdm-edit-grid" style=display:grid;grid-template-columns:1fr 1fr;gap:12px 16px>
           <div><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리 상태</label>
-            <select id=rdm-status style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit><option>배치완료</option><option>처리중</option><option>완료</option></select></div>
+            <select id=rdm-status style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit><option>접수중</option><option>배치완료</option><option>처리중</option><option>완료</option></select></div>
           <div><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리담당자</label>
             <select id=rdm-handler style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit></select></div>
           <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>도착시간</label>
@@ -2622,9 +2623,10 @@
     const handler  = document.getElementById('rdm-handler').value.trim() || null;
     const content  = document.getElementById('rdm-content').value.trim() || null;
     const detail   = document.getElementById('rdm-detail').value.trim() || null;
-    // 배치완료 상태에서 처리내용 or 처리담당자 + 처리일시가 입력되면 자동으로 완료 처리
+    // 접수중/배치완료/처리중(또는 비정상 빈값) 상태에서 처리담당자+처리일시+처리내용이 입력되면 자동으로 완료 처리
     let status = document.getElementById('rdm-status').value;
-    if ((currentReport?.status === '배치완료' || currentReport?.status === '처리중') && handler && completionAt && content) {
+    const prevStatus = currentReport?.status;
+    if ((!prevStatus || prevStatus === '접수중' || prevStatus === '배치완료' || prevStatus === '처리중') && handler && completionAt && content) {
       status = '완료';
     }
     const update = {
