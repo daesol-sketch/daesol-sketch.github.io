@@ -606,6 +606,7 @@
               <button type="button" class="ac-toggle-btn" onmousedown="event.preventDefault();acToggleAll()" title="전체 목록">▼</button>
               <div class="ac-dropdown" id="ac-dropdown" style="display:none"></div>
             </div>
+            <div id="site-inspector-info" style="display:none;margin-top:6px;font-size:12px;color:var(--tx-3)"></div>
           </div>
           <div class="form-group">
             <label>엘리베이터 호기 <span class="required">*</span></label>
@@ -5040,7 +5041,17 @@
     const wrap = document.getElementById('f-elevator-wrap');
     if (!wrap) return;
     wrap.innerHTML = '<input type="text" id="f-elevator" placeholder="불러오는 중..." disabled style="color:#a0aec0" />';
-    const { data: siteData } = await db.from('managed_sites').select('id').eq('site_name', siteName).single();
+    const { data: siteData } = await db.from('managed_sites').select('id, main_inspector, sub_inspector, sub_inspector2').eq('site_name', siteName).single();
+    // 점검자 정보 표시
+    const infoEl = document.getElementById('site-inspector-info');
+    if (infoEl) {
+      const parts = [];
+      if (siteData?.main_inspector) parts.push('주점검자: ' + siteData.main_inspector);
+      if (siteData?.sub_inspector)  parts.push('보조1: ' + siteData.sub_inspector);
+      if (siteData?.sub_inspector2) parts.push('보조2: ' + siteData.sub_inspector2);
+      if (parts.length) { infoEl.innerHTML = '👷 ' + parts.join(' · '); infoEl.style.display = ''; }
+      else { infoEl.style.display = 'none'; infoEl.innerHTML = ''; }
+    }
     if (!siteData) { resetElevatorInput(); return; }
     const { data: elevData } = await db.from('site_elevators').select('unit_name,elevator_number').eq('site_id', siteData.id).order('id');
     if (!elevData || !elevData.length) { resetElevatorInput(); return; }
@@ -5197,6 +5208,8 @@
     input.style.color = '';
     input.style.cursor = '';
     if (toggleBtn) toggleBtn.style.display = '';
+    const infoEl = document.getElementById('site-inspector-info');
+    if (infoEl) { infoEl.style.display = 'none'; infoEl.innerHTML = ''; }
   }
 
   function setReporterField() {
