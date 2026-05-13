@@ -2628,6 +2628,9 @@
     const prevStatus = currentReport?.status;
     if ((!prevStatus || prevStatus === '접수중' || prevStatus === '배치완료' || prevStatus === '처리중') && handler && completionAt && content) {
       status = '완료';
+    } else if ((!prevStatus || prevStatus === '접수중') && handler) {
+      // 접수중(또는 빈값)에서 담당자만 지정한 경우 → 배치완료 자동 전환
+      status = '배치완료';
     }
     const update = {
       status,
@@ -5355,7 +5358,7 @@
         switchTab(e.data.tab, null);
         if (e.data.reportId) {
           setTimeout(async () => {
-            await db.from('reports').update({ status: '처리중', confirmed_at: new Date().toISOString() }).eq('id', e.data.reportId).eq('status', '배치완료');
+            await db.from('reports').update({ status: '처리중', confirmed_at: new Date().toISOString() }).eq('id', e.data.reportId).in('status', ['배치완료', '접수중']);
           }, 300);
         }
       }
@@ -5396,7 +5399,7 @@
   if (_tabParam) { setTimeout(() => switchTab(_tabParam, null), 800); history.replaceState(null, '', location.pathname); }
   if (_openReportParam) { setTimeout(() => { switchTab('list', null); setTimeout(() => showReportDetail(_openReportParam), 400); }, 800); history.replaceState(null, '', location.pathname); }
   const _confirmReportParam = _urlParams.get('confirmReport');
-  if (_confirmReportParam) { setTimeout(async () => { await db.from('reports').update({ status: '처리중', confirmed_at: new Date().toISOString() }).eq('id', _confirmReportParam).eq('status', '배치완료'); switchTab('list', null); history.replaceState(null, '', location.pathname); }, 800); }
+  if (_confirmReportParam) { setTimeout(async () => { await db.from('reports').update({ status: '처리중', confirmed_at: new Date().toISOString() }).eq('id', _confirmReportParam).in('status', ['배치완료', '접수중']); switchTab('list', null); history.replaceState(null, '', location.pathname); }, 800); }
   const _fillReportParam = _urlParams.get('fillReport');
   const _fillPhoneParam = _urlParams.get('phone');
   if (_fillReportParam) {
