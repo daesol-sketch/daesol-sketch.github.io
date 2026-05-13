@@ -1421,13 +1421,11 @@
             </div>
             <input type="time" id="rdm-time" class="time-input-pc" oninput="if(this._v&&this._v.slice(3)!==this.value.slice(3))this.blur();this._v=this.value;clampCompletionTime()" style="width:140px;flex-shrink:0;margin-left:24px;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a202c" />
             </div></div>
-          <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리내용</label>
-            <input type=text id=rdm-content placeholder="처리한 내용을 적어주세요. 부품교체를 하셨으면 아래 체크해주세요." style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit /></div>
+          <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>처리/상세내역</label>
+            <textarea id=rdm-content placeholder="처리한 내용을 자세히 적어주세요. 부품교체를 하셨으면 아래 체크해주세요." rows=5 style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical></textarea></div>
           <div style=grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fffbeb;border:1.5px solid #fbd38d;border-radius:8px>
             <input type=checkbox id=rdm-parts style=width:18px;height:18px;cursor:pointer;accent-color:#d69e2e;flex-shrink:0 />
             <label for=rdm-parts style=font-size:13px;font-weight:600;color:#744210;cursor:pointer;user-select:none>부품 교체 있음</label></div>
-          <div style=grid-column:1/-1><label style=font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px>상세내역</label>
-            <textarea id=rdm-detail placeholder="상세내역을 자세하게 적어주세요." rows=4 style=width:100%;padding:8px 10px;border:1.5px solid #cbd5e0;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical></textarea></div>
         </div>
       </div>
     </div>
@@ -2429,9 +2427,15 @@
         document.getElementById('rdm-time').value = now.toTimeString().slice(0,5);
       }
       syncSelectFromTime('rdm-time', 'rdm-hour', 'rdm-min');
-      document.getElementById('rdm-content').value  = r.completion_content || '';
+      // 처리/상세내역: 기존 두 필드(content, detail) 둘 다 호환
+      const _legacyDetail = r.completion_detail || '';
+      const _content = r.completion_content || '';
+      let _mergedContent = _content;
+      if (_legacyDetail && _legacyDetail !== _content) {
+        _mergedContent = _content ? (_content + '\n' + _legacyDetail) : _legacyDetail;
+      }
+      document.getElementById('rdm-content').value  = _mergedContent;
       document.getElementById('rdm-parts').checked  = r.parts_replaced || false;
-      document.getElementById('rdm-detail').value   = r.completion_detail || '';
       const rescueSec = document.getElementById('rdm-rescue-section');
       if (r.type === '갇힘정지') {
         rescueSec.style.display = '';
@@ -2480,9 +2484,8 @@
           (r.type === '갇힘정지' ? roRow('구출자', escHtml(r.rescue_handler || '-')) : '') +
           (r.type === '갇힘정지' && r.rescue_at ? roRow('구출시간', new Date(r.rescue_at).toLocaleString('ko-KR')) : '') +
           roRow('처리일시', completionAt) +
-          roRow('처리내용', escHtml(r.completion_content || '-')) +
+          roRow('처리/상세내역', `<span style="white-space:pre-wrap">${escHtml(r.completion_content || r.completion_detail || '-')}</span>`) +
           roRow('부품교체', r.parts_replaced ? '있음' : '없음') +
-          (r.completion_detail ? roRow('상세내역', `<span style="white-space:pre-wrap">${escHtml(r.completion_detail)}</span>`) : '') +
           `</div></div>`;
         roSec.style.display = '';
       } else if (r.confirmed_at && r.completion_handler) {
@@ -2622,7 +2625,6 @@
 
     const handler  = document.getElementById('rdm-handler').value.trim() || null;
     const content  = document.getElementById('rdm-content').value.trim() || null;
-    const detail   = document.getElementById('rdm-detail').value.trim() || null;
     // 접수중/배치완료/처리중(또는 비정상 빈값) 상태에서 처리담당자+처리일시+처리내용이 입력되면 자동으로 완료 처리
     let status = document.getElementById('rdm-status').value;
     const prevStatus = currentReport?.status;
@@ -2639,7 +2641,7 @@
       completion_at:       completionAt,
       completion_content:  content,
       parts_replaced:      document.getElementById('rdm-parts').checked,
-      completion_detail:   detail,
+      completion_detail:   null,  // 통합 후 detail은 비움
     };
     if (currentReport?.type === '갇힘정지') {
       const rescueDateVal = document.getElementById('rdm-rescue-date').value;
@@ -2809,8 +2811,7 @@
         (r.completion_handler ? '<span class=meta-item>👷 담당: ' + escHtml(r.completion_handler) + '</span>' : '') +
         (compDt ? '<span class=meta-item>🕐 처리일시: ' + compDt + '</span>' : '') +
         '</div>' +
-        (r.completion_content ? '<div style=margin-top:4px;font-size:13px;color:#2d3748;font-weight:500>' + escHtml(r.completion_content) + '</div>' : '') +
-        (r.completion_detail ? '<div class=report-desc>' + escHtml(r.completion_detail) + '</div>' : '') +
+        ((r.completion_content || r.completion_detail) ? '<div class=report-desc style="white-space:pre-wrap">' + escHtml(r.completion_content || r.completion_detail) + '</div>' : '') +
         '</div>' +
         '<div class=report-right onclick=event.stopPropagation()>' +
         ((currentRole==='관리자'||currentRole==='마스터') ? '<button class=btn-delete onclick=deleteReport(' + JSON.stringify(r.id) + ')>삭제</button>' : '') +
@@ -3213,7 +3214,8 @@
     el.innerHTML = list.map(r => {
       const _d = r.created_at ? new Date(r.created_at) : null;
       const dt = _d ? (_d.getMonth()+1) + '월' + _d.getDate() + '일 ' + String(_d.getHours()).padStart(2,'0') + ':' + String(_d.getMinutes()).padStart(2,'0') : '';
-      const hc = r.status !== '접수중' && (r.completion_content || r.completion_handler || r.completion_at);
+      const _listContent = r.completion_content || r.completion_detail || '';
+      const hc = r.status !== '접수중' && (_listContent || r.completion_handler || r.completion_at);
       const dispatchTime = r.confirmed_at ? (() => { const d = new Date(r.confirmed_at); return (d.getMonth()+1) + '월' + d.getDate() + '일 ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); })() : '';
       const repeatKey = (r.building||'') + '||' + (r.elevator||'') + '||' + (r.type||'');
       const repeatCount = repeatCountMap[repeatKey] || 0;
@@ -3240,7 +3242,7 @@
         '<span class=report-date>📅 ' + dt + '</span>' +
         '</div>' +
         (r.description ? '<div class=report-desc>' + r.description.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' : '') +
-        (hc ? '<div style=margin-top:4px;font-size:12px;color:#276749;background:#f0fff4;border-radius:6px;padding:4px_8px;display:inline-block>' .replace(/_/g,' ') + '처리: ' + escHtml(r.completion_handler||'') + (dispatchTime ? '&nbsp;&nbsp;확인시간: ' + dispatchTime : '') + (r.completion_content ? ' · ' + escHtml(r.completion_content) : '') + '</div>' : '') +
+        (hc ? '<div style="margin-top:4px;font-size:12px;color:#276749;background:#f0fff4;border-radius:6px;padding:4px 8px;white-space:pre-wrap">처리: ' + escHtml(r.completion_handler||'') + (dispatchTime ? '&nbsp;&nbsp;확인시간: ' + dispatchTime : '') + (_listContent ? '<br>' + escHtml(_listContent) : '') + '</div>' : '') +
         '</div>' +
         '<div class=report-right onclick=event.stopPropagation() style=display:flex;flex-direction:column;align-items:flex-end;gap:6px>' +
         ((r.status === '배치완료' || r.status === '처리중' || r.status === '접수중') && (currentRole==='직원'||currentRole==='마스터') ? '<button style=background:#2b6cb0;color:white;border:none;border-radius:10px;padding:12px_20px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;width:100% onclick=confirmDispatch(' + JSON.stringify(r.id) + ')>' + (r.completion_handler ? '🔄 재배치' : '✅ 배치') + '</button>'.replace(/_/g,' ') : '') +
