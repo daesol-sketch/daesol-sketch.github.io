@@ -90,7 +90,8 @@
     .ac-item { padding: 9px 14px; font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--br); line-height: 1.4; transition: background 0.1s; color: var(--tx); }
     .ac-item:last-child { border-bottom: none; }
     .ac-item:hover, .ac-item.active { background: var(--btn2-bg); color: var(--tx-head); }
-    .ac-item mark { background: #2b6cb0; color: #ffffff; font-weight: 700; border-radius: 2px; padding: 0 2px; }
+    .ac-item mark { background: #ecc94b; color: #1a202c; font-weight: 700; border-radius: 2px; padding: 0 2px; }
+    body.light-mode .ac-item mark { background: #2b6cb0; color: #ffffff; }
     .ac-count { font-size: 11px; color: var(--tx-5); padding: 5px 14px; background: var(--bg-head); border-top: 1px solid var(--br); text-align: right; }
 
     .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
@@ -392,6 +393,7 @@
   body.light-mode [style*="border:1.5px solid #444"] { border-color: var(--br-hi) !important; }
   body.light-mode [style*="border:1px solid #2a2a2a"] { border-color: var(--br) !important; }
   body.light-mode [style*="border:1px solid #222"] { border-color: var(--br) !important; }
+  body.light-mode #site-inspector-info { color: #2b6cb0 !important; }
   </style>
 </head>
 <body>
@@ -606,7 +608,7 @@
               <button type="button" class="ac-toggle-btn" onmousedown="event.preventDefault();acToggleAll()" title="전체 목록">▼</button>
               <div class="ac-dropdown" id="ac-dropdown" style="display:none"></div>
             </div>
-            <div id="site-inspector-info" style="display:none;margin-top:6px;font-size:12px;color:var(--tx-3)"></div>
+            <div id="site-inspector-info" style="display:none;margin-top:6px;font-size:13px;color:#f6ad55;font-weight:600"></div>
           </div>
           <div class="form-group">
             <label>엘리베이터 호기 <span class="required">*</span></label>
@@ -2044,9 +2046,30 @@
     handlerGroup.style.visibility = 'visible';
 
     const shiftType = getCurrentShiftType();
-    const date = getShiftDate();
-    const { data } = await db.from('duty_roster').select('handler_name, account_id')
-      .eq('date', date).eq('shift_type', shiftType).eq('team', team);
+
+    let data;
+    if (shiftType === '주간') {
+      // 주간: accounts 테이블의 team 컬럼 기준 (인사관리 팀 배정자)
+      const { data: accs } = await db.from('accounts')
+        .select('username, id, position')
+        .eq('team', team);
+      const POSITION_ORDER = ['대표','전무','이사','부장','차장','과장','대리','사원'];
+      const sorted = (accs || []).slice().sort((a, b) => {
+        const ai = POSITION_ORDER.indexOf(a.position);
+        const bi = POSITION_ORDER.indexOf(b.position);
+        const aOrder = ai === -1 ? 999 : ai;
+        const bOrder = bi === -1 ? 999 : bi;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return (a.username || '').localeCompare(b.username || '', 'ko');
+      });
+      data = sorted.map(a => ({ handler_name: a.username, account_id: String(a.id) }));
+    } else {
+      // 평일당직/주말당직: 기존 duty_roster 기반
+      const date = getShiftDate();
+      const { data: dutyData } = await db.from('duty_roster').select('handler_name, account_id')
+        .eq('date', date).eq('shift_type', shiftType).eq('team', team);
+      data = dutyData;
+    }
 
     handlerGroup.style.display = 'block';
     handlerSel.innerHTML = '<option value="">-- 담당자 선택 --</option>';
@@ -3043,7 +3066,7 @@
     try {
       const building = document.getElementById('f-building').value.trim();
       if (SITES.length === 0) await loadSiteNames();
-      if (!SITES.includes(building)) {
+      if (!SITES.some(s => s.name === building)) {
         document.getElementById('f-building').style.borderColor = '#e53e3e';
         showToast('⚠️ 등록되지 않은 현장명입니다. 목록에서 선택해 주세요.');
         btn.disabled = false; btn.textContent = '✅ 신고 접수하기';
@@ -3452,19 +3475,19 @@
   function acInputEditSite(inp) {
     const q=inp.value.trim().toLowerCase(), dd=document.getElementById('ac-edit-site-dd');
     if(!q){dd.style.display='none';acEditSiteMatches=[];return;}
-    acEditSiteMatches=SITES.filter(s=>s.toLowerCase().includes(q));
+    acEditSiteMatches=SITES.filter(s=>s.name.toLowerCase().includes(q));
     if(!acEditSiteMatches.length){dd.style.display='none';return;}
-    dd.innerHTML=acEditSiteMatches.map((s,i)=>{const sl=s.toLowerCase(),idx=sl.indexOf(q);return`<div class="ac-item" data-i="${i}" onmousedown="acPickEditSite(${i})">${escHtml(s.slice(0,idx))}<mark>${escHtml(s.slice(idx,idx+q.length))}</mark>${escHtml(s.slice(idx+q.length))}</div>`;}).join('')+`<div class="ac-count">총 ${acEditSiteMatches.length}건</div>`;
+    dd.innerHTML=acEditSiteMatches.map((s,i)=>{const nm=s.name,sl=nm.toLowerCase(),idx=sl.indexOf(q);return`<div class="ac-item" data-i="${i}" onmousedown="acPickEditSite(${i})">${escHtml(nm.slice(0,idx))}<mark>${escHtml(nm.slice(idx,idx+q.length))}</mark>${escHtml(nm.slice(idx+q.length))}</div>`;}).join('')+`<div class="ac-count">총 ${acEditSiteMatches.length}건</div>`;
     dd.style.display='block';
   }
   function acToggleAllEditSite() {
     const dd=document.getElementById('ac-edit-site-dd');
     if(dd.style.display!=='none'){dd.style.display='none';return;}
     acEditSiteMatches=[...SITES];
-    dd.innerHTML=acEditSiteMatches.map((s,i)=>`<div class="ac-item" data-i="${i}" onmousedown="acPickEditSite(${i})">${escHtml(s)}</div>`).join('')+`<div class="ac-count">전체 ${SITES.length}건</div>`;
+    dd.innerHTML=acEditSiteMatches.map((s,i)=>`<div class="ac-item" data-i="${i}" onmousedown="acPickEditSite(${i})">${escHtml(s.name)}</div>`).join('')+`<div class="ac-count">전체 ${SITES.length}건</div>`;
     dd.style.display='block'; document.getElementById('edit-acc-site').focus();
   }
-  function acPickEditSite(i){document.getElementById('edit-acc-site').value=acEditSiteMatches[i];document.getElementById('ac-edit-site-dd').style.display='none';acEditSiteMatches=[];}
+  function acPickEditSite(i){document.getElementById('edit-acc-site').value=acEditSiteMatches[i].name;document.getElementById('ac-edit-site-dd').style.display='none';acEditSiteMatches=[];}
 
   async function deleteAccount(id, username) {
     if (!confirm(`"${username}" 계정을 삭제하시겠습니까?`)) return;
@@ -4988,29 +5011,41 @@
   }
 
   /* ── AUTOCOMPLETE ── */
-  let SITES = [];
+  let SITES = [];  // [{ name, address }, ...]
 
   async function loadSiteNames() {
-    const { data } = await db.from('managed_sites').select('site_name').order('site_name');
-    SITES = data ? data.map(m => m.site_name).filter(Boolean) : [];
+    const { data } = await db.from('managed_sites').select('site_name, elevator_address').order('site_name');
+    SITES = data ? data.filter(m => m.site_name).map(m => ({ name: m.site_name, address: m.elevator_address || '' })) : [];
   }
 
 
   let acMatches = [];
   function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function acHighlight(text, q) {
+    if (!text) return '';
+    const lower = text.toLowerCase();
+    const idx = q ? lower.indexOf(q) : -1;
+    if (idx === -1) return escHtml(text);
+    return escHtml(text.slice(0,idx)) + '<mark>' + escHtml(text.slice(idx, idx+q.length)) + '</mark>' + escHtml(text.slice(idx+q.length));
+  }
+  function acItemHTML(s, i, q) {
+    const nameHTML = acHighlight(s.name, q);
+    const addrHTML = s.address ? `<div style="font-size:11px;color:var(--tx-4);margin-top:2px">${acHighlight(s.address, q)}</div>` : '';
+    return `<div class="ac-item" data-i="${i}" onmousedown="acPick(${i})">${nameHTML}${addrHTML}</div>`;
+  }
 
   async function acInput(inp) {
     if (SITES.length === 0) await loadSiteNames();
     const q = inp.value.trim().toLowerCase(), dd = document.getElementById('ac-dropdown');
     if (!q) { dd.style.display='none'; acMatches=[]; resetElevatorInput(); inp.style.borderColor=''; return; }
-    acMatches = SITES.filter(s => s.toLowerCase().includes(q));
+    acMatches = SITES.filter(s => s.name.toLowerCase().includes(q) || (s.address && s.address.toLowerCase().includes(q)));
     if (!acMatches.length) {
       dd.style.display='none';
       inp.style.borderColor = '#e53e3e';
       return;
     }
     inp.style.borderColor = '';
-    dd.innerHTML = acMatches.map((s,i) => { const sl=s.toLowerCase(),idx=sl.indexOf(q); return `<div class="ac-item" data-i="${i}" onmousedown="acPick(${i})">${escHtml(s.slice(0,idx))}<mark>${escHtml(s.slice(idx,idx+q.length))}</mark>${escHtml(s.slice(idx+q.length))}</div>`; }).join('') + `<div class="ac-count">총 ${acMatches.length}건</div>`;
+    dd.innerHTML = acMatches.map((s,i) => acItemHTML(s, i, q)).join('') + `<div class="ac-count">총 ${acMatches.length}건</div>`;
     dd.style.display='block';
   }
   async function acToggleAll() {
@@ -5018,11 +5053,12 @@
     const dd=document.getElementById('ac-dropdown');
     if (dd.style.display!=='none'){dd.style.display='none';return;}
     acMatches=[...SITES];
-    dd.innerHTML=acMatches.map((s,i)=>`<div class="ac-item" data-i="${i}" onmousedown="acPick(${i})">${escHtml(s)}</div>`).join('')+`<div class="ac-count">전체 ${SITES.length}건</div>`;
+    dd.innerHTML = acMatches.map((s,i) => acItemHTML(s, i, '')).join('') + `<div class="ac-count">전체 ${SITES.length}건</div>`;
     dd.style.display='block'; document.getElementById('f-building').focus();
   }
   function acPick(i){
-    const name = acMatches[i];
+    const item = acMatches[i];
+    const name = item.name;
     const inp = document.getElementById('f-building');
     inp.value = name;
     inp.style.borderColor = '';
@@ -5081,19 +5117,19 @@
   function acInputSite(inp){
     const q=inp.value.trim().toLowerCase(),dd=document.getElementById('ac-site-dd');
     if(!q){dd.style.display='none';acSiteMatches=[];return;}
-    acSiteMatches=SITES.filter(s=>s.toLowerCase().includes(q));
+    acSiteMatches=SITES.filter(s=>s.name.toLowerCase().includes(q));
     if(!acSiteMatches.length){dd.style.display='none';return;}
-    dd.innerHTML=acSiteMatches.map((s,i)=>{const sl=s.toLowerCase(),idx=sl.indexOf(q);return`<div class="ac-item" data-i="${i}" onmousedown="acPickSite(${i})">${escHtml(s.slice(0,idx))}<mark>${escHtml(s.slice(idx,idx+q.length))}</mark>${escHtml(s.slice(idx+q.length))}</div>`;}).join('')+`<div class="ac-count">총 ${acSiteMatches.length}건</div>`;
+    dd.innerHTML=acSiteMatches.map((s,i)=>{const nm=s.name,sl=nm.toLowerCase(),idx=sl.indexOf(q);return`<div class="ac-item" data-i="${i}" onmousedown="acPickSite(${i})">${escHtml(nm.slice(0,idx))}<mark>${escHtml(nm.slice(idx,idx+q.length))}</mark>${escHtml(nm.slice(idx+q.length))}</div>`;}).join('')+`<div class="ac-count">총 ${acSiteMatches.length}건</div>`;
     dd.style.display='block';
   }
   function acToggleAllSite(){
     const dd=document.getElementById('ac-site-dd');
     if(dd.style.display!=='none'){dd.style.display='none';return;}
     acSiteMatches=[...SITES];
-    dd.innerHTML=acSiteMatches.map((s,i)=>`<div class="ac-item" data-i="${i}" onmousedown="acPickSite(${i})">${escHtml(s)}</div>`).join('')+`<div class="ac-count">전체 ${SITES.length}건</div>`;
+    dd.innerHTML=acSiteMatches.map((s,i)=>`<div class="ac-item" data-i="${i}" onmousedown="acPickSite(${i})">${escHtml(s.name)}</div>`).join('')+`<div class="ac-count">전체 ${SITES.length}건</div>`;
     dd.style.display='block'; document.getElementById('new-acc-site').focus();
   }
-  function acPickSite(i){document.getElementById('new-acc-site').value=acSiteMatches[i];document.getElementById('ac-site-dd').style.display='none';acSiteMatches=[];document.getElementById('new-acc-pw').focus();}
+  function acPickSite(i){document.getElementById('new-acc-site').value=acSiteMatches[i].name;document.getElementById('ac-site-dd').style.display='none';acSiteMatches=[];document.getElementById('new-acc-pw').focus();}
 
   /* ── 로그인 페이지 ── */
   function goHome() {
@@ -6071,7 +6107,7 @@
     // 현장 드롭다운: 이미 로드된 SITES 배열 사용
     if (!SITES.length) await loadSiteNames();
     const siteEl = document.getElementById('dk-site');
-    siteEl.innerHTML = '<option value="">현장 선택</option>' + SITES.map(s => `<option value="${s}">${s}</option>`).join('');
+    siteEl.innerHTML = '<option value="">현장 선택</option>' + SITES.map(s => `<option value="${escHtml(s.name)}">${escHtml(s.name)}</option>`).join('');
 
     const inspEl = document.getElementById('dk-inspector');
     inspEl.innerHTML = '<option value="">선택</option>' + _docketStaffList.map(s => {
