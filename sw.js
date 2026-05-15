@@ -1,4 +1,4 @@
-const CACHE_NAME = 'daesol-el-v10';
+const CACHE_NAME = 'daesol-el-v11';
 // index.html은 캐시하지 않음 — 항상 최신 버전 사용
 const STATIC_ASSETS = [
   './manifest.json',
@@ -40,6 +40,7 @@ self.addEventListener('push', event => {
         body: data.body,
         icon: './icon-192.png',
         badge: './icon-192.png',
+        image: './icon-512.png',
         vibrate: [300, 150, 300, 150, 300],
         requireInteraction,
         data: { reportId: data.reportId || null, type: data.type || null, siteName: data.siteName || null, phone: data.phone || null }
