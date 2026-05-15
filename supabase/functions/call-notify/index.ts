@@ -2,8 +2,20 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import webpush from 'npm:web-push';
 
 function normalizePhone(phone: string): string {
-  return (phone || '').replace(/[-\s]/g, '');
+  return (phone || '').replace(/\D/g, '');
 }
+
+// 메모 형태("1호기,2호기: 010-2075-3312") 텍스트에서 9~12자리 전화번호 패턴만 추출 후 정규화
+function extractPhones(text: string | null | undefined): string[] {
+  if (!text) return [];
+  const matches = String(text).match(/(\d[\d\s\-]{7,15}\d)/g);
+  if (!matches) return [];
+  return matches.map(m => m.replace(/\D/g, '')).filter(n => n.length >= 9 && n.length <= 12);
+}
+
+const EMERG_COLS = ['emergency_phone','emergency_phone2','emergency_phone3','emergency_phone4','emergency_phone5','emergency_phone6','emergency_phone7','emergency_phone8','emergency_phone9','emergency_phone10'];
+const PHONE_COLS = ['site_phone','site_phone2','manager_mobile'];
+const SITE_SELECT = ['site_name', ...PHONE_COLS, ...EMERG_COLS].join(',');
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -34,14 +46,21 @@ Deno.serve(async (req) => {
 
     const { data: sites } = await db
       .from('managed_sites')
-      .select('site_name, site_phone, manager_mobile');
+      .select(SITE_SELECT);
 
     let siteName: string | null = null;
     if (sites) {
-      const matched = sites.find(s =>
-        (s.site_phone && normalizePhone(s.site_phone) === normalizedSender) ||
-        (s.manager_mobile && normalizePhone(s.manager_mobile) === normalizedSender)
-      );
+      const matched = sites.find((s: any) => {
+        // 일반 전화 컬럼: 정규화 후 정확 일치
+        for (const col of PHONE_COLS) {
+          if (s[col] && normalizePhone(s[col]) === normalizedSender) return true;
+        }
+        // 비상통화장치 컬럼: 텍스트에서 전화번호 패턴 추출 후 매칭 (메모 형식 지원)
+        for (const col of EMERG_COLS) {
+          if (s[col] && extractPhones(s[col]).includes(normalizedSender)) return true;
+        }
+        return false;
+      });
       if (matched) siteName = matched.site_name;
     }
 
