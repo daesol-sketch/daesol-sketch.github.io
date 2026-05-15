@@ -13,8 +13,19 @@ function extractPhones(text: string | null | undefined): string[] {
   return matches.map(m => m.replace(/\D/g, '')).filter(n => n.length >= 9 && n.length <= 12);
 }
 
-const EMERG_COLS = ['emergency_phone','emergency_phone2','emergency_phone3','emergency_phone4','emergency_phone5','emergency_phone6','emergency_phone7','emergency_phone8','emergency_phone9','emergency_phone10'];
-const PHONE_COLS = ['site_phone','site_phone2','manager_mobile'];
+const EMERG_COLS = [
+  'emergency_phone',
+  'emergency_phone2',
+  'emergency_phone3',
+  'emergency_phone4',
+  'emergency_phone5',
+  'emergency_phone6',
+  'emergency_phone7',
+  'emergency_phone8',
+  'emergency_phone9',
+  'emergency_phone10'
+];
+const PHONE_COLS = ['site_phone', 'site_phone2', 'manager_mobile'];
 const SITE_SELECT = ['site_name', ...PHONE_COLS, ...EMERG_COLS].join(',');
 
 Deno.serve(async (req) => {
