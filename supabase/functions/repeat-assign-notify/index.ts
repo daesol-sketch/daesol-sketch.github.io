@@ -42,7 +42,8 @@ Deno.serve(async () => {
             title: '🔧 고장 신고 배정',
             body: `${r.building} ${r.elevator} 고장 신고가 배정되었습니다.`,
             reportId: r.id
-          })
+          }),
+          { TTL: 120 }
         );
         sent++;
       } catch(e: any) {

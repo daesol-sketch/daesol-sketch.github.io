@@ -43,7 +43,8 @@ Deno.serve(async (req) => {
           body: `${building} ${elevator} 고장 신고가 배정되었습니다.`,
           reportId,
           requireInteraction: sub.is_mobile === true
-        })
+        }),
+        { TTL: 120 }
       );
       sent++;
     } catch (e: any) {
