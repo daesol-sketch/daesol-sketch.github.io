@@ -3355,14 +3355,12 @@
     const el = document.getElementById('call-logs-list');
     if (!el) return;
     el.innerHTML = '<div class="loading-state">불러오는 중...</div>';
-    // 기본 날짜: 최근 7일
+    // 기본 날짜: 오늘 (들어올 때마다 리셋)
+    const today = new Date().toLocaleDateString('sv');
     const fromEl = document.getElementById('call-logs-from');
     const toEl   = document.getElementById('call-logs-to');
-    if (fromEl && !fromEl.value) {
-      const d = new Date(); d.setDate(d.getDate() - 7);
-      fromEl.value = d.toLocaleDateString('sv');
-    }
-    if (toEl && !toEl.value) toEl.value = new Date().toLocaleDateString('sv');
+    if (fromEl) fromEl.value = today;
+    if (toEl)   toEl.value = today;
     const { data, error } = await db.from('call_logs').select('*').order('received_at', { ascending: false }).limit(1000);
     if (error) { el.innerHTML = '<div class="empty-state">❌ 로드 실패: ' + escHtml(error.message) + '</div>'; return; }
     callLogsData = data || [];
