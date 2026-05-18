@@ -3398,16 +3398,14 @@
       const senderEsc = escHtml(r.sender || '');
       const phoneAttr = (r.sender || '').replace(/'/g, '&#39;');
       const siteAttr = (r.site_name || '').replace(/'/g, '&#39;');
-      const onclick = r.site_name
-        ? `onclick="callLogToReport('${siteAttr}','${phoneAttr}')" style="cursor:pointer"`
-        : '';
+      const onclick = `onclick="callLogToReport('${siteAttr}','${phoneAttr}')" style="cursor:pointer"`;
       return '<div class="report-item" ' + onclick + ' style="display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px 18px;margin-bottom:10px">' +
         '<div class="report-left">' +
         '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
         labelHtml +
         '<span style="font-size:14px;color:var(--tx-2);font-weight:600">📞 ' + senderEsc + '</span>' +
         '</div>' +
-        '<div style="font-size:12px;color:var(--tx-3);margin-top:4px">🕐 ' + dt + (r.site_name ? '  ·  탭하여 신고 접수 →' : '') + '</div>' +
+        '<div style="font-size:12px;color:var(--tx-3);margin-top:4px">🕐 ' + dt + '  ·  탭하여 신고 접수 →</div>' +
         '</div>' +
         '</div>';
     }).join('');
