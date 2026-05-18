@@ -460,6 +460,7 @@
   <button class="drawer-menu-item tab-btn" id="tab-docket-btn" onclick="switchTab('docket');closeNavMenu()" style="display:none"><span class="menu-icon">📝</span> 서비스다켓</button>
   <button class="drawer-menu-item tab-btn" id="tab-sites-btn" onclick="switchTab('sites');closeNavMenu()" style="display:none"><span class="menu-icon">👤</span> 인사 관리</button>
   <button class="drawer-menu-item tab-btn" id="tab-holiday-btn" onclick="switchTab('holiday');closeNavMenu()" style="display:none"><span class="menu-icon">📅</span> 휴일 관리</button>
+  <button class="drawer-menu-item tab-btn" id="tab-call-logs-btn" onclick="switchTab('call-logs');closeNavMenu()" style="display:none"><span class="menu-icon">📞</span> 전화 기록</button>
   <div style="flex:1"></div>
   <button class="drawer-logout" onclick="doLogout()">로그아웃</button>
 </div>
@@ -545,6 +546,9 @@
       </button>
       <button class="home-grid-item" onclick="switchTab('docket')" id="home-gi-docket" style="display:none">
         <span class="gi-icon">📝</span><span class="gi-label">서비스다켓</span>
+      </button>
+      <button class="home-grid-item" onclick="switchTab('call-logs')" id="home-gi-call-logs" style="display:none">
+        <span class="gi-icon">📞</span><span class="gi-label">전화 기록</span>
       </button>
     </div>
   </div>
@@ -865,6 +869,30 @@
         <button onclick="addHoliday()" style="padding:9px 20px;background:#2b6cb0;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">+ 추가</button>
       </div>
       <div id="holiday-list"><div class="loading-state">불러오는 중...</div></div>
+    </div>
+  </div>
+  <!-- 전화 기록 -->
+  <div class="page" id="page-call-logs">
+    <div class="card">
+      <h2>📞 전화 기록 <span id="call-logs-count" style="font-size:13px;font-weight:400;color:var(--tx-3);margin-left:8px"></span></h2>
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+        <div style="position:relative;display:flex">
+          <input type="text" id="call-logs-from" placeholder="2026-05-01" maxlength="10" oninput="autoFormatDate(this);renderCallLogs()" style="padding:8px 12px;border:1.5px solid var(--br-mid);border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:120px;background:var(--bg-card);color:var(--tx)" />
+          <div style="position:relative;width:36px;border:1.5px solid var(--br-mid);border-left:none;border-radius:0 8px 8px 0;background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer">📅
+            <input type="date" id="call-logs-from-picker" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" oninput="document.getElementById('call-logs-from').value=this.value;renderCallLogs()" />
+          </div>
+        </div>
+        <span style="color:var(--tx-3)">~</span>
+        <div style="position:relative;display:flex">
+          <input type="text" id="call-logs-to" placeholder="2026-05-18" maxlength="10" oninput="autoFormatDate(this);renderCallLogs()" style="padding:8px 12px;border:1.5px solid var(--br-mid);border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:120px;background:var(--bg-card);color:var(--tx)" />
+          <div style="position:relative;width:36px;border:1.5px solid var(--br-mid);border-left:none;border-radius:0 8px 8px 0;background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer">📅
+            <input type="date" id="call-logs-to-picker" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" oninput="document.getElementById('call-logs-to').value=this.value;renderCallLogs()" />
+          </div>
+        </div>
+        <input type="text" id="call-logs-search" placeholder="🔍 발신번호·현장명·직원명 검색" oninput="renderCallLogs()" style="padding:8px 12px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:13px;font-family:inherit;flex:1;min-width:200px;background:var(--bg-card);color:var(--tx)" />
+        <button onclick="loadCallLogs()" style="padding:8px 14px;background:var(--bg-high);border:1.5px solid var(--br-mid);border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;color:var(--tx)">🔄 새로고침</button>
+      </div>
+      <div id="call-logs-list"><div class="loading-state">불러오는 중...</div></div>
     </div>
   </div>
   <!-- 검사일정 -->
@@ -2123,7 +2151,7 @@
   updateClock(); setInterval(updateClock, 1000);
 
   /* ── NAV MENU (사이드 드로어) ── */
-  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', gongsa:'📸 공사팀 사진철', holiday:'📅 휴일 관리', 'insp-calendar':'🗓️ 검사일정', docket:'📝 서비스다켓' };
+  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', gongsa:'📸 공사팀 사진철', holiday:'📅 휴일 관리', 'insp-calendar':'🗓️ 검사일정', docket:'📝 서비스다켓', 'call-logs':'📞 전화 기록' };
   function toggleNavMenu() {
     if (!currentUser) return;
     document.getElementById('side-drawer').classList.toggle('open');
@@ -2249,6 +2277,7 @@
     }
     if (tab === 'sites' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'holiday' && currentRole !== '관리자' && currentRole !== '마스터') return;
+    if (tab === 'call-logs' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'mgmt' && !currentRole) return;
     if (tab === 'jungong' && !currentRole) return;
     if (!_isPopState && tab !== _currentHistoryTab) history.pushState({ tab }, '', location.pathname);
@@ -2267,6 +2296,7 @@
     if (tab === 'gongsa') initGongsa();
     if (tab === 'insp-calendar') loadInspCalendar();
     if (tab === 'docket') initDocketTab();
+    if (tab === 'call-logs') loadCallLogs();
     const lbl = document.getElementById('current-tab-label');
     if (lbl) lbl.textContent = TAB_LABELS[tab] || '';
   }
@@ -2983,6 +3013,7 @@
     const isStaff = currentRole === '직원';
     document.getElementById('tab-sites-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-holiday-btn').style.display = isAdmin ? 'flex' : 'none';
+    document.getElementById('tab-call-logs-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-insp-calendar-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-mgmt-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-duty-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
@@ -3000,6 +3031,8 @@
     if (giDocket) giDocket.style.display = currentRole === '마스터' ? 'flex' : 'none';
     const giInspCal = document.getElementById('home-gi-insp-calendar');
     if (giInspCal) giInspCal.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
+    const giCallLogs = document.getElementById('home-gi-call-logs');
+    if (giCallLogs) giCallLogs.style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('sub-tab-done-btn').style.display = 'inline-block';
     // 반복고장현황 서브탭: 직원/관리자만
     document.getElementById('sub-tab-repeat-btn').style.display = (isAdmin || isStaff) ? 'inline-block' : 'none';
@@ -3314,6 +3347,85 @@
     showToast('🗑️ 삭제되었습니다.');
     await loadHolidays();
     loadHolidayList();
+  }
+
+  /* ── 전화 기록 ── */
+  let callLogsData = [];
+  async function loadCallLogs() {
+    const el = document.getElementById('call-logs-list');
+    if (!el) return;
+    el.innerHTML = '<div class="loading-state">불러오는 중...</div>';
+    // 기본 날짜: 최근 7일
+    const fromEl = document.getElementById('call-logs-from');
+    const toEl   = document.getElementById('call-logs-to');
+    if (fromEl && !fromEl.value) {
+      const d = new Date(); d.setDate(d.getDate() - 7);
+      fromEl.value = d.toLocaleDateString('sv');
+    }
+    if (toEl && !toEl.value) toEl.value = new Date().toLocaleDateString('sv');
+    const { data, error } = await db.from('call_logs').select('*').order('received_at', { ascending: false }).limit(1000);
+    if (error) { el.innerHTML = '<div class="empty-state">❌ 로드 실패: ' + escHtml(error.message) + '</div>'; return; }
+    callLogsData = data || [];
+    renderCallLogs();
+  }
+
+  function renderCallLogs() {
+    const el = document.getElementById('call-logs-list');
+    if (!el) return;
+    const fromVal = document.getElementById('call-logs-from')?.value || '';
+    const toVal   = document.getElementById('call-logs-to')?.value || '';
+    const q = (document.getElementById('call-logs-search')?.value || '').trim().toLowerCase();
+    let list = callLogsData;
+    if (fromVal || toVal) list = list.filter(r => {
+      const d = r.received_at ? new Date(r.received_at).toLocaleDateString('sv') : '';
+      if (fromVal && d < fromVal) return false;
+      if (toVal   && d > toVal)   return false;
+      return true;
+    });
+    if (q) list = list.filter(r =>
+      (r.sender||'').toLowerCase().includes(q) ||
+      (r.site_name||'').toLowerCase().includes(q) ||
+      (r.employee_name||'').toLowerCase().includes(q)
+    );
+    const countEl = document.getElementById('call-logs-count');
+    if (countEl) countEl.textContent = '총 ' + list.length + '건';
+    if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="icon">📞</div>전화 기록이 없습니다</div>'; return; }
+    el.innerHTML = list.map(r => {
+      const dt = r.received_at ? new Date(r.received_at).toLocaleString('ko-KR') : '';
+      const labelHtml = r.site_name
+        ? '<span style="color:#63b3ed;font-weight:700">🏢 ' + escHtml(r.site_name) + '</span>'
+        : r.employee_name
+          ? '<span style="color:#68d391;font-weight:700">👷 직원 ' + escHtml(r.employee_name) + '</span>'
+          : '<span style="color:#fc8181;font-weight:700">❓ 미등록 번호</span>';
+      const senderEsc = escHtml(r.sender || '');
+      const phoneAttr = (r.sender || '').replace(/'/g, '&#39;');
+      const siteAttr = (r.site_name || '').replace(/'/g, '&#39;');
+      const onclick = r.site_name
+        ? `onclick="callLogToReport('${siteAttr}','${phoneAttr}')" style="cursor:pointer"`
+        : '';
+      return '<div class="report-item" ' + onclick + ' style="display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px 18px;margin-bottom:10px">' +
+        '<div class="report-left">' +
+        '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
+        labelHtml +
+        '<span style="font-size:14px;color:var(--tx-2);font-weight:600">📞 ' + senderEsc + '</span>' +
+        '</div>' +
+        '<div style="font-size:12px;color:var(--tx-3);margin-top:4px">🕐 ' + dt + (r.site_name ? '  ·  탭하여 신고 접수 →' : '') + '</div>' +
+        '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function callLogToReport(siteName, phone) {
+    switchTab('fault', null);
+    setTimeout(() => {
+      switchSubTab('report');
+      setTimeout(() => {
+        const bldg = document.getElementById('f-building');
+        if (bldg && siteName) { bldg.value = siteName; loadElevatorsForSite(siteName); }
+        const ph = document.getElementById('f-phone');
+        if (ph && phone) { ph.value = phone; autoFormatPhone(ph); }
+      }, 200);
+    }, 100);
   }
 
   let accountsData = [];
