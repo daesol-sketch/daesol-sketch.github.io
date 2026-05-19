@@ -2978,7 +2978,25 @@
       return true;
     });
     if (!list.length) { showToast('내보낼 내역이 없습니다.'); return; }
-    const fmt = (v) => v ? new Date(v).toLocaleString('ko-KR') : '';
+    const pad = (n) => String(n).padStart(2, '0');
+    // 풀 포맷: YYYY-MM-DD HH:MM (초 없음)
+    const fmt = (v) => {
+      if (!v) return '';
+      const d = new Date(v);
+      return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    };
+    // 시간만: HH:MM
+    const fmtTime = (v) => {
+      if (!v) return '';
+      const d = new Date(v);
+      return pad(d.getHours()) + ':' + pad(d.getMinutes());
+    };
+    // 월일+시간: M/D HH:MM
+    const fmtMdHm = (v) => {
+      if (!v) return '';
+      const d = new Date(v);
+      return (d.getMonth()+1) + '/' + d.getDate() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    };
     const rows = list.map((r, i) => ({
       '번호': i + 1,
       '접수일시': fmt(r.created_at),
@@ -2989,12 +3007,12 @@
       '접수자': r.name || '',
       '내용': r.description || '',
       '처리담당자': r.completion_handler || '',
-      '도착시간': fmt(r.arrival_at),
-      '처리완료일시': fmt(r.completion_at),
+      '도착시간': fmtTime(r.arrival_at),
+      '처리완료일시': fmtMdHm(r.completion_at),
       '처리/상세내역': r.completion_content || r.completion_detail || '',
       '부품교체': r.parts_replaced ? '있음' : '없음',
       '구출자': r.rescue_handler || '',
-      '구출시간': fmt(r.rescue_at),
+      '구출시간': fmtTime(r.rescue_at),
       '신고자 연락처': r.phone || '',
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
