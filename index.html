@@ -2979,11 +2979,11 @@
     });
     if (!list.length) { showToast('내보낼 내역이 없습니다.'); return; }
     const pad = (n) => String(n).padStart(2, '0');
-    // 풀 포맷: YYYY-MM-DD HH:MM (초 없음)
-    const fmt = (v) => {
+    // 날짜만: YYYY-MM-DD
+    const fmtDate = (v) => {
       if (!v) return '';
       const d = new Date(v);
-      return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+      return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
     };
     // 시간만: HH:MM
     const fmtTime = (v) => {
@@ -2997,9 +2997,16 @@
       const d = new Date(v);
       return (d.getMonth()+1) + '/' + d.getDate() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
     };
+    // 풀 포맷: YYYY-MM-DD HH:MM
+    const fmtFull = (v) => {
+      if (!v) return '';
+      const d = new Date(v);
+      return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    };
     const rows = list.map((r, i) => ({
       '번호': i + 1,
-      '접수일시': fmt(r.created_at),
+      '접수일': fmtDate(r.created_at),
+      '접수시간': fmtTime(r.created_at),
       '건물명': r.building || '',
       '호기': r.elevator || '',
       '승강기번호': r.regno || '',
@@ -3012,13 +3019,14 @@
       '처리/상세내역': r.completion_content || r.completion_detail || '',
       '부품교체': r.parts_replaced ? '있음' : '없음',
       '구출자': r.rescue_handler || '',
-      '구출시간': fmtTime(r.rescue_at),
+      '구출시간': fmtFull(r.rescue_at),
       '신고자 연락처': r.phone || '',
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     ws['!cols'] = [
       {wch:6},   // 번호
-      {wch:20},  // 접수일시
+      {wch:12},  // 접수일
+      {wch:8},   // 접수시간
       {wch:25},  // 건물명
       {wch:12},  // 호기
       {wch:12},  // 승강기번호
@@ -3026,12 +3034,12 @@
       {wch:10},  // 접수자
       {wch:30},  // 내용
       {wch:10},  // 처리담당자
-      {wch:20},  // 도착시간
-      {wch:20},  // 처리완료일시
+      {wch:8},   // 도착시간
+      {wch:14},  // 처리완료일시
       {wch:40},  // 처리/상세내역
       {wch:8},   // 부품교체
       {wch:12},  // 구출자
-      {wch:20},  // 구출시간
+      {wch:18},  // 구출시간
       {wch:14},  // 신고자 연락처
     ];
     const wb = XLSX.utils.book_new();
