@@ -6663,7 +6663,7 @@
     const sigImg = d.customer_signature ? '<img src="' + d.customer_signature + '" style="max-height:28px;object-fit:contain;mix-blend-mode:multiply" />' : '';
     const totalSupply = parts.reduce((s,p) => s + (p.price||0)*(p.qty||0), 0);
     const totalVat = Math.round(totalSupply * 0.1);
-    const approvedAt = d.completed_at || null;
+    const approvedAt = d.approval_date || d.completed_at || null;
     const field = (l, t, w, h, content, extra) => {
       const ex = extra || '';
       return '<div style="position:absolute;left:' + l + 'px;top:' + t + 'px;width:' + w + 'px;height:' + h + 'px;display:flex;align-items:center;font-family:\'맑은 고딕\',sans-serif;font-size:13px;color:#000;overflow:hidden;' + ex + '">' + content + '</div>';
@@ -6715,6 +6715,20 @@
       + field(255, 1016,  50, 22, fmtDay(approvedAt),   'justify-content:center')
       + field(408, 1014, 70, 28, esc(d.customer_name||''), 'align-items:center;justify-content:center')
       + field(478, 1014, 220, 28, sigImg, 'align-items:center')
+      // 보수작업 정보 (양식 하단 노란 동그라미 영역)
+      + field(110, 1080, 20, 20, chk(d.work_type_maint===true),  'justify-content:center;font-size:16px;font-weight:900')
+      + field(200, 1080, 20, 20, chk(d.work_type_parts===true),  'justify-content:center;font-size:16px;font-weight:900')
+      // 세부작업내용 표 (최대 4행 표시)
+      + (Array.isArray(d.work_details) ? d.work_details : []).slice(0, 4).map((w, i) => {
+          const top = 1130 + i * 24;
+          return field(70, top, 420, 22, esc(w.detail||''), 'padding-left:4px') +
+                 field(495, top, 60, 22, esc(String(w.count||'')), 'justify-content:center') +
+                 field(560, top, 110, 22, esc(w.unit||''), 'justify-content:center');
+        }).join('')
+      // 양식 맨 아래 동기화 체크: 고장처리내역(항상) / 부품교체승인서(부품교체 체크 시) / 보수작업내용(보수작업내용 체크 시)
+      + field(220, 1240, 18, 18, chk(true),                      'justify-content:center;font-size:16px;font-weight:900')
+      + field(325, 1240, 18, 18, chk(d.work_type_parts===true),  'justify-content:center;font-size:16px;font-weight:900')
+      + field(430, 1240, 18, 18, chk(d.work_type_maint===true),  'justify-content:center;font-size:16px;font-weight:900')
       + '</div>';
   }
 
@@ -6738,7 +6752,7 @@
       const ex = extra || '';
       return '<div style="position:absolute;left:' + l + 'px;top:' + t + 'px;width:' + w + 'px;height:' + h + 'px;display:flex;align-items:center;font-family:\'맑은 고딕\',sans-serif;font-size:15px;color:#000;overflow:hidden;' + ex + '">' + content + '</div>';
     };
-    const approvedAt = d.completed_at || null;
+    const approvedAt = d.approval_date || d.completed_at || null;
     let partsHtml = '';
     for (let i = 0; i < 6; i++) {
       const p = parts[i] || {};
