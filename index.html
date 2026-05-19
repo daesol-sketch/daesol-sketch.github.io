@@ -2985,14 +2985,13 @@
       '호기': r.elevator || '',
       '승강기번호': r.regno || '',
       '유형': r.type || '',
-      '긴급도': r.priority || '',
-      '신고자': r.name || '',
+      '접수자': r.name || '',
       '연락처': r.phone || '',
       '내용': r.description || '',
       '처리일시': r.created_at ? new Date(r.created_at).toLocaleString('ko-KR') : '',
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = [{wch:6},{wch:12},{wch:25},{wch:12},{wch:12},{wch:12},{wch:8},{wch:10},{wch:14},{wch:30},{wch:20}];
+    ws['!cols'] = [{wch:6},{wch:12},{wch:25},{wch:12},{wch:12},{wch:12},{wch:10},{wch:14},{wch:30},{wch:20}];
     const wb = XLSX.utils.book_new();
     const dateStr = new Date().toLocaleDateString('sv');
     XLSX.utils.book_append_sheet(wb, ws, '고장처리내역');
