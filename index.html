@@ -2990,7 +2990,6 @@
       '신고자 연락처': r.phone || '',
       '내용': r.description || '',
       '처리담당자': r.completion_handler || '',
-      '확인시간': fmt(r.confirmed_at),
       '도착시간': fmt(r.arrival_at),
       '처리완료일시': fmt(r.completion_at),
       '처리/상세내역': r.completion_content || r.completion_detail || '',
@@ -3010,7 +3009,6 @@
       {wch:14},  // 연락처
       {wch:30},  // 내용
       {wch:10},  // 처리담당자
-      {wch:20},  // 확인시간
       {wch:20},  // 도착시간
       {wch:20},  // 처리완료일시
       {wch:40},  // 처리/상세내역
