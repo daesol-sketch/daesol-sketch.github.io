@@ -2978,9 +2978,10 @@
       return true;
     });
     if (!list.length) { showToast('내보낼 내역이 없습니다.'); return; }
+    const fmt = (v) => v ? new Date(v).toLocaleString('ko-KR') : '';
     const rows = list.map((r, i) => ({
       '번호': i + 1,
-      '접수일시': r.created_at ? new Date(r.created_at).toLocaleString('ko-KR') : '',
+      '접수일시': fmt(r.created_at),
       '건물명': r.building || '',
       '호기': r.elevator || '',
       '승강기번호': r.regno || '',
@@ -2988,9 +2989,35 @@
       '접수자': r.name || '',
       '연락처': r.phone || '',
       '내용': r.description || '',
+      '처리담당자': r.completion_handler || '',
+      '확인시간': fmt(r.confirmed_at),
+      '도착시간': fmt(r.arrival_at),
+      '처리완료일시': fmt(r.completion_at),
+      '처리/상세내역': r.completion_content || r.completion_detail || '',
+      '부품교체': r.parts_replaced ? '있음' : '없음',
+      '구출자': r.rescue_handler || '',
+      '구출시간': fmt(r.rescue_at),
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = [{wch:6},{wch:20},{wch:25},{wch:12},{wch:12},{wch:12},{wch:10},{wch:14},{wch:30}];
+    ws['!cols'] = [
+      {wch:6},   // 번호
+      {wch:20},  // 접수일시
+      {wch:25},  // 건물명
+      {wch:12},  // 호기
+      {wch:12},  // 승강기번호
+      {wch:12},  // 유형
+      {wch:10},  // 접수자
+      {wch:14},  // 연락처
+      {wch:30},  // 내용
+      {wch:10},  // 처리담당자
+      {wch:20},  // 확인시간
+      {wch:20},  // 도착시간
+      {wch:20},  // 처리완료일시
+      {wch:40},  // 처리/상세내역
+      {wch:8},   // 부품교체
+      {wch:12},  // 구출자
+      {wch:20},  // 구출시간
+    ];
     const wb = XLSX.utils.book_new();
     const dateStr = new Date().toLocaleDateString('sv');
     XLSX.utils.book_append_sheet(wb, ws, '고장처리내역');
