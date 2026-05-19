@@ -1260,6 +1260,39 @@
         <div id="dk-parts-empty" style="text-align:center;color:var(--tx-4);font-size:13px;padding:12px">사용 부품 없음</div>
       </div>
 
+      <!-- 부품교체 승인 정보 -->
+      <div style="background:var(--bg-high);border-radius:10px;padding:14px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;color:var(--tx-3);margin-bottom:10px">✍️ 부품교체 승인</div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--tx-3);display:block;margin-bottom:5px">승인일</label>
+          <div style="position:relative;display:flex">
+            <input type="text" id="dk-approval-date" placeholder="2026-05-19" maxlength="10" oninput="autoFormatDate(this)" style="padding:8px 10px;border:1.5px solid var(--br-mid);border-radius:8px 0 0 8px;font-size:13px;font-family:inherit;width:140px;color:var(--tx);background:var(--bg-card)" />
+            <div style="position:relative;width:36px;border:1.5px solid var(--br-mid);border-left:none;border-radius:0 8px 8px 0;background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer">📅
+              <input type="date" id="dk-approval-date-picker" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" oninput="document.getElementById('dk-approval-date').value=this.value" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 보수작업 정보 -->
+      <div style="background:var(--bg-high);border-radius:10px;padding:14px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;color:var(--tx-3);margin-bottom:10px">🔧 보수작업 정보</div>
+        <div style="display:flex;gap:20px;margin-bottom:12px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx)">
+            <input type="checkbox" id="dk-work-maint" style="width:16px;height:16px;cursor:pointer"> 보수작업내용
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx)">
+            <input type="checkbox" id="dk-work-parts" style="width:16px;height:16px;cursor:pointer"> 부품교체
+          </label>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:12px;font-weight:600;color:var(--tx-3)">세부작업내용</span>
+          <button type="button" onclick="addWorkDetailRow()" style="padding:5px 12px;background:var(--btn-bg);color:var(--btn-tx);border:none;border-radius:6px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">+ 추가</button>
+        </div>
+        <div id="dk-work-details-rows" style="display:grid;gap:8px"></div>
+        <div id="dk-work-details-empty" style="text-align:center;color:var(--tx-4);font-size:13px;padding:12px">세부작업내용 없음</div>
+      </div>
+
       <!-- 담당 기사 -->
       <div class="form-group" style="margin-bottom:16px">
         <label>담당 기사</label>
@@ -6287,10 +6320,14 @@
       });
       ['dk-occ-hour','dk-recv-hour','dk-arr-hour','dk-resc-hour','dk-comp-hour',
        'dk-occ-min','dk-recv-min','dk-arr-min','dk-resc-min','dk-comp-min'].forEach(id => refreshCselBtn(id));
-      ['dk-fault-area','dk-repair','dk-customer-name','dk-customer-phone'].forEach(i => { const el = document.getElementById(i); if (el) el.value = ''; });
+      ['dk-fault-area','dk-repair','dk-customer-name','dk-customer-phone','dk-approval-date'].forEach(i => { const el = document.getElementById(i); if (el) el.value = ''; });
       const fc = document.getElementById('dk-fault-cause'); if (fc) fc.value = '';
       document.getElementById('dk-trapped').checked = false;
       document.getElementById('dk-normal-on-arrival').checked = false;
+      document.getElementById('dk-work-maint').checked = false;
+      document.getElementById('dk-work-parts').checked = false;
+      docketWorkDetails = [];
+      renderDocketWorkDetails();
       setDocketPartsFree(true);
       document.getElementById('dk-parts-rows').innerHTML = '';
       document.getElementById('dk-parts-empty').style.display = '';
@@ -6316,6 +6353,11 @@
       document.getElementById('dk-repair').value = d.repair_content || '';
       document.getElementById('dk-trapped').checked = !!d.passenger_trapped;
       document.getElementById('dk-normal-on-arrival').checked = !!d.normal_on_arrival;
+      document.getElementById('dk-work-maint').checked = !!d.work_type_maint;
+      document.getElementById('dk-work-parts').checked = !!d.work_type_parts;
+      document.getElementById('dk-approval-date').value = d.approval_date || '';
+      docketWorkDetails = Array.isArray(d.work_details) ? d.work_details.slice() : [];
+      renderDocketWorkDetails();
       setDocketPartsFree(d.parts_free !== false);
       document.getElementById('dk-inspector').value = d.inspector || '';
       document.getElementById('dk-customer-name').value = d.customer_name || '';
@@ -6447,6 +6489,36 @@
     })).filter(p => p.name);
   }
 
+  /* ── 세부작업내용 ── */
+  let docketWorkDetails = [];
+  function renderDocketWorkDetails() {
+    const wrap = document.getElementById('dk-work-details-rows');
+    const empty = document.getElementById('dk-work-details-empty');
+    if (!wrap) return;
+    if (!docketWorkDetails.length) {
+      wrap.innerHTML = '';
+      if (empty) empty.style.display = '';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    wrap.innerHTML = docketWorkDetails.map((d, i) =>
+      '<div style="display:grid;grid-template-columns:1fr 60px 90px 32px;gap:6px;align-items:center">' +
+      '<input type="text" placeholder="세부작업내용" value="' + String(d.detail||'').replace(/"/g,'&quot;') + '" oninput="docketWorkDetails[' + i + '].detail=this.value" style="padding:7px 10px;border:1.5px solid var(--br-mid);border-radius:7px;font-size:13px;font-family:inherit;color:var(--tx);background:var(--bg-card)" />' +
+      '<input type="text" placeholder="대수" value="' + String(d.count||'').replace(/"/g,'&quot;') + '" oninput="docketWorkDetails[' + i + '].count=this.value" style="padding:7px 10px;border:1.5px solid var(--br-mid);border-radius:7px;font-size:13px;font-family:inherit;text-align:center;color:var(--tx);background:var(--bg-card)" />' +
+      '<input type="text" placeholder="동/호기" value="' + String(d.unit||'').replace(/"/g,'&quot;') + '" oninput="docketWorkDetails[' + i + '].unit=this.value" style="padding:7px 10px;border:1.5px solid var(--br-mid);border-radius:7px;font-size:13px;font-family:inherit;color:var(--tx);background:var(--bg-card)" />' +
+      '<button type="button" onclick="removeWorkDetailRow(' + i + ')" style="background:none;border:1px solid var(--br-mid);border-radius:6px;font-size:14px;color:var(--tx-3);cursor:pointer;height:32px;width:32px">✕</button>' +
+      '</div>'
+    ).join('');
+  }
+  function addWorkDetailRow() {
+    docketWorkDetails.push({ detail: '', count: '', unit: '' });
+    renderDocketWorkDetails();
+  }
+  function removeWorkDetailRow(i) {
+    docketWorkDetails.splice(i, 1);
+    renderDocketWorkDetails();
+  }
+
   /* ── 서명 캔버스 ── */
   function initDocketCanvas() {
     const canvas = document.getElementById('dk-sig-canvas');
@@ -6532,6 +6604,10 @@
       arrived_at: toISO('dk-arr'),
       rescued_at: toISO('dk-resc'),
       completed_at: toISO('dk-comp'),
+      approval_date: document.getElementById('dk-approval-date').value || null,
+      work_type_maint: document.getElementById('dk-work-maint').checked,
+      work_type_parts: document.getElementById('dk-work-parts').checked,
+      work_details: docketWorkDetails.filter(w => (w.detail||'').trim() || w.count || (w.unit||'').trim()),
       created_by: currentUser?.username || null,
     };
 
@@ -6637,6 +6713,7 @@
       + field(115, 1016,  60, 22, fmtYear(approvedAt),  'justify-content:center')
       + field(191, 1016,  50, 22, fmtMonth(approvedAt), 'justify-content:center')
       + field(255, 1016,  50, 22, fmtDay(approvedAt),   'justify-content:center')
+      + field(408, 1014, 70, 28, esc(d.customer_name||''), 'align-items:center;justify-content:center')
       + field(478, 1014, 220, 28, sigImg, 'align-items:center')
       + '</div>';
   }
