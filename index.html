@@ -2987,7 +2987,6 @@
       '승강기번호': r.regno || '',
       '유형': r.type || '',
       '접수자': r.name || '',
-      '신고자 연락처': r.phone || '',
       '내용': r.description || '',
       '처리담당자': r.completion_handler || '',
       '도착시간': fmt(r.arrival_at),
@@ -2996,6 +2995,7 @@
       '부품교체': r.parts_replaced ? '있음' : '없음',
       '구출자': r.rescue_handler || '',
       '구출시간': fmt(r.rescue_at),
+      '신고자 연락처': r.phone || '',
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     ws['!cols'] = [
