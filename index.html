@@ -1676,7 +1676,7 @@
         </select>
       </div>
       <div>
-        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">계약 구분 <span style="color:#e53e3e">*</span></label>
+        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">계약 구분</label>
         <select class="modal-input normal" id="mgmt-contract-type" style="margin-bottom:0;letter-spacing:0" onkeydown="mgmtEnterNext(event,this)">
           <option value="">-- 선택 --</option>
           <option>TK-POG</option>
@@ -4777,7 +4777,7 @@
   async function mgmtConfirm() {
     const name = document.getElementById('mgmt-name').value.trim();
     const ctype = document.getElementById('mgmt-contract-type').value;
-    if (!name || !ctype) { showToast('현장명과 계약구분은 필수입니다.'); return; }
+    if (!name) { showToast('현장명은 필수입니다.'); return; }
     // 호기명 미입력 행 검사
     const badElev = pendingElevators.find(e => !e._deleted && !e.unit_name.trim());
     if (badElev) { showToast('호기명을 입력하지 않은 행이 있습니다.'); return; }
@@ -4785,7 +4785,7 @@
     const payload = {
       site_name:         name,
       site_type:         document.getElementById('mgmt-site-type').value || null,
-      contract_type:     ctype,
+      contract_type:     ctype || null,
       contract_date:     document.getElementById('mgmt-contract-date').value || null,
       contract_start:    document.getElementById('mgmt-contract-start').value.trim() || null,
       contract_end:      document.getElementById('mgmt-contract-end').value.trim() || null,
