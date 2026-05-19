@@ -3015,7 +3015,8 @@
       '내용': r.description || '',
       '처리담당자': r.completion_handler || '',
       '도착시간': fmtTime(r.arrival_at),
-      '처리완료일시': fmtMdHm(r.completion_at),
+      '처리일': fmtDate(r.completion_at),
+      '처리시간': fmtTime(r.completion_at),
       '처리/상세내역': r.completion_content || r.completion_detail || '',
       '부품교체': r.parts_replaced ? '있음' : '없음',
       '구출자': r.rescue_handler || '',
@@ -3035,7 +3036,8 @@
       {wch:30},  // 내용
       {wch:10},  // 처리담당자
       {wch:8},   // 도착시간
-      {wch:14},  // 처리완료일시
+      {wch:12},  // 처리일
+      {wch:8},   // 처리시간
       {wch:40},  // 처리/상세내역
       {wch:8},   // 부품교체
       {wch:12},  // 구출자
@@ -6616,9 +6618,9 @@
       + field(661, 216,  30, 22, fmtHour(d.rescued_at),  'justify-content:center')
       + field(691, 216,  30, 22, fmtMin(d.rescued_at),   'justify-content:center')
       + field(315, 237,  28, 20, chk(d.passenger_trapped===true),  'justify-content:center;font-size:16px;font-weight:900')
-      + field(365, 237,  28, 20, chk(d.passenger_trapped===false), 'justify-content:center;font-size:16px;font-weight:900')
+      + field(346, 237,  28, 20, chk(d.passenger_trapped===false), 'justify-content:center;font-size:16px;font-weight:900')
       + field(633, 237,  28, 20, chk(d.normal_on_arrival===true),  'justify-content:center;font-size:16px;font-weight:900')
-      + field(683, 237,  28, 20, chk(d.normal_on_arrival===false), 'justify-content:center;font-size:16px;font-weight:900')
+      + field(665, 237,  28, 20, chk(d.normal_on_arrival===false), 'justify-content:center;font-size:16px;font-weight:900')
       + field(228, 266, 565, 22, esc(d.fault_area||''))
       + field(228, 290, 565, 22, esc(d.fault_cause||''))
       + field(204, 335, 565, 40, esc(d.repair_content||''), 'align-items:flex-start;padding-top:3px;white-space:pre-wrap;font-size:13px')
@@ -6626,8 +6628,8 @@
       + field(181, 362,  30, 22, fmtMin(d.completed_at),  'justify-content:center')
       + field(598, 382,  28, 22, chk(d.normal_after_work===true),  'justify-content:center;font-size:16px;font-weight:900')
       + field(648, 382,  28, 22, chk(d.normal_after_work===false), 'justify-content:center;font-size:16px;font-weight:900')
-      + field(56,  390,  28, 20, chk(d.parts_free===false), 'justify-content:center;font-size:16px;font-weight:900')
-      + field(98,  410,  28, 20, chk(d.parts_free===true),  'justify-content:center;font-size:16px;font-weight:900')
+      + field(57,  390,  28, 20, chk(d.parts_free===false), 'justify-content:center;font-size:16px;font-weight:900')
+      + field(118,  390,  28, 20, chk(d.parts_free===true),  'justify-content:center;font-size:16px;font-weight:900')
       + partsHtml
       + field(110, 545, 170, 25, (totalSupply ? totalSupply.toLocaleString()+'원' : ''), 'justify-content:flex-end;padding-right:3px')
       + field(329, 545, 170, 25, (totalVat ? totalVat.toLocaleString()+'원' : ''), 'justify-content:flex-end;padding-right:3px')
