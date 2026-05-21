@@ -3584,32 +3584,34 @@
     const files = Array.from(input.files || []);
     if (!files.length) return;
     const invalidFile = files.find(f => f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf'));
-    if (invalidFile) {
-      showToast('PDF 파일만 업로드 가능: ' + invalidFile.name);
-      input.value = '';
-      return;
-    }
+    if (invalidFile) { alert('PDF 파일만 업로드 가능: ' + invalidFile.name); input.value = ''; return; }
     const bigFile = files.find(f => f.size > 50 * 1024 * 1024);
-    if (bigFile) {
-      showToast('50MB 초과 파일: ' + bigFile.name);
-      input.value = '';
-      return;
-    }
+    if (bigFile) { alert('50MB 초과 파일: ' + bigFile.name); input.value = ''; return; }
     let notes = '';
     if (files.length === 1) {
       const n = prompt('메모 (선택, 비워둬도 됨):', '');
       if (n === null) { input.value = ''; return; }
       notes = n;
+    } else {
+      if (!confirm(files.length + '개 파일을 업로드합니다. 시간이 오래 걸릴 수 있으며, 페이지를 닫으면 중단됩니다.\n\n계속하시겠습니까?')) {
+        input.value = '';
+        return;
+      }
     }
     const btn = document.getElementById('contracts-upload-btn');
-    if (btn) { btn.disabled = true; }
-    let ok = 0, fail = 0;
+    if (btn) btn.disabled = true;
+    let ok = 0, fail = 0, done = 0;
     let firstError = '';
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (btn) btn.textContent = '업로드 중 ' + (i+1) + '/' + files.length + '...';
+    const total = files.length;
+    const CONCURRENCY = 5;
+    const updateProgress = () => {
+      if (btn) btn.textContent = '업로드 중 ' + done + '/' + total + '...';
+    };
+    updateProgress();
+
+    const uploadOne = async (file, i) => {
       try {
-        const timestamp = Date.now() + '_' + i;
+        const timestamp = Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2, 8);
         const ext = (file.name.match(/\.[^.]+$/) || ['.pdf'])[0].toLowerCase();
         const path = timestamp + ext;
         const { error: upErr } = await db.storage.from('contracts').upload(path, file, { contentType: 'application/pdf', upsert: false });
@@ -3627,14 +3629,24 @@
         fail++;
         if (!firstError) firstError = (e?.message || String(e));
         console.warn('업로드 실패:', file.name, e);
+      } finally {
+        done++;
+        updateProgress();
       }
+    };
+
+    // 동시 5개씩 병렬 처리 (배치)
+    for (let i = 0; i < files.length; i += CONCURRENCY) {
+      const batch = files.slice(i, i + CONCURRENCY).map((f, j) => uploadOne(f, i + j));
+      await Promise.all(batch);
     }
+
     if (btn) { btn.disabled = false; btn.textContent = '+ 계약서 업로드'; }
     input.value = '';
     if (fail && firstError) {
-      alert('업로드 실패 ' + fail + '건\n\n첫 에러:\n' + firstError);
+      alert('업로드 완료\n\n✅ 성공: ' + ok + '건\n❌ 실패: ' + fail + '건 (총 ' + total + '건)\n\n첫 에러:\n' + firstError);
     } else {
-      showToast('✅ ' + ok + '건 업로드 완료' + (fail ? ' / ❌ ' + fail + '건 실패' : ''));
+      alert('✅ 업로드 완료\n총 ' + ok + '건 성공');
     }
     await loadContracts();
   }
