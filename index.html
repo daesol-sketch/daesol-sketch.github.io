@@ -2330,7 +2330,7 @@
     if (tab === 'sites' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'holiday' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'call-logs' && currentRole !== '관리자' && currentRole !== '마스터') return;
-    if (tab === 'contracts' && !currentRole) return;
+    if (tab === 'contracts' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'mgmt' && !currentRole) return;
     if (tab === 'jungong' && !currentRole) return;
     if (!_isPopState && tab !== _currentHistoryTab) history.pushState({ tab }, '', location.pathname);
@@ -3119,8 +3119,7 @@
     document.getElementById('tab-sites-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-holiday-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-call-logs-btn').style.display = isAdmin ? 'flex' : 'none';
-    document.getElementById('tab-contracts-btn').style.display = currentRole ? 'flex' : 'none';
-    document.getElementById('contracts-upload-btn').style.display = isAdmin ? '' : 'none';
+    document.getElementById('tab-contracts-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-insp-calendar-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-mgmt-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-duty-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
@@ -3141,7 +3140,7 @@
     const giCallLogs = document.getElementById('home-gi-call-logs');
     if (giCallLogs) giCallLogs.style.display = isAdmin ? 'flex' : 'none';
     const giContracts = document.getElementById('home-gi-contracts');
-    if (giContracts) giContracts.style.display = currentRole ? 'flex' : 'none';
+    if (giContracts) giContracts.style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('sub-tab-done-btn').style.display = 'inline-block';
     // 반복고장현황 서브탭: 직원/관리자만
     document.getElementById('sub-tab-repeat-btn').style.display = (isAdmin || isStaff) ? 'inline-block' : 'none';
@@ -3557,8 +3556,7 @@
     );
     const countEl = document.getElementById('contracts-count');
     if (countEl) countEl.textContent = '총 ' + list.length + '건';
-    const isAdmin = currentRole === '관리자' || currentRole === '마스터';
-    if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="icon">📄</div>' + (q ? '검색 결과 없음' : (isAdmin ? '등록된 계약서 없음. 우측 상단 [+ 계약서 업로드] 버튼으로 추가하세요.' : '등록된 계약서가 없습니다.')) + '</div>'; return; }
+    if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="icon">📄</div>' + (q ? '검색 결과 없음' : '등록된 계약서 없음. 우측 상단 [+ 계약서 업로드] 버튼으로 추가하세요.') + '</div>'; return; }
     el.innerHTML = list.map(c => {
       const sizeKB = c.file_size ? (c.file_size/1024).toFixed(0) + ' KB' : '';
       const sizeMB = c.file_size && c.file_size > 1024*512 ? (c.file_size/1024/1024).toFixed(2) + ' MB' : sizeKB;
@@ -3576,8 +3574,7 @@
         '</div>' +
         '<div style="display:flex;gap:6px;align-items:center">' +
         '<button onclick="previewContract(' + c.id + ')" style="padding:7px 12px;background:#276749;color:white;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer">👁️ 미리보기</button>' +
-        (isAdmin ? '<button onclick="downloadContract(' + c.id + ')" style="padding:7px 12px;background:#2b6cb0;color:white;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer">📥 다운로드</button>' : '') +
-        (isAdmin ? '<button onclick="deleteContract(' + c.id + ')" class="btn-delete" style="padding:7px 12px">🗑️ 삭제</button>' : '') +
+        '<button onclick="deleteContract(' + c.id + ')" class="btn-delete" style="padding:7px 12px">🗑️ 삭제</button>' +
         '</div>' +
         '</div>';
     }).join('');
