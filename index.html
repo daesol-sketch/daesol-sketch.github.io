@@ -461,6 +461,7 @@
   <button class="drawer-menu-item tab-btn" id="tab-sites-btn" onclick="switchTab('sites');closeNavMenu()" style="display:none"><span class="menu-icon">👤</span> 인사 관리</button>
   <button class="drawer-menu-item tab-btn" id="tab-holiday-btn" onclick="switchTab('holiday');closeNavMenu()" style="display:none"><span class="menu-icon">📅</span> 휴일 관리</button>
   <button class="drawer-menu-item tab-btn" id="tab-call-logs-btn" onclick="switchTab('call-logs');closeNavMenu()" style="display:none"><span class="menu-icon">📞</span> 전화 기록</button>
+  <button class="drawer-menu-item tab-btn" id="tab-contracts-btn" onclick="switchTab('contracts');closeNavMenu()" style="display:none"><span class="menu-icon">📄</span> 계약서</button>
   <div style="flex:1"></div>
   <button class="drawer-logout" onclick="doLogout()">로그아웃</button>
 </div>
@@ -549,6 +550,9 @@
       </button>
       <button class="home-grid-item" onclick="switchTab('call-logs')" id="home-gi-call-logs" style="display:none">
         <span class="gi-icon">📞</span><span class="gi-label">전화 기록</span>
+      </button>
+      <button class="home-grid-item" onclick="switchTab('contracts')" id="home-gi-contracts" style="display:none">
+        <span class="gi-icon">📄</span><span class="gi-label">계약서</span>
       </button>
     </div>
   </div>
@@ -893,6 +897,30 @@
         <button onclick="loadCallLogs()" style="padding:8px 14px;background:var(--bg-high);border:1.5px solid var(--br-mid);border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;color:var(--tx)">🔄 새로고침</button>
       </div>
       <div id="call-logs-list"><div class="loading-state">불러오는 중...</div></div>
+    </div>
+  </div>
+  <!-- 계약서 보관함 -->
+  <div class="page" id="page-contracts">
+    <div id="contracts-sites-view">
+      <div class="card">
+        <h2>📄 계약서 보관함 <span id="contracts-sites-count" style="font-size:13px;font-weight:400;color:var(--tx-3);margin-left:8px"></span></h2>
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+          <input type="text" id="contracts-sites-search" placeholder="🔍 현장명 검색" oninput="renderContractsSites()" style="padding:8px 12px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:13px;font-family:inherit;flex:1;min-width:200px;background:var(--bg-card);color:var(--tx)" />
+          <button onclick="loadContractsSites()" style="padding:8px 14px;background:var(--bg-high);border:1.5px solid var(--br-mid);border-radius:8px;font-size:13px;cursor:pointer;color:var(--tx)">🔄 새로고침</button>
+        </div>
+        <div id="contracts-sites-list"><div class="loading-state">불러오는 중...</div></div>
+      </div>
+    </div>
+    <div id="contracts-detail-view" style="display:none">
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+          <button onclick="backToContractsSites()" style="padding:8px 14px;background:var(--bg-high);border:1.5px solid var(--br-mid);border-radius:8px;font-size:13px;cursor:pointer;color:var(--tx)">← 목록</button>
+          <h2 id="contracts-detail-title" style="margin:0;flex:1">📄 계약서</h2>
+          <button onclick="document.getElementById('contracts-file-input').click()" id="contracts-upload-btn" style="padding:9px 18px;background:var(--btn-bg);color:var(--btn-tx);border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">+ 계약서 업로드</button>
+          <input type="file" id="contracts-file-input" accept="application/pdf,.pdf" style="display:none" onchange="uploadContract(this)" />
+        </div>
+        <div id="contracts-list"><div class="loading-state">불러오는 중...</div></div>
+      </div>
     </div>
   </div>
   <!-- 검사일정 -->
@@ -2184,7 +2212,7 @@
   updateClock(); setInterval(updateClock, 1000);
 
   /* ── NAV MENU (사이드 드로어) ── */
-  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', gongsa:'📸 공사팀 사진철', holiday:'📅 휴일 관리', 'insp-calendar':'🗓️ 검사일정', docket:'📝 서비스다켓', 'call-logs':'📞 전화 기록' };
+  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', gongsa:'📸 공사팀 사진철', holiday:'📅 휴일 관리', 'insp-calendar':'🗓️ 검사일정', docket:'📝 서비스다켓', 'call-logs':'📞 전화 기록', contracts:'📄 계약서' };
   function toggleNavMenu() {
     if (!currentUser) return;
     document.getElementById('side-drawer').classList.toggle('open');
@@ -2311,6 +2339,7 @@
     if (tab === 'sites' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'holiday' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'call-logs' && currentRole !== '관리자' && currentRole !== '마스터') return;
+    if (tab === 'contracts' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'mgmt' && !currentRole) return;
     if (tab === 'jungong' && !currentRole) return;
     if (!_isPopState && tab !== _currentHistoryTab) history.pushState({ tab }, '', location.pathname);
@@ -2330,6 +2359,7 @@
     if (tab === 'insp-calendar') loadInspCalendar();
     if (tab === 'docket') initDocketTab();
     if (tab === 'call-logs') loadCallLogs();
+    if (tab === 'contracts') loadContractsSites();
     const lbl = document.getElementById('current-tab-label');
     if (lbl) lbl.textContent = TAB_LABELS[tab] || '';
   }
@@ -3098,6 +3128,7 @@
     document.getElementById('tab-sites-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-holiday-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-call-logs-btn').style.display = isAdmin ? 'flex' : 'none';
+    document.getElementById('tab-contracts-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-insp-calendar-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-mgmt-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-duty-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
@@ -3117,6 +3148,8 @@
     if (giInspCal) giInspCal.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     const giCallLogs = document.getElementById('home-gi-call-logs');
     if (giCallLogs) giCallLogs.style.display = isAdmin ? 'flex' : 'none';
+    const giContracts = document.getElementById('home-gi-contracts');
+    if (giContracts) giContracts.style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('sub-tab-done-btn').style.display = 'inline-block';
     // 반복고장현황 서브탭: 직원/관리자만
     document.getElementById('sub-tab-repeat-btn').style.display = (isAdmin || isStaff) ? 'inline-block' : 'none';
@@ -3506,6 +3539,169 @@
         if (ph && phone) { ph.value = phone; autoFormatPhone(ph); }
       }, 200);
     }, 100);
+  }
+
+  /* ── 계약서 보관함 ── */
+  let contractsSitesData = [];
+  let contractsCurrentSiteId = null;
+  let contractsCurrentSiteName = '';
+  let contractsCurrentList = [];
+
+  async function loadContractsSites() {
+    const el = document.getElementById('contracts-sites-list');
+    if (!el) return;
+    el.innerHTML = '<div class="loading-state">불러오는 중...</div>';
+    document.getElementById('contracts-sites-view').style.display = '';
+    document.getElementById('contracts-detail-view').style.display = 'none';
+    const { data: sites, error } = await db.from('managed_sites').select('id, site_name').order('site_name');
+    if (error) { el.innerHTML = '<div class="empty-state">❌ ' + escHtml(error.message) + '</div>'; return; }
+    const { data: contracts } = await db.from('contracts').select('site_id');
+    const countMap = {};
+    (contracts || []).forEach(c => { countMap[c.site_id] = (countMap[c.site_id]||0) + 1; });
+    contractsSitesData = (sites || []).map(s => ({ ...s, count: countMap[s.id] || 0 }));
+    renderContractsSites();
+  }
+
+  function renderContractsSites() {
+    const el = document.getElementById('contracts-sites-list');
+    if (!el) return;
+    const q = (document.getElementById('contracts-sites-search')?.value || '').trim().toLowerCase();
+    let list = contractsSitesData;
+    if (q) list = list.filter(s => (s.site_name||'').toLowerCase().includes(q));
+    const countEl = document.getElementById('contracts-sites-count');
+    if (countEl) countEl.textContent = '총 ' + list.length + '개 현장';
+    if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="icon">📄</div>현장 없음</div>'; return; }
+    el.innerHTML = list.map(s =>
+      '<div onclick="openContractsForSite(' + s.id + ',' + JSON.stringify(s.site_name||'').replace(/"/g,'&quot;') + ')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg-card);border:1.5px solid var(--br-mid);border-radius:10px;margin-bottom:8px;cursor:pointer">' +
+      '<div style="flex:1;font-size:15px;font-weight:600;color:var(--tx)">🏢 ' + escHtml(s.site_name||'') + '</div>' +
+      (s.count > 0
+        ? '<span style="background:#1a2a3a;color:#63b3ed;border:1.5px solid #2c4a6a;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:700">📄 ' + s.count + '건</span>'
+        : '<span style="color:var(--tx-4);font-size:12px">없음</span>') +
+      '<span style="color:var(--tx-3);font-size:16px">›</span>' +
+      '</div>'
+    ).join('');
+  }
+
+  async function openContractsForSite(siteId, siteName) {
+    contractsCurrentSiteId = siteId;
+    contractsCurrentSiteName = siteName;
+    document.getElementById('contracts-sites-view').style.display = 'none';
+    document.getElementById('contracts-detail-view').style.display = '';
+    document.getElementById('contracts-detail-title').textContent = '📄 ' + siteName;
+    await loadContractsForSite(siteId);
+  }
+
+  function backToContractsSites() {
+    document.getElementById('contracts-sites-view').style.display = '';
+    document.getElementById('contracts-detail-view').style.display = 'none';
+    contractsCurrentSiteId = null;
+    loadContractsSites();
+  }
+
+  async function loadContractsForSite(siteId) {
+    const el = document.getElementById('contracts-list');
+    if (!el) return;
+    el.innerHTML = '<div class="loading-state">불러오는 중...</div>';
+    const { data, error } = await db.from('contracts').select('*').eq('site_id', siteId).order('contract_date', { ascending: false, nullsLast: true }).order('created_at', { ascending: false });
+    if (error) { el.innerHTML = '<div class="empty-state">❌ ' + escHtml(error.message) + '</div>'; return; }
+    contractsCurrentList = data || [];
+    renderContractsForSite();
+  }
+
+  function renderContractsForSite() {
+    const el = document.getElementById('contracts-list');
+    if (!el) return;
+    if (!contractsCurrentList.length) { el.innerHTML = '<div class="empty-state"><div class="icon">📄</div>등록된 계약서 없음. 우측 상단 [+ 계약서 업로드] 버튼으로 추가하세요.</div>'; return; }
+    el.innerHTML = contractsCurrentList.map(c => {
+      const sizeKB = c.file_size ? (c.file_size/1024).toFixed(0) + ' KB' : '';
+      const sizeMB = c.file_size && c.file_size > 1024*512 ? (c.file_size/1024/1024).toFixed(2) + ' MB' : sizeKB;
+      const cDate = c.contract_date ? new Date(c.contract_date).toLocaleDateString('ko-KR') : '';
+      const uDate = c.created_at ? new Date(c.created_at).toLocaleString('ko-KR') : '';
+      return '<div style="display:grid;grid-template-columns:1fr auto;gap:10px;padding:14px 16px;background:var(--bg-card);border:1.5px solid var(--br-mid);border-radius:10px;margin-bottom:8px">' +
+        '<div>' +
+        '<div style="font-size:14px;font-weight:600;color:var(--tx);margin-bottom:4px">📄 ' + escHtml(c.file_name||'') + '</div>' +
+        '<div style="font-size:12px;color:var(--tx-3)">' +
+          (cDate ? '📅 계약일: ' + cDate + '  ·  ' : '') +
+          '📤 ' + (c.uploaded_by ? escHtml(c.uploaded_by) + '  ·  ' : '') + uDate +
+          (sizeMB ? '  ·  ' + sizeMB : '') +
+        '</div>' +
+        (c.notes ? '<div style="font-size:12px;color:var(--tx-2);margin-top:4px;background:var(--bg-high);padding:6px 10px;border-radius:6px">' + escHtml(c.notes) + '</div>' : '') +
+        '</div>' +
+        '<div style="display:flex;gap:6px;align-items:center">' +
+        '<button onclick="downloadContract(' + c.id + ')" style="padding:7px 12px;background:#2b6cb0;color:white;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer">📥 다운로드</button>' +
+        '<button onclick="deleteContract(' + c.id + ')" class="btn-delete" style="padding:7px 12px">🗑️ 삭제</button>' +
+        '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  async function uploadContract(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (!contractsCurrentSiteId) { showToast('현장 먼저 선택'); return; }
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      showToast('PDF 파일만 업로드 가능');
+      input.value = '';
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      showToast('50MB 이하 파일만 업로드 가능');
+      input.value = '';
+      return;
+    }
+    const contractDate = prompt('계약일을 입력하세요 (YYYY-MM-DD, 모르면 비워두고 확인):', new Date().toLocaleDateString('sv'));
+    if (contractDate === null) { input.value = ''; return; }
+    const notes = prompt('메모 (선택, 비워둘 수 있음):', '') || '';
+    const btn = document.getElementById('contracts-upload-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '업로드 중...'; }
+    try {
+      const timestamp = Date.now();
+      const safeName = file.name.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ._-]/g, '_');
+      const path = contractsCurrentSiteId + '/' + timestamp + '_' + safeName;
+      const { error: upErr } = await db.storage.from('contracts').upload(path, file, { contentType: 'application/pdf', upsert: false });
+      if (upErr) throw upErr;
+      const { error: dbErr } = await db.from('contracts').insert({
+        site_id: contractsCurrentSiteId,
+        file_name: file.name,
+        file_path: path,
+        file_size: file.size,
+        contract_date: (contractDate && /^\d{4}-\d{2}-\d{2}$/.test(contractDate)) ? contractDate : null,
+        notes: notes.trim() || null,
+        uploaded_by: currentUser ? currentUser.username : null
+      });
+      if (dbErr) throw dbErr;
+      showToast('✅ 업로드 완료');
+      input.value = '';
+      await loadContractsForSite(contractsCurrentSiteId);
+    } catch (e) {
+      showToast('❌ 업로드 실패: ' + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '+ 계약서 업로드'; }
+    }
+  }
+
+  async function downloadContract(id) {
+    const c = contractsCurrentList.find(x => x.id === id);
+    if (!c) return;
+    const { data, error } = await db.storage.from('contracts').createSignedUrl(c.file_path, 60);
+    if (error || !data?.signedUrl) { showToast('❌ ' + (error?.message || '실패')); return; }
+    const a = document.createElement('a');
+    a.href = data.signedUrl;
+    a.download = c.file_name;
+    a.target = '_blank';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  async function deleteContract(id) {
+    const c = contractsCurrentList.find(x => x.id === id);
+    if (!c) return;
+    if (!confirm('"' + c.file_name + '" 계약서를 삭제하시겠습니까?')) return;
+    const { error: stErr } = await db.storage.from('contracts').remove([c.file_path]);
+    if (stErr) { showToast('⚠️ 파일 삭제 경고: ' + stErr.message); }
+    const { error: dbErr } = await db.from('contracts').delete().eq('id', id);
+    if (dbErr) { showToast('❌ DB 삭제 실패: ' + dbErr.message); return; }
+    showToast('🗑️ 삭제 완료');
+    await loadContractsForSite(contractsCurrentSiteId);
   }
 
   let accountsData = [];
