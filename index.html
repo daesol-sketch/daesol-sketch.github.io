@@ -907,6 +907,11 @@
         <button onclick="document.getElementById('contracts-file-input').click()" id="contracts-upload-btn" style="margin-left:auto;padding:9px 18px;background:var(--btn-bg);color:var(--btn-tx);border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">+ 계약서 업로드</button>
         <input type="file" id="contracts-file-input" accept="application/pdf,.pdf" multiple style="display:none" onchange="uploadContract(this)" />
       </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+        <button class="filter-btn active" data-ctype="" onclick="setContractsFilter('',this)">전체</button>
+        <button class="filter-btn" data-ctype="TKE" onclick="setContractsFilter('TKE',this)">🅃 TKE</button>
+        <button class="filter-btn" data-ctype="대솔이엘" onclick="setContractsFilter('대솔이엘',this)">🅓 대솔이엘</button>
+      </div>
       <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
         <input type="text" id="contracts-search" placeholder="🔍 파일명·메모 검색" oninput="renderContracts()" style="padding:8px 12px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:13px;font-family:inherit;flex:1;min-width:200px;background:var(--bg-card);color:var(--tx)" />
         <button onclick="loadContracts()" style="padding:8px 14px;background:var(--bg-high);border:1.5px solid var(--br-mid);border-radius:8px;font-size:13px;cursor:pointer;color:var(--tx)">🔄 새로고침</button>
@@ -3534,6 +3539,14 @@
 
   /* ── 계약서 보관함 (단일 폴더 방식) ── */
   let contractsList = [];
+  let contractsFilter = '';
+
+  function setContractsFilter(type, btn) {
+    contractsFilter = type;
+    document.querySelectorAll('#page-contracts .filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderContracts();
+  }
 
   async function loadContracts() {
     const el = document.getElementById('contracts-list');
@@ -3550,6 +3563,7 @@
     if (!el) return;
     const q = (document.getElementById('contracts-search')?.value || '').trim().toLowerCase();
     let list = contractsList;
+    if (contractsFilter) list = list.filter(c => c.contract_type === contractsFilter);
     if (q) list = list.filter(c =>
       (c.file_name||'').toLowerCase().includes(q) ||
       (c.notes||'').toLowerCase().includes(q)
@@ -3562,9 +3576,14 @@
       const sizeMB = c.file_size && c.file_size > 1024*512 ? (c.file_size/1024/1024).toFixed(2) + ' MB' : sizeKB;
       const cDate = c.contract_date ? new Date(c.contract_date).toLocaleDateString('ko-KR') : '';
       const uDate = c.created_at ? new Date(c.created_at).toLocaleString('ko-KR') : '';
+      const typeBadge = c.contract_type === 'TKE'
+        ? '<span style="background:#1a2a3a;color:#63b3ed;border:1.5px solid #2c4a6a;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;margin-right:6px">🅃 TKE</span>'
+        : c.contract_type === '대솔이엘'
+          ? '<span style="background:#2a1a0a;color:#f6ad55;border:1.5px solid #4a2a0a;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;margin-right:6px">🅓 대솔이엘</span>'
+          : '';
       return '<div style="display:grid;grid-template-columns:1fr auto;gap:10px;padding:14px 16px;background:var(--bg-card);border:1.5px solid var(--br-mid);border-radius:10px;margin-bottom:8px">' +
         '<div>' +
-        '<div style="font-size:14px;font-weight:600;color:var(--tx);margin-bottom:4px">📄 ' + escHtml(c.file_name||'') + '</div>' +
+        '<div style="font-size:14px;font-weight:600;color:var(--tx);margin-bottom:4px">' + typeBadge + '📄 ' + escHtml(c.file_name||'') + '</div>' +
         '<div style="font-size:12px;color:var(--tx-3)">' +
           (cDate ? '📅 계약일: ' + cDate + '  ·  ' : '') +
           '📤 ' + (c.uploaded_by ? escHtml(c.uploaded_by) + '  ·  ' : '') + uDate +
@@ -3587,13 +3606,20 @@
     if (invalidFile) { alert('PDF 파일만 업로드 가능: ' + invalidFile.name); input.value = ''; return; }
     const bigFile = files.find(f => f.size > 50 * 1024 * 1024);
     if (bigFile) { alert('50MB 초과 파일: ' + bigFile.name); input.value = ''; return; }
+    // 양식 선택 (TKE / 대솔이엘)
+    const typeInput = prompt('이 ' + files.length + '개 파일의 양식을 입력하세요:\n  1 = TKE\n  2 = 대솔이엘\n  (빈 값 또는 취소 시 분류 안 함)', '');
+    if (typeInput === null) { input.value = ''; return; }
+    let contractType = null;
+    if (typeInput.trim() === '1' || typeInput.toUpperCase() === 'TKE') contractType = 'TKE';
+    else if (typeInput.trim() === '2' || typeInput.includes('대솔')) contractType = '대솔이엘';
+
     let notes = '';
     if (files.length === 1) {
       const n = prompt('메모 (선택, 비워둬도 됨):', '');
       if (n === null) { input.value = ''; return; }
       notes = n;
     } else {
-      if (!confirm(files.length + '개 파일을 업로드합니다. 시간이 오래 걸릴 수 있으며, 페이지를 닫으면 중단됩니다.\n\n계속하시겠습니까?')) {
+      if (!confirm(files.length + '개 파일을 ' + (contractType || '미분류') + '로 업로드합니다. 시간이 오래 걸릴 수 있으며, 페이지를 닫으면 중단됩니다.\n\n계속하시겠습니까?')) {
         input.value = '';
         return;
       }
@@ -3620,6 +3646,7 @@
           file_name: file.name,
           file_path: path,
           file_size: file.size,
+          contract_type: contractType,
           notes: notes.trim() || null,
           uploaded_by: currentUser ? currentUser.username : null
         });
