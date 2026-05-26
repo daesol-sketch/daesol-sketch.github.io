@@ -3680,8 +3680,8 @@
           ? '<span style="background:#2a1a0a;color:#f6ad55;border:1.5px solid #4a2a0a;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;margin-right:6px">🅓 대솔이엘</span>'
           : '';
       const checked = contractsSelected.has(c.id);
-      return '<div style="display:grid;grid-template-columns:auto 1fr auto;gap:10px;padding:14px 16px;background:' + (checked ? '#1a2a3a' : 'var(--bg-card)') + ';border:1.5px solid ' + (checked ? '#2c4a6a' : 'var(--br-mid)') + ';border-radius:10px;margin-bottom:8px">' +
-        '<input type="checkbox" ' + (checked ? 'checked' : '') + ' onchange="toggleContractSelect(' + c.id + ',this.checked);renderContracts()" style="width:18px;height:18px;cursor:pointer;margin-top:2px;align-self:start" />' +
+      return '<div onclick="previewContract(' + c.id + ')" style="display:grid;grid-template-columns:auto 1fr auto;gap:10px;padding:14px 16px;background:' + (checked ? '#1a2a3a' : 'var(--bg-card)') + ';border:1.5px solid ' + (checked ? '#2c4a6a' : 'var(--br-mid)') + ';border-radius:10px;margin-bottom:8px;cursor:pointer">' +
+        '<input type="checkbox" ' + (checked ? 'checked' : '') + ' onclick="event.stopPropagation()" onchange="toggleContractSelect(' + c.id + ',this.checked);renderContracts()" style="width:18px;height:18px;cursor:pointer;margin-top:2px;align-self:start" />' +
         '<div>' +
         '<div style="font-size:14px;font-weight:600;color:var(--tx);margin-bottom:4px">' + typeBadge + '📄 ' + escHtml(c.file_name||'') + '</div>' +
         '<div style="font-size:12px;color:var(--tx-3)">' +
@@ -3690,13 +3690,12 @@
           (sizeMB ? '  ·  ' + sizeMB : '') +
         '</div>' +
         (c.notes
-          ? '<div onclick="editContractNotes(' + c.id + ')" style="font-size:12px;color:var(--tx-2);margin-top:4px;background:var(--bg-high);padding:6px 10px;border-radius:6px;cursor:pointer" title="클릭하여 메모 편집">📝 ' + escHtml(c.notes) + '</div>'
-          : '<button onclick="editContractNotes(' + c.id + ')" style="font-size:11px;color:var(--tx-4);margin-top:4px;background:none;border:1px dashed var(--br-mid);padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit">+ 메모 추가</button>'
+          ? '<div onclick="event.stopPropagation();editContractNotes(' + c.id + ')" style="font-size:12px;color:var(--tx-2);margin-top:4px;background:var(--bg-high);padding:6px 10px;border-radius:6px;cursor:pointer" title="클릭하여 메모 편집">📝 ' + escHtml(c.notes) + '</div>'
+          : '<button onclick="event.stopPropagation();editContractNotes(' + c.id + ')" style="font-size:11px;color:var(--tx-4);margin-top:4px;background:none;border:1px dashed var(--br-mid);padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit">+ 메모 추가</button>'
         ) +
         '</div>' +
         '<div style="display:flex;gap:6px;align-items:center">' +
-        '<button onclick="previewContract(' + c.id + ')" style="padding:7px 12px;background:#276749;color:white;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer">👁️ 미리보기</button>' +
-        '<button onclick="deleteContract(' + c.id + ')" class="btn-delete" style="padding:7px 12px">🗑️ 삭제</button>' +
+        '<button onclick="event.stopPropagation();deleteContract(' + c.id + ')" class="btn-delete" style="padding:7px 12px">🗑️ 삭제</button>' +
         '</div>' +
         '</div>';
     }).join('');
