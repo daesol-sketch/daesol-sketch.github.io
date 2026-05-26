@@ -3635,9 +3635,24 @@
     const el = document.getElementById('contracts-list');
     if (!el) return;
     el.innerHTML = '<div class="loading-state">불러오는 중...</div>';
-    const { data, error } = await db.from('contracts').select('*').order('created_at', { ascending: false }).limit(2000);
-    if (error) { el.innerHTML = '<div class="empty-state">❌ ' + escHtml(error.message) + '</div>'; return; }
-    contractsList = data || [];
+    // PostgREST가 한 번에 최대 1000건만 반환하므로 페이지네이션으로 전체 로드
+    const PAGE_SIZE = 1000;
+    let allData = [];
+    let from = 0;
+    while (from < 100000) {  // 안전장치: 10만 건 상한
+      const { data, error } = await db
+        .from('contracts')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+      if (error) { el.innerHTML = '<div class="empty-state">❌ ' + escHtml(error.message) + '</div>'; return; }
+      if (!data || data.length === 0) break;
+      allData = allData.concat(data);
+      if (data.length < PAGE_SIZE) break;
+      from += PAGE_SIZE;
+      el.innerHTML = '<div class="loading-state">불러오는 중... ' + allData.length + '건</div>';
+    }
+    contractsList = allData;
     renderContracts();
   }
 
