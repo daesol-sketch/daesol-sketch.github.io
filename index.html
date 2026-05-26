@@ -3689,21 +3689,45 @@
   }
 
   async function uploadContract(input, contractType) {
+    // 즉시 시각적 피드백 - 검증 전에 버튼 disable
+    const btnsWrap = document.getElementById('contracts-upload-btns');
+    if (btnsWrap) {
+      btnsWrap.querySelectorAll('button').forEach(b => { b.disabled = true; b.textContent = '검증 중...'; });
+    }
+    await new Promise(r => setTimeout(r, 30));  // UI 업데이트 보장
+
     const files = Array.from(input.files || []);
-    if (!files.length) return;
-    const invalidFile = files.find(f => f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf'));
-    if (invalidFile) { alert('PDF 파일만 업로드 가능: ' + invalidFile.name); input.value = ''; return; }
-    const bigFile = files.find(f => f.size > 50 * 1024 * 1024);
-    if (bigFile) { alert('50MB 초과 파일: ' + bigFile.name); input.value = ''; return; }
+    console.log('[계약서] 업로드 요청:', files.length, '건,', contractType);
+
+    const restoreBtns = () => {
+      if (btnsWrap) {
+        btnsWrap.querySelectorAll('button').forEach(b => b.disabled = false);
+        const tkeBtn = btnsWrap.querySelector('button[onclick*="tke-input"]');
+        const dsBtn  = btnsWrap.querySelector('button[onclick*="daesol-input"]');
+        if (tkeBtn) tkeBtn.textContent = '+ 🅃 TKE 업로드';
+        if (dsBtn)  dsBtn.textContent  = '+ 🅓 대솔이엘 업로드';
+      }
+    };
+
+    if (!files.length) { restoreBtns(); return; }
+
+    // 검증을 한 번의 순회로 처리
+    let invalidName = '', bigName = '';
+    for (const f of files) {
+      if (!invalidName && f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')) invalidName = f.name;
+      if (!bigName && f.size > 50 * 1024 * 1024) bigName = f.name;
+      if (invalidName && bigName) break;
+    }
+    if (invalidName) { alert('PDF 파일만 업로드 가능: ' + invalidName); input.value = ''; restoreBtns(); return; }
+    if (bigName) { alert('50MB 초과 파일: ' + bigName); input.value = ''; restoreBtns(); return; }
 
     if (files.length > 1) {
       if (!confirm(files.length + '개 파일을 [' + contractType + ']로 업로드합니다. 시간이 오래 걸릴 수 있으며, 페이지를 닫으면 중단됩니다.\n\n계속하시겠습니까?')) {
         input.value = '';
+        restoreBtns();
         return;
       }
     }
-    const btnsWrap = document.getElementById('contracts-upload-btns');
-    if (btnsWrap) btnsWrap.querySelectorAll('button').forEach(b => b.disabled = true);
     let ok = 0, fail = 0, done = 0;
     let firstError = '';
     const total = files.length;
@@ -3748,14 +3772,7 @@
       await Promise.all(batch);
     }
 
-    if (btnsWrap) {
-      btnsWrap.querySelectorAll('button').forEach(b => b.disabled = false);
-      // 원래 텍스트 복원
-      const tkeBtn = btnsWrap.querySelector('button[onclick*="tke-input"]');
-      const dsBtn  = btnsWrap.querySelector('button[onclick*="daesol-input"]');
-      if (tkeBtn) tkeBtn.textContent = '+ 🅃 TKE 업로드';
-      if (dsBtn)  dsBtn.textContent  = '+ 🅓 대솔이엘 업로드';
-    }
+    restoreBtns();
     input.value = '';
     if (fail && firstError) {
       alert('업로드 완료\n\n✅ 성공: ' + ok + '건\n❌ 실패: ' + fail + '건 (총 ' + total + '건)\n\n첫 에러:\n' + firstError);
