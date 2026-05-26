@@ -3595,7 +3595,10 @@
           '📤 ' + (c.uploaded_by ? escHtml(c.uploaded_by) + '  ·  ' : '') + uDate +
           (sizeMB ? '  ·  ' + sizeMB : '') +
         '</div>' +
-        (c.notes ? '<div style="font-size:12px;color:var(--tx-2);margin-top:4px;background:var(--bg-high);padding:6px 10px;border-radius:6px">' + escHtml(c.notes) + '</div>' : '') +
+        (c.notes
+          ? '<div onclick="editContractNotes(' + c.id + ')" style="font-size:12px;color:var(--tx-2);margin-top:4px;background:var(--bg-high);padding:6px 10px;border-radius:6px;cursor:pointer" title="클릭하여 메모 편집">📝 ' + escHtml(c.notes) + '</div>'
+          : '<button onclick="editContractNotes(' + c.id + ')" style="font-size:11px;color:var(--tx-4);margin-top:4px;background:none;border:1px dashed var(--br-mid);padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit">+ 메모 추가</button>'
+        ) +
         '</div>' +
         '<div style="display:flex;gap:6px;align-items:center">' +
         '<button onclick="previewContract(' + c.id + ')" style="padding:7px 12px;background:#276749;color:white;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer">👁️ 미리보기</button>' +
@@ -3613,12 +3616,7 @@
     const bigFile = files.find(f => f.size > 50 * 1024 * 1024);
     if (bigFile) { alert('50MB 초과 파일: ' + bigFile.name); input.value = ''; return; }
 
-    let notes = '';
-    if (files.length === 1) {
-      const n = prompt('메모 (선택, 비워둬도 됨):', '');
-      if (n === null) { input.value = ''; return; }
-      notes = n;
-    } else {
+    if (files.length > 1) {
       if (!confirm(files.length + '개 파일을 [' + contractType + ']로 업로드합니다. 시간이 오래 걸릴 수 있으며, 페이지를 닫으면 중단됩니다.\n\n계속하시겠습니까?')) {
         input.value = '';
         return;
@@ -3650,7 +3648,6 @@
           file_path: path,
           file_size: file.size,
           contract_type: contractType,
-          notes: notes.trim() || null,
           uploaded_by: currentUser ? currentUser.username : null
         });
         if (dbErr) throw dbErr;
@@ -3718,6 +3715,19 @@
     if (dbErr) { showToast('❌ DB 삭제 실패: ' + dbErr.message); return; }
     showToast('🗑️ 삭제 완료');
     await loadContracts();
+  }
+
+  async function editContractNotes(id) {
+    const c = contractsList.find(x => x.id === id);
+    if (!c) return;
+    const newNotes = prompt('메모를 입력하세요 (검색에 사용됨, 빈 값으로 두면 삭제):', c.notes || '');
+    if (newNotes === null) return;
+    const value = newNotes.trim() || null;
+    const { error } = await db.from('contracts').update({ notes: value }).eq('id', id);
+    if (error) { showToast('❌ ' + error.message); return; }
+    showToast('✅ 메모 저장됨');
+    c.notes = value;
+    renderContracts();
   }
 
   let accountsData = [];
