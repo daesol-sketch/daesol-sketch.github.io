@@ -904,8 +904,12 @@
     <div class="card">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
         <h2 style="margin:0">📄 계약서 보관함 <span id="contracts-count" style="font-size:13px;font-weight:400;color:var(--tx-3);margin-left:8px"></span></h2>
-        <button onclick="document.getElementById('contracts-file-input').click()" id="contracts-upload-btn" style="margin-left:auto;padding:9px 18px;background:var(--btn-bg);color:var(--btn-tx);border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">+ 계약서 업로드</button>
-        <input type="file" id="contracts-file-input" accept="application/pdf,.pdf" multiple style="display:none" onchange="uploadContract(this)" />
+        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap" id="contracts-upload-btns">
+          <button onclick="document.getElementById('contracts-tke-input').click()" style="padding:9px 16px;background:#2b6cb0;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">+ 🅃 TKE 업로드</button>
+          <button onclick="document.getElementById('contracts-daesol-input').click()" style="padding:9px 16px;background:#c05621;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">+ 🅓 대솔이엘 업로드</button>
+        </div>
+        <input type="file" id="contracts-tke-input" accept="application/pdf,.pdf" multiple style="display:none" onchange="uploadContract(this,'TKE')" />
+        <input type="file" id="contracts-daesol-input" accept="application/pdf,.pdf" multiple style="display:none" onchange="uploadContract(this,'대솔이엘')" />
       </div>
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
         <button class="filter-btn active" data-ctype="" onclick="setContractsFilter('',this)">전체</button>
@@ -3125,6 +3129,8 @@
     document.getElementById('tab-holiday-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-call-logs-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-contracts-btn').style.display = isAdmin ? 'flex' : 'none';
+    const cBtns = document.getElementById('contracts-upload-btns');
+    if (cBtns) cBtns.style.display = isAdmin ? '' : 'none';
     document.getElementById('tab-insp-calendar-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-mgmt-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-duty-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
@@ -3599,19 +3605,13 @@
     }).join('');
   }
 
-  async function uploadContract(input) {
+  async function uploadContract(input, contractType) {
     const files = Array.from(input.files || []);
     if (!files.length) return;
     const invalidFile = files.find(f => f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf'));
     if (invalidFile) { alert('PDF 파일만 업로드 가능: ' + invalidFile.name); input.value = ''; return; }
     const bigFile = files.find(f => f.size > 50 * 1024 * 1024);
     if (bigFile) { alert('50MB 초과 파일: ' + bigFile.name); input.value = ''; return; }
-    // 양식 선택 (TKE / 대솔이엘)
-    const typeInput = prompt('이 ' + files.length + '개 파일의 양식을 입력하세요:\n  1 = TKE\n  2 = 대솔이엘\n  (빈 값 또는 취소 시 분류 안 함)', '');
-    if (typeInput === null) { input.value = ''; return; }
-    let contractType = null;
-    if (typeInput.trim() === '1' || typeInput.toUpperCase() === 'TKE') contractType = 'TKE';
-    else if (typeInput.trim() === '2' || typeInput.includes('대솔')) contractType = '대솔이엘';
 
     let notes = '';
     if (files.length === 1) {
@@ -3619,19 +3619,22 @@
       if (n === null) { input.value = ''; return; }
       notes = n;
     } else {
-      if (!confirm(files.length + '개 파일을 ' + (contractType || '미분류') + '로 업로드합니다. 시간이 오래 걸릴 수 있으며, 페이지를 닫으면 중단됩니다.\n\n계속하시겠습니까?')) {
+      if (!confirm(files.length + '개 파일을 [' + contractType + ']로 업로드합니다. 시간이 오래 걸릴 수 있으며, 페이지를 닫으면 중단됩니다.\n\n계속하시겠습니까?')) {
         input.value = '';
         return;
       }
     }
-    const btn = document.getElementById('contracts-upload-btn');
-    if (btn) btn.disabled = true;
+    const btnsWrap = document.getElementById('contracts-upload-btns');
+    if (btnsWrap) btnsWrap.querySelectorAll('button').forEach(b => b.disabled = true);
     let ok = 0, fail = 0, done = 0;
     let firstError = '';
     const total = files.length;
     const CONCURRENCY = 5;
     const updateProgress = () => {
-      if (btn) btn.textContent = '업로드 중 ' + done + '/' + total + '...';
+      if (btnsWrap) {
+        const text = '업로드 중 ' + done + '/' + total + '...';
+        btnsWrap.querySelectorAll('button').forEach(b => b.textContent = text);
+      }
     };
     updateProgress();
 
@@ -3668,12 +3671,19 @@
       await Promise.all(batch);
     }
 
-    if (btn) { btn.disabled = false; btn.textContent = '+ 계약서 업로드'; }
+    if (btnsWrap) {
+      btnsWrap.querySelectorAll('button').forEach(b => b.disabled = false);
+      // 원래 텍스트 복원
+      const tkeBtn = btnsWrap.querySelector('button[onclick*="tke-input"]');
+      const dsBtn  = btnsWrap.querySelector('button[onclick*="daesol-input"]');
+      if (tkeBtn) tkeBtn.textContent = '+ 🅃 TKE 업로드';
+      if (dsBtn)  dsBtn.textContent  = '+ 🅓 대솔이엘 업로드';
+    }
     input.value = '';
     if (fail && firstError) {
       alert('업로드 완료\n\n✅ 성공: ' + ok + '건\n❌ 실패: ' + fail + '건 (총 ' + total + '건)\n\n첫 에러:\n' + firstError);
     } else {
-      alert('✅ 업로드 완료\n총 ' + ok + '건 성공');
+      alert('✅ 업로드 완료\n총 ' + ok + '건 성공 [' + contractType + ']');
     }
     await loadContracts();
   }
