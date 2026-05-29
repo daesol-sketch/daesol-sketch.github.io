@@ -2672,6 +2672,23 @@
     renderList();
   }
 
+  async function phoneDelivered(id) {
+    if (!confirm('전화로 전달하신 것으로 처리하시겠습니까?')) return;
+    const handler = currentUser?.username || '';
+    const now = new Date().toISOString();
+    const { error } = await db.from('reports').update({
+      status: '처리중',
+      confirmed_at: now,
+      phone_delivered_at: now,
+      phone_delivered_by: handler
+    }).eq('id', id);
+    if (error) { showToast('❌ 오류: ' + error.message); return; }
+    showToast('✅ 전화로 전달 처리되었습니다.');
+    await loadReports();
+    updateStats();
+    renderList();
+  }
+
   function clampArrivalTime() {
     const dateVal = document.getElementById('rdm-arr-date').value;
     const timeVal = document.getElementById('rdm-arr-time').value;
@@ -3402,6 +3419,7 @@
       const _listContent = r.completion_content || r.completion_detail || '';
       const hc = r.status !== '접수중' && (_listContent || r.completion_handler || r.completion_at);
       const dispatchTime = r.confirmed_at ? (() => { const d = new Date(r.confirmed_at); return (d.getMonth()+1) + '월' + d.getDate() + '일 ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); })() : '';
+      const phoneDeliveredTime = r.phone_delivered_at ? (() => { const d = new Date(r.phone_delivered_at); return (d.getMonth()+1) + '월' + d.getDate() + '일 ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); })() : '';
       const repeatKey = (r.building||'') + '||' + (r.elevator||'') + '||' + (r.type||'');
       const repeatCount = repeatCountMap[repeatKey] || 0;
       const repeatNotice = (repeatCount >= 1 && r.type)
@@ -3427,10 +3445,11 @@
         '<span class=report-date>📅 ' + dt + '</span>' +
         '</div>' +
         (r.description ? '<div class=report-desc>' + r.description.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' : '') +
-        (hc ? '<div style="margin-top:4px;font-size:12px;color:#276749;background:#f0fff4;border-radius:6px;padding:4px 8px;white-space:pre-wrap">처리: ' + escHtml(r.completion_handler||'') + (dispatchTime ? '&nbsp;&nbsp;확인시간: ' + dispatchTime : '') + (_listContent ? '<br>' + escHtml(_listContent) : '') + '</div>' : '') +
+        (hc ? '<div style="margin-top:4px;font-size:12px;color:#276749;background:#f0fff4;border-radius:6px;padding:4px 8px;white-space:pre-wrap">처리: ' + escHtml(r.completion_handler||'') + (r.phone_delivered_at ? '&nbsp;&nbsp;전화로 전달함' + (r.phone_delivered_by ? ' (' + escHtml(r.phone_delivered_by) + ')' : '') + ' ' + phoneDeliveredTime : (dispatchTime ? '&nbsp;&nbsp;확인시간: ' + dispatchTime : '')) + (_listContent ? '<br>' + escHtml(_listContent) : '') + '</div>' : '') +
         '</div>' +
         '<div class=report-right onclick=event.stopPropagation() style=display:flex;flex-direction:column;align-items:flex-end;gap:6px>' +
         ((r.status === '배치완료' || r.status === '처리중' || r.status === '접수중') && (currentRole==='직원'||currentRole==='마스터') ? '<button style=background:#2b6cb0;color:white;border:none;border-radius:10px;padding:12px_20px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;width:100% onclick=confirmDispatch(' + JSON.stringify(r.id) + ')>' + (r.completion_handler ? '🔄 재배치' : '✅ 배치') + '</button>'.replace(/_/g,' ') : '') +
+        ((currentRole==='관리자'||currentRole==='마스터') && r.status === '배치완료' && !r.confirmed_at && !r.phone_delivered_at ? '<button style=background:#dd6b20;color:white;border:none;border-radius:10px;padding:12px_20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;width:100% onclick=phoneDelivered(' + JSON.stringify(r.id) + ')>📞 전화로 전달</button>'.replace(/_/g,' ') : '') +
         ((currentRole==='관리자'||currentRole==='마스터') ? '<button class=btn-delete style=width:100% onclick=deleteReport(' + JSON.stringify(r.id) + ')>삭제</button>' : '') +
         '</div></div>';
     }).join('');
