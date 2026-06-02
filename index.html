@@ -1671,8 +1671,8 @@
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <span style="font-size:14px;font-weight:700;color:#e2e8f0">🛗 호기 목록</span>
         <div style="display:flex;gap:8px">
-          <button onclick="refreshAllElevatorInfo()"
-            style="padding:6px 14px;background:#dd6b20;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
+          <button id="elevator-modal-refresh-btn" onclick="refreshAllElevatorInfo()"
+            style="padding:6px 14px;background:#dd6b20;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:none">
             🔄 정보 새로고침
           </button>
           <button id="elevator-modal-add-btn" onclick="showAddElevatorModal()"
@@ -4660,6 +4660,8 @@
   async function loadElevators() {
     const el = document.getElementById('elevator-list');
     el.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
+    const refreshBtn = document.getElementById('elevator-modal-refresh-btn');
+    if (refreshBtn) refreshBtn.style.display = (currentRole === '관리자' || currentRole === '마스터') ? 'inline-block' : 'none';
     const { data, error } = await db.from('site_elevators').select('*').eq('site_id', currentSiteForElevator.id);
     if (error) { el.innerHTML = '<div class="loading-state">불러오기 실패</div>'; return; }
     if (data) data.sort((a, b) => {
