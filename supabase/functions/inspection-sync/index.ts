@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       const res = await fetch(`https://apis.data.go.kr/B553664/BuldElevatorService/getBuldElvtrList?serviceKey=${API_KEY}&pageNo=1&numOfRows=1&type=xml&elevator_no=${no}`);
       const xml = await res.text();
 
-      const update: Record<string, string> = {};
+      const update: Record<string, any> = {};
       const model    = parseTag(xml, 'elvtrModel');
       const inspDate = fmtDate(parseTag(xml, 'applcEnDt'));
       const result   = parseTag(xml, 'resultNm');
@@ -58,12 +58,25 @@ Deno.serve(async (req) => {
       const addr1    = parseTag(xml, 'address1');
       const addr2    = parseTag(xml, 'address2');
       const buldNm   = parseTag(xml, 'buldNm');
+      const asignNo  = parseTag(xml, 'elvtrAsignNo');
+      const kindNm   = parseTag(xml, 'elvtrKindNm');
 
       if (model)    update.elevator_model         = model;
       if (inspDate) update.inspection_due_date     = inspDate;
       if (result)   update.last_inspection_result  = result;
       if (install)  update.install_date            = install;
-      if (buldNm && !elev.unit_name) update.unit_name = buldNm;
+      if (asignNo) {
+        const n = parseInt(asignNo, 10);
+        if (!isNaN(n)) update.assign_no = n;
+      }
+      if (kindNm) update.kind_name = kindNm;
+
+      // unit_name: assign_no + kind_name 우선, 없으면 buldNm fallback
+      if (update.assign_no && update.kind_name) {
+        update.unit_name = update.assign_no + ' ' + update.kind_name;
+      } else if (buldNm && !elev.unit_name) {
+        update.unit_name = buldNm;
+      }
 
       if (Object.keys(update).length > 0) {
         await db.from('site_elevators').update(update).eq('id', elev.id);
