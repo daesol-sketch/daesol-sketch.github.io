@@ -65,6 +65,7 @@ Deno.serve(async (req) => {
       const buldNm   = parseTag(newXml, 'buldNm')        || parseTag(oldXml, 'buldNm');
       const asignNo  = parseTag(newXml, 'elvtrAsignNo')  || parseTag(oldXml, 'elvtrAsignNo');
       const kindNm   = parseTag(newXml, 'elvtrKindNm')   || parseTag(oldXml, 'elvtrKindNm');
+      const instPlace = parseTag(newXml, 'installationPlace') || parseTag(oldXml, 'installationPlace');
 
       if (model)    update.elevator_model         = model;
       if (inspDate) update.inspection_due_date     = inspDate;
@@ -75,6 +76,7 @@ Deno.serve(async (req) => {
         if (!isNaN(n)) update.assign_no = n;
       }
       if (kindNm) update.kind_name = kindNm;
+      if (instPlace) update.installation_place = instPlace;
 
       // unit_name: assign_no + kind_name 우선, 없으면 buldNm fallback
       if (update.assign_no && update.kind_name) {

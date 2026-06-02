@@ -4695,7 +4695,7 @@
           : (e.unit_name || '');
         return `<tr>
         <td>${i+1}</td>
-        <td><strong>${escHtml(displayName)}</strong>${(() => { if (!e.install_date) return ''; const d = new Date(e.install_date); const t = new Date(); t.setHours(0,0,0,0); const y3 = new Date(t); y3.setFullYear(y3.getFullYear()-3); return d > y3 ? ` <span style="background:#fefcbf;color:#744210;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">하자</span>` : ''; })()}</td>
+        <td><strong>${escHtml(displayName)}</strong>${(() => { if (!e.install_date) return ''; const d = new Date(e.install_date); const t = new Date(); t.setHours(0,0,0,0); const y3 = new Date(t); y3.setFullYear(y3.getFullYear()-3); return d > y3 ? ` <span style="background:#fefcbf;color:#744210;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">하자</span>` : ''; })()}${e.installation_place ? '<div style="font-size:11px;color:#a0aec0;margin-top:2px;font-weight:400">설치위치 ' + escHtml(e.installation_place) + '</div>' : ''}</td>
         <td>${e.elevator_number ? `<a href="#" onclick="openElevatorSearch('${escHtml(e.elevator_number)}',${e.id},'${escHtml(e.unit_name||'')}');return false;" style="color:#2b6cb0;font-weight:600;text-decoration:none" title="API에서 정보 불러오기">${escHtml(e.elevator_number)} 🔍</a>` : '-'}</td>
         <td>${escHtml(e.elevator_model||'-')}</td>
         <td>${(() => {
@@ -4809,6 +4809,7 @@
         if (item.elvtrAsignNo) update.assign_no = parseInt(item.elvtrAsignNo, 10) || null;
         if (item.elvtrKindNm) update.kind_name = item.elvtrKindNm;
         if (item.elvtrModel) update.elevator_model = item.elvtrModel;
+        if (item.installationPlace) update.installation_place = item.installationPlace;
         if (update.assign_no && update.kind_name) {
           update.unit_name = update.assign_no + ' ' + update.kind_name;
         }
