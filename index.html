@@ -1671,6 +1671,10 @@
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <span style="font-size:14px;font-weight:700;color:#e2e8f0">🛗 호기 목록</span>
         <div style="display:flex;gap:8px">
+          <button onclick="refreshAllElevatorInfo()"
+            style="padding:6px 14px;background:#dd6b20;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
+            🔄 정보 새로고침
+          </button>
           <button id="elevator-modal-add-btn" onclick="showAddElevatorModal()"
             style="padding:6px 14px;background:#2b6cb0;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">
             + 호기 추가
@@ -1704,12 +1708,15 @@
   <div class="modal-box" style="width:400px;max-width:calc(100vw - 40px);text-align:left;padding:28px 24px">
     <div style="font-size:22px;text-align:center;margin-bottom:8px">🛗</div>
     <h3 id="elev-modal-title" style="text-align:center;font-size:17px;font-weight:700;color:#1a365d;margin-bottom:18px">호기 추가</h3>
-    <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">호기명 <span style="color:#e53e3e">*</span></label>
-    <input type="text" class="modal-input normal" id="elev-unit-name" placeholder="예: 1호기, B동 2호기" style="margin-bottom:10px" />
-    <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">승강기번호</label>
+    <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">승강기번호 <span style="color:#e53e3e">*</span></label>
     <input type="text" class="modal-input normal" id="elev-number" placeholder="예: 2134859" maxlength="7" style="margin-bottom:10px" onblur="autoFillElevModelSingle(this.value)" />
-    <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">엘리베이터 모델</label>
-    <input type="text" class="modal-input normal" id="elev-model" placeholder="모델명" style="margin-bottom:10px" />
+    <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">호기번호 <span style="color:#a0aec0;font-weight:400">(자동)</span></label>
+    <input type="text" class="modal-input normal" id="elev-assign-no" placeholder="API에서 자동 채움" style="margin-bottom:10px" />
+    <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">호기 종류 <span style="color:#a0aec0;font-weight:400">(자동)</span></label>
+    <input type="text" class="modal-input normal" id="elev-kind-name" placeholder="API에서 자동 채움 (예: 장애인용)" style="margin-bottom:10px" />
+    <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">엘리베이터 모델 <span style="color:#a0aec0;font-weight:400">(자동)</span></label>
+    <input type="text" class="modal-input normal" id="elev-model" placeholder="API에서 자동 채움" style="margin-bottom:10px" />
+    <input type="hidden" id="elev-unit-name" />
     <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">비고</label>
     <textarea class="modal-input normal" id="elev-notes" placeholder="메모" style="margin-bottom:0;min-height:60px;resize:vertical"></textarea>
     <div class="modal-error" id="elev-error" style="display:none;margin-top:8px"></div>
@@ -4169,7 +4176,7 @@
   /* ── 관리현장 ── */
   let mgmtData = [];
   let editingMgmtId = null;
-  let pendingElevators = []; // {id, unit_name, elevator_number, elevator_model, notes, _deleted}
+  let pendingElevators = []; // {id, unit_name, elevator_number, elevator_model, assign_no, kind_name, notes, _deleted}
 
   function renderElevatorRows() {
     const container = document.getElementById('mgmt-elev-list');
@@ -4183,8 +4190,8 @@
     const inpElev = (v,i) => `<input type="text" value="${escHtml(v||'')}" placeholder="2134859" maxlength="7" oninput="pendingElevators[${i}].elevator_number=this.value" onblur="autoFillElevModel(${i},this.value)" style="width:100%;padding:5px 7px;border:1.5px solid #cbd5e0;border-radius:6px;font-size:12px;font-family:inherit" />`;
     container.innerHTML = `<table style="width:100%;border-collapse:collapse">
       <thead><tr style="background:#f7fafc">
-        <th style="padding:6px 8px;font-size:12px;font-weight:700;color:#4a5568;text-align:left;border-bottom:1.5px solid #e2e8f0;white-space:nowrap">호기명 *</th>
-        <th style="padding:6px 8px;font-size:12px;font-weight:700;color:#4a5568;text-align:left;border-bottom:1.5px solid #e2e8f0;white-space:nowrap">승강기번호</th>
+        <th style="padding:6px 8px;font-size:12px;font-weight:700;color:#4a5568;text-align:left;border-bottom:1.5px solid #e2e8f0;white-space:nowrap">승강기번호 *</th>
+        <th style="padding:6px 8px;font-size:12px;font-weight:700;color:#4a5568;text-align:left;border-bottom:1.5px solid #e2e8f0;white-space:nowrap">호기/종류</th>
         <th style="padding:6px 8px;font-size:12px;font-weight:700;color:#4a5568;text-align:left;border-bottom:1.5px solid #e2e8f0;white-space:nowrap">엘리베이터 모델</th>
         <th style="padding:6px 8px;font-size:12px;font-weight:700;color:#4a5568;text-align:left;border-bottom:1.5px solid #e2e8f0;white-space:nowrap">비고</th>
         <th style="padding:6px 8px;border-bottom:1.5px solid #e2e8f0;width:48px"></th>
@@ -4192,9 +4199,9 @@
       <tbody>
         ${pendingElevators.map((e, i) => e._deleted ? '' : `
           <tr style="border-bottom:1px solid #f0f4f8">
-            <td style="padding:4px 6px">${inp(e.unit_name,'1호기',`pendingElevators[${i}].unit_name=this.value`)}</td>
             <td style="padding:4px 6px">${inpElev(e.elevator_number,i)}</td>
-            <td style="padding:4px 6px">${inp(e.elevator_model,'모델명',`pendingElevators[${i}].elevator_model=this.value`)}</td>
+            <td style="padding:4px 6px">${inp(e.unit_name,'API 자동 채움',`pendingElevators[${i}].unit_name=this.value`)}</td>
+            <td style="padding:4px 6px">${inp(e.elevator_model,'API 자동 채움',`pendingElevators[${i}].elevator_model=this.value`)}</td>
             <td style="padding:4px 6px">${inp(e.notes,'메모',`pendingElevators[${i}].notes=this.value`)}</td>
             <td style="padding:4px 6px;text-align:center">
               <button type="button" onclick="removeElevatorRow(${i})" style="background:none;border:1.5px solid #fed7d7;color:#c53030;padding:3px 8px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700">삭제</button>
@@ -4206,37 +4213,47 @@
   }
 
   function addElevatorRow() {
-    pendingElevators.push({ id: null, unit_name: '', elevator_number: '', elevator_model: '', notes: '', _deleted: false });
+    pendingElevators.push({ id: null, unit_name: '', elevator_number: '', elevator_model: '', assign_no: null, kind_name: '', notes: '', _deleted: false });
     renderElevatorRows();
   }
 
   async function autoFillElevModelSingle(num) {
     const no = (num || '').replace(/-/g, '');
     if (no.length < 7) return;
-    const modelInput = document.getElementById('elev-model');
-    if (!modelInput || modelInput.value) return;
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/elevator-info?elevator_no=${no}`, {
         headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` }
       });
       const data = await res.json();
-      if (data.item?.elvtrModel) modelInput.value = data.item.elvtrModel;
+      const item = data.item;
+      if (!item) return;
+      const modelInput = document.getElementById('elev-model');
+      const asignInput = document.getElementById('elev-assign-no');
+      const kindInput = document.getElementById('elev-kind-name');
+      if (modelInput && !modelInput.value && item.elvtrModel) modelInput.value = item.elvtrModel;
+      if (asignInput && !asignInput.value && item.elvtrAsignNo) asignInput.value = item.elvtrAsignNo;
+      if (kindInput && !kindInput.value && item.elvtrKindNm) kindInput.value = item.elvtrKindNm;
     } catch(e) {}
   }
 
   async function autoFillElevModel(idx, num) {
     const no = (num || '').replace(/-/g, '');
     if (no.length < 7) return;
-    const realIdx = pendingElevators.findIndex((e, i) => !e._deleted && pendingElevators.filter(x => !x._deleted).indexOf(e) === idx);
     const target = pendingElevators.filter(e => !e._deleted)[idx];
-    if (!target || target.elevator_model) return;
+    if (!target) return;
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/elevator-info?elevator_no=${no}`, {
         headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` }
       });
       const data = await res.json();
-      if (data.item?.elvtrModel) {
-        target.elevator_model = data.item.elvtrModel;
+      const item = data.item;
+      if (item) {
+        if (item.elvtrModel && !target.elevator_model) target.elevator_model = item.elvtrModel;
+        if (item.elvtrAsignNo) target.assign_no = parseInt(item.elvtrAsignNo, 10) || null;
+        if (item.elvtrKindNm) target.kind_name = item.elvtrKindNm;
+        if (target.assign_no && target.kind_name && !target.unit_name) {
+          target.unit_name = target.assign_no + ' ' + target.kind_name;
+        }
         renderElevatorRows();
       }
     } catch(e) {}
@@ -4643,9 +4660,12 @@
   async function loadElevators() {
     const el = document.getElementById('elevator-list');
     el.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
-    const { data, error } = await db.from('site_elevators').select('*').eq('site_id', currentSiteForElevator.id).order('id');
+    const { data, error } = await db.from('site_elevators').select('*').eq('site_id', currentSiteForElevator.id);
     if (error) { el.innerHTML = '<div class="loading-state">불러오기 실패</div>'; return; }
     if (data) data.sort((a, b) => {
+      if (a.assign_no != null && b.assign_no != null) return a.assign_no - b.assign_no;
+      if (a.assign_no != null) return -1;
+      if (b.assign_no != null) return 1;
       const nat = (s) => (s||'').replace(/(\d+)/g, n => n.padStart(10, '0'));
       return nat(a.unit_name).localeCompare(nat(b.unit_name));
     });
@@ -4656,12 +4676,16 @@
     const isAdmin = currentRole === '관리자' || currentRole === '마스터';
     el.innerHTML = `<div style="overflow-x:auto"><table class="site-table" style="width:100%">
       <thead><tr>
-        <th>#</th><th>호기명</th><th>승강기번호</th><th>엘리베이터 모델</th><th>검사만료일</th><th>최근검사결과</th><th>비고</th>
+        <th>#</th><th>호기/종류</th><th>승강기번호</th><th>엘리베이터 모델</th><th>검사만료일</th><th>최근검사결과</th><th>비고</th>
         ${isAdmin ? '<th>관리</th>' : ''}
       </tr></thead>
-      <tbody>${data.map((e,i) => `<tr>
+      <tbody>${data.map((e,i) => {
+        const displayName = (e.assign_no != null && e.kind_name)
+          ? e.assign_no + ' ' + e.kind_name
+          : (e.unit_name || '');
+        return `<tr>
         <td>${i+1}</td>
-        <td><strong>${escHtml(e.unit_name||'')}</strong>${(() => { if (!e.install_date) return ''; const d = new Date(e.install_date); const t = new Date(); t.setHours(0,0,0,0); const y3 = new Date(t); y3.setFullYear(y3.getFullYear()-3); return d > y3 ? ` <span style="background:#fefcbf;color:#744210;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">하자</span>` : ''; })()}</td>
+        <td><strong>${escHtml(displayName)}</strong>${(() => { if (!e.install_date) return ''; const d = new Date(e.install_date); const t = new Date(); t.setHours(0,0,0,0); const y3 = new Date(t); y3.setFullYear(y3.getFullYear()-3); return d > y3 ? ` <span style="background:#fefcbf;color:#744210;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">하자</span>` : ''; })()}</td>
         <td>${e.elevator_number ? `<a href="#" onclick="openElevatorSearch('${escHtml(e.elevator_number)}',${e.id},'${escHtml(e.unit_name||'')}');return false;" style="color:#2b6cb0;font-weight:600;text-decoration:none" title="API에서 정보 불러오기">${escHtml(e.elevator_number)} 🔍</a>` : '-'}</td>
         <td>${escHtml(e.elevator_model||'-')}</td>
         <td>${(() => {
@@ -4681,13 +4705,20 @@
           if (r === '조건부합격') return '<span style="color:#dd6b20;font-weight:700">△ 조건부합격</span>';
           return '<span style="color:#e53e3e;font-weight:700">✗ ' + escHtml(r) + '</span>';
         })()}</td>
-        <td>${escHtml(e.notes||'-')}</td>
+        <td><input type="text" value="${escHtml(e.notes||'')}" placeholder="-" style="border:none;background:transparent;width:100%;padding:4px;font-size:13px;font-family:inherit" onfocus="this.style.background='#fff';this.style.border='1.5px solid #cbd5e0';this.style.borderRadius='4px'" onblur="this.style.background='transparent';this.style.border='none';updateElevNotes(${e.id}, this.value)" /></td>
         ${isAdmin ? `<td style="white-space:nowrap">
           <button class="btn-sm" style="border-color:#bee3f8;color:#2b6cb0" onclick="showEditElevatorModal(${e.id})">수정</button>
           <button class="btn-sm del" onclick="deleteElevator(${e.id})">삭제</button>
         </td>` : ''}
-      </tr>`).join('')}</tbody>
+      </tr>`;
+      }).join('')}</tbody>
     </table></div>`;
+  }
+
+  async function updateElevNotes(id, notes) {
+    const trimmed = (notes || '').trim() || null;
+    const { error } = await db.from('site_elevators').update({ notes: trimmed }).eq('id', id);
+    if (error) showToast('❌ 비고 저장 실패');
   }
 
   let editingElevatorId = null;
@@ -4697,11 +4728,13 @@
     document.getElementById('elev-modal-title').textContent = '호기 추가';
     document.getElementById('elev-unit-name').value = '';
     document.getElementById('elev-number').value = '';
+    document.getElementById('elev-assign-no').value = '';
+    document.getElementById('elev-kind-name').value = '';
     document.getElementById('elev-model').value = '';
     document.getElementById('elev-notes').value = '';
     document.getElementById('elev-error').style.display = 'none';
     openModal('elev-modal');
-    setTimeout(() => document.getElementById('elev-unit-name').focus(), 100);
+    setTimeout(() => document.getElementById('elev-number').focus(), 100);
   }
 
   async function showEditElevatorModal(id) {
@@ -4711,6 +4744,8 @@
     document.getElementById('elev-modal-title').textContent = '호기 수정';
     document.getElementById('elev-unit-name').value = data.unit_name || '';
     document.getElementById('elev-number').value = data.elevator_number || '';
+    document.getElementById('elev-assign-no').value = data.assign_no != null ? data.assign_no : '';
+    document.getElementById('elev-kind-name').value = data.kind_name || '';
     document.getElementById('elev-model').value = data.elevator_model || '';
     document.getElementById('elev-notes').value = data.notes || '';
     document.getElementById('elev-error').style.display = 'none';
@@ -4718,15 +4753,22 @@
   }
 
   async function elevatorConfirm() {
-    const unit_name = document.getElementById('elev-unit-name').value.trim();
+    const elevator_number = document.getElementById('elev-number').value.trim() || null;
     const errEl = document.getElementById('elev-error');
-    if (!unit_name) { errEl.textContent = '호기명을 입력하세요.'; errEl.style.display = 'block'; return; }
+    if (!elevator_number) { errEl.textContent = '승강기번호를 입력하세요.'; errEl.style.display = 'block'; return; }
+    const assignVal = document.getElementById('elev-assign-no').value.trim();
+    const assign_no = assignVal ? (parseInt(assignVal, 10) || null) : null;
+    const kind_name = document.getElementById('elev-kind-name').value.trim() || null;
+    const elevator_model = document.getElementById('elev-model').value.trim() || null;
+    const unit_name = (assign_no && kind_name) ? (assign_no + ' ' + kind_name) : elevator_number;
     const payload = {
       site_id:          currentSiteForElevator.id,
       unit_name,
-      elevator_number:           document.getElementById('elev-number').value.trim() || null,
-      elevator_model:            document.getElementById('elev-model').value.trim() || null,
-      notes:                     document.getElementById('elev-notes').value.trim() || null,
+      elevator_number,
+      elevator_model,
+      assign_no,
+      kind_name,
+      notes:            document.getElementById('elev-notes').value.trim() || null,
     };
     const { error } = editingElevatorId
       ? await db.from('site_elevators').update(payload).eq('id', editingElevatorId)
@@ -4734,6 +4776,41 @@
     if (error) { errEl.textContent = '저장 실패: ' + error.message; errEl.style.display = 'block'; return; }
     closeModal('elev-modal');
     showToast(editingElevatorId ? '✅ 호기가 수정되었습니다.' : '✅ 호기가 추가되었습니다.');
+    loadElevators();
+  }
+
+  async function refreshAllElevatorInfo() {
+    if (!confirm('이 현장의 모든 호기 정보를 API로 새로고침합니다.\n호기번호/종류/모델이 자동으로 채워집니다.\n계속할까요?')) return;
+    const { data } = await db.from('site_elevators').select('*').eq('site_id', currentSiteForElevator.id);
+    if (!data?.length) { showToast('호기가 없습니다.'); return; }
+    showToast('⏳ 새로고침 중... ' + data.length + '건');
+    let success = 0, fail = 0;
+    for (const e of data) {
+      if (!e.elevator_number) { fail++; continue; }
+      const no = e.elevator_number.replace(/-/g, '');
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/elevator-info?elevator_no=${no}`, {
+          headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        });
+        const result = await res.json();
+        const item = result.item;
+        if (!item) { fail++; continue; }
+        const update = {};
+        if (item.elvtrAsignNo) update.assign_no = parseInt(item.elvtrAsignNo, 10) || null;
+        if (item.elvtrKindNm) update.kind_name = item.elvtrKindNm;
+        if (item.elvtrModel) update.elevator_model = item.elvtrModel;
+        if (update.assign_no && update.kind_name) {
+          update.unit_name = update.assign_no + ' ' + update.kind_name;
+        }
+        if (Object.keys(update).length) {
+          await db.from('site_elevators').update(update).eq('id', e.id);
+        }
+        success++;
+      } catch(err) {
+        fail++;
+      }
+    }
+    showToast('✅ 새로고침 완료: ' + success + '건 성공 / ' + fail + '건 실패');
     loadElevators();
   }
 
@@ -5251,20 +5328,28 @@
     for (const e of pendingElevators) {
       if (e._deleted && e.id) {
         await db.from('site_elevators').delete().eq('id', e.id);
-      } else if (!e._deleted && e.unit_name.trim()) {
+      } else if (!e._deleted && (e.unit_name?.trim() || e.elevator_number?.trim())) {
+        const assign_no = e.assign_no || null;
+        const kind_name = e.kind_name || null;
+        const generated_name = (assign_no && kind_name) ? (assign_no + ' ' + kind_name) : (e.elevator_number?.trim() || '');
+        const final_name = e.unit_name?.trim() || generated_name;
         if (e.id) {
           await db.from('site_elevators').update({
-            unit_name: e.unit_name.trim(),
+            unit_name: final_name,
             elevator_number: e.elevator_number?.trim() || null,
             elevator_model: e.elevator_model?.trim() || null,
+            assign_no,
+            kind_name,
             notes: e.notes?.trim() || null,
           }).eq('id', e.id);
         } else {
           await db.from('site_elevators').insert({
             site_id: siteId,
-            unit_name: e.unit_name.trim(),
+            unit_name: final_name,
             elevator_number: e.elevator_number?.trim() || null,
             elevator_model: e.elevator_model?.trim() || null,
+            assign_no,
+            kind_name,
             notes: e.notes?.trim() || null,
           });
         }
