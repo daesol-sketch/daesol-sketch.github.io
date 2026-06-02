@@ -8,7 +8,8 @@ Deno.serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const API_KEY = 'c6e435c47faeefcf40523c23655d6b5c5cab178dec7457eeb696d06473d71ea0';
+    const OLD_KEY = 'c6e435c47faeefcf40523c23655d6b5c5cab178dec7457eeb696d06473d71ea0';
+    const NEW_KEY = 'ec060d89458664bd9f339a514fc44b1c5780f427ff0157fb2456524538686669';
 
     const body = await req.json();
     const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
@@ -47,19 +48,23 @@ Deno.serve(async (req) => {
       const no = (elev.elevator_number || '').replace(/-/g, '');
       if (!no) continue;
 
-      const res = await fetch(`https://apis.data.go.kr/B553664/BuldElevatorService/getBuldElvtrList?serviceKey=${API_KEY}&pageNo=1&numOfRows=1&type=xml&elevator_no=${no}`);
-      const xml = await res.text();
+      const [newRes, oldRes] = await Promise.all([
+        fetch(`https://apis.data.go.kr/B553664/ElevatorInformationService/getElevatorViewM?serviceKey=${NEW_KEY}&pageNo=1&numOfRows=1&type=xml&elevator_no=${no}`),
+        fetch(`https://apis.data.go.kr/B553664/BuldElevatorService/getBuldElvtrList?serviceKey=${OLD_KEY}&pageNo=1&numOfRows=1&type=xml&elevator_no=${no}`)
+      ]);
+      const newXml = await newRes.text();
+      const oldXml = await oldRes.text();
 
       const update: Record<string, any> = {};
-      const model    = parseTag(xml, 'elvtrModel');
-      const inspDate = fmtDate(parseTag(xml, 'applcEnDt'));
-      const result   = parseTag(xml, 'resultNm');
-      const install  = fmtDate(parseTag(xml, 'frstInstallationDe'));
-      const addr1    = parseTag(xml, 'address1');
-      const addr2    = parseTag(xml, 'address2');
-      const buldNm   = parseTag(xml, 'buldNm');
-      const asignNo  = parseTag(xml, 'elvtrAsignNo');
-      const kindNm   = parseTag(xml, 'elvtrKindNm');
+      const model    = parseTag(newXml, 'elvtrModel')    || parseTag(oldXml, 'elvtrModel');
+      const inspDate = fmtDate(parseTag(newXml, 'applcEnDt') || parseTag(oldXml, 'applcEnDt'));
+      const result   = parseTag(newXml, 'lastResultNm')  || parseTag(oldXml, 'resultNm');
+      const install  = fmtDate(parseTag(oldXml, 'frstInstallationDe'));
+      const addr1    = parseTag(newXml, 'address1')      || parseTag(oldXml, 'address1');
+      const addr2    = parseTag(newXml, 'address2')      || parseTag(oldXml, 'address2');
+      const buldNm   = parseTag(newXml, 'buldNm')        || parseTag(oldXml, 'buldNm');
+      const asignNo  = parseTag(newXml, 'elvtrAsignNo')  || parseTag(oldXml, 'elvtrAsignNo');
+      const kindNm   = parseTag(newXml, 'elvtrKindNm')   || parseTag(oldXml, 'elvtrKindNm');
 
       if (model)    update.elevator_model         = model;
       if (inspDate) update.inspection_due_date     = inspDate;
