@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
       shuttleFloorCnt:  get(oldXml, 'shuttleFloorCnt'),
       groundFloorCnt:   get(newXml, 'divGroundFloorCnt') || get(oldXml, 'groundFloorCnt'),
       undgrndFloorCnt:  get(newXml, 'divUndgrndFloorCnt') || get(oldXml, 'undgrndFloorCnt'),
-      installationPlace: get(oldXml, 'installationPlace'),
+      installationPlace: get(newXml, 'installationPlace') || get(oldXml, 'installationPlace'),
       frstInstallationDe: get(oldXml, 'frstInstallationDe'),
       installationDe:   get(oldXml, 'installationDe'),
       applcBeDt:        get(newXml, 'applcBeDt')        || get(oldXml, 'applcBeDt'),
