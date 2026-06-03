@@ -4810,6 +4810,12 @@
         if (item.elvtrKindNm) update.kind_name = item.elvtrKindNm;
         if (item.elvtrModel) update.elevator_model = item.elvtrModel;
         if (item.installationPlace) update.installation_place = item.installationPlace;
+        const _fmtD = (v) => { if (!v) return null; if (/^\d{8}$/.test(v)) return v.slice(0,4)+'-'+v.slice(4,6)+'-'+v.slice(6,8); if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; return null; };
+        const _inspD = _fmtD(item.applcEnDt);
+        const _instD = _fmtD(item.frstInstallationDe);
+        if (_inspD) update.inspection_due_date = _inspD;
+        if (item.resultNm) update.last_inspection_result = item.resultNm;
+        if (_instD) update.install_date = _instD;
         if (update.assign_no && update.kind_name) {
           update.unit_name = update.assign_no + ' ' + update.kind_name;
         }
