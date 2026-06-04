@@ -525,6 +525,10 @@
           <div class="home-stat-num" id="home-stat-pending">-</div>
           <div class="home-stat-lbl">처리 대기</div>
         </div>
+        <div class="home-stat-box" onclick="showMyProcessing()" style="cursor:pointer">
+          <div class="home-stat-num" id="home-stat-myproc">-</div>
+          <div class="home-stat-lbl">내 처리중</div>
+        </div>
       </div>
     </div>
     <div class="home-section-title">빠른 메뉴</div>
@@ -2412,9 +2416,12 @@
     let q1 = db.from('reports').select('*', { count:'exact', head:true }).gte('created_at', start).lt('created_at', end).eq('completion_handler', currentUser.username);
     let q2 = db.from('reports').select('*', { count:'exact', head:true }).neq('status', '완료').eq('completion_handler', currentUser.username);
     let q3 = db.from('reports').select('*', { count:'exact', head:true }).in('status', ['배치완료', '접수중']);
-    const [{ count: faultCount }, { count: pendingCount }, { count: unhandledCount }] = await Promise.all([q1, q2, q3]);
+    let q4 = db.from('reports').select('*', { count:'exact', head:true }).eq('status', '처리중').eq('completion_handler', currentUser.username);
+    const [{ count: faultCount }, { count: pendingCount }, { count: unhandledCount }, { count: myProcCount }] = await Promise.all([q1, q2, q3, q4]);
     document.getElementById('home-stat-fault').textContent = faultCount ?? 0;
     document.getElementById('home-stat-pending').textContent = pendingCount ?? 0;
+    const myProcEl = document.getElementById('home-stat-myproc');
+    if (myProcEl) myProcEl.textContent = myProcCount ?? 0;
     const badge = document.getElementById('home-fault-badge');
     if (badge) {
       if (unhandledCount > 0) { badge.textContent = unhandledCount; badge.style.display = ''; }
@@ -3398,12 +3405,28 @@
     renderList();
   }
 
+  let myProcessingMode = false;
+
+  async function showMyProcessing() {
+    myProcessingMode = true;
+    switchTab('fault');
+    setTimeout(() => {
+      switchSubTab('list');
+      const btn = document.querySelector('.filter-btn[onclick*="처리중"]');
+      if (btn) setFilter('처리중', btn);
+    }, 100);
+  }
+
   function renderList() {
     const q = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
     const fromVal = document.getElementById('report-month-from')?.value || '';
     const toVal   = document.getElementById('report-month-to')?.value || '';
     let list = reports.filter(r => r.status !== '완료');
     if (currentFilter !== '전체') list = list.filter(r => r.status === currentFilter);
+    if (myProcessingMode) {
+      list = list.filter(r => r.completion_handler === currentUser?.username);
+      myProcessingMode = false;
+    }
     if (fromVal || toVal) list = list.filter(r => {
       const d = r.created_at ? new Date(r.created_at).toLocaleDateString('sv') : '';
       if (fromVal && d < fromVal) return false;
