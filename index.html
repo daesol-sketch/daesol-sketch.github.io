@@ -706,6 +706,7 @@
           <button class="filter-btn active" onclick="setFilter('전체',this)">전체</button>
           <button class="filter-btn" onclick="setFilter('배치완료',this)">배치완료</button>
           <button class="filter-btn" onclick="setFilter('처리중',this)">처리중</button>
+          <button class="filter-btn" onclick="setFilter('내처리중',this)">내 처리중</button>
           <div class="report-date-filter" style="display:flex;align-items:center;gap:6px;margin-left:auto">
             <label style="font-size:13px;color:#4a5568;white-space:nowrap">날짜:</label>
             <div style="position:relative;display:flex">
@@ -3405,25 +3406,16 @@
     renderList();
   }
 
-  let myProcessingMode = false;
-
   async function showMyProcessing() {
     switchTab('fault');
     switchSubTab('list');
     await new Promise(r => setTimeout(r, 400));
-    // 날짜 필터 비우기 (날짜 무관 표시)
     const fromInput = document.getElementById('report-month-from');
     const toInput = document.getElementById('report-month-to');
     if (fromInput) fromInput.value = '';
     if (toInput) toInput.value = '';
-    // 처리중 필터 활성화
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    const btn = document.querySelector('.filter-btn[onclick*="처리중"]');
-    if (btn) btn.classList.add('active');
-    currentFilter = '처리중';
-    // 마지막에 myProcessingMode 설정 + 직접 renderList 호출
-    myProcessingMode = true;
-    renderList();
+    const btn = document.querySelector('.filter-btn[onclick*="내처리중"]');
+    if (btn) setFilter('내처리중', btn);
   }
 
   function renderList() {
@@ -3431,10 +3423,10 @@
     const fromVal = document.getElementById('report-month-from')?.value || '';
     const toVal   = document.getElementById('report-month-to')?.value || '';
     let list = reports.filter(r => r.status !== '완료');
-    if (currentFilter !== '전체') list = list.filter(r => r.status === currentFilter);
-    if (myProcessingMode) {
-      list = list.filter(r => r.completion_handler === currentUser?.username);
-      myProcessingMode = false;
+    if (currentFilter === '내처리중') {
+      list = list.filter(r => r.status === '처리중' && r.completion_handler === currentUser?.username);
+    } else if (currentFilter !== '전체') {
+      list = list.filter(r => r.status === currentFilter);
     }
     if (fromVal || toVal) list = list.filter(r => {
       const d = r.created_at ? new Date(r.created_at).toLocaleDateString('sv') : '';
