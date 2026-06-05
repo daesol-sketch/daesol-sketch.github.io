@@ -1011,6 +1011,8 @@
             <div class="mgmt-fopt" id="mgmt-opt-expire" data-val="expire" onclick="selectMgmtFilter('expire')">⚠️ 계약만료</div>
             <div class="mgmt-fopt" id="mgmt-opt-insp-expire" data-val="insp_expire" onclick="selectMgmtFilter('insp_expire')">🔍 검사만료</div>
             <div class="mgmt-fopt" id="mgmt-opt-defect" data-val="defect" onclick="selectMgmtFilter('defect')">🏗️ 하자</div>
+            <div class="mgmt-fopt" id="mgmt-opt-free" data-val="free" onclick="selectMgmtFilter('free')">🆓 무상</div>
+            <div class="mgmt-fopt" id="mgmt-opt-lost" data-val="lost" onclick="selectMgmtFilter('lost')">❌ 상실</div>
           </div>
         </div>
         <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -4519,7 +4521,7 @@
     if (arrow) arrow.style.transform = '';
   });
 
-  const MGMT_FILTER_LABELS = { all: '전체', expire: '⚠️ 계약만료', insp_expire: '🔍 검사만료', defect: '🏗️ 하자' };
+  const MGMT_FILTER_LABELS = { all: '전체', expire: '⚠️ 계약만료', insp_expire: '🔍 검사만료', defect: '🏗️ 하자', free: '🆓 무상', lost: '❌ 상실' };
 
   function selectMgmtFilter(type) {
     document.getElementById('mgmt-filter-menu').style.display = 'none';
@@ -4596,6 +4598,12 @@
     if (mgmtFilter === 'defect') {
       list = list.filter(m => m.defect_count > 0);
     }
+    if (mgmtFilter === 'free') {
+      list = list.filter(m => m.site_type === '무상');
+    }
+    if (mgmtFilter === 'lost') {
+      list = list.filter(m => m.site_type === '상실');
+    }
     // 검사만료 건수 배지
     const inspCount = mgmtData.filter(m => m.insp_expired > 0 || m.insp_soon > 0).length;
     const optInsp = document.getElementById('mgmt-opt-insp-expire');
@@ -4603,6 +4611,12 @@
     const defectSiteCount = mgmtData.filter(m => m.defect_count > 0).length;
     const optDefect = document.getElementById('mgmt-opt-defect');
     if (optDefect) optDefect.innerHTML = `🏗️ 하자${defectSiteCount > 0 ? ` <span class="fopt-badge yellow">${defectSiteCount}</span>` : ''}`;
+    const freeCount = mgmtData.filter(m => m.site_type === '무상').length;
+    const optFree = document.getElementById('mgmt-opt-free');
+    if (optFree) optFree.innerHTML = `🆓 무상${freeCount > 0 ? ` <span class="fopt-badge">${freeCount}</span>` : ''}`;
+    const lostCount = mgmtData.filter(m => m.site_type === '상실').length;
+    const optLost = document.getElementById('mgmt-opt-lost');
+    if (optLost) optLost.innerHTML = `❌ 상실${lostCount > 0 ? ` <span class="fopt-badge">${lostCount}</span>` : ''}`;
 
 
     // 필터 적용 후 현장수 / 대수 표시
