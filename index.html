@@ -527,7 +527,7 @@
         </div>
         <div class="home-stat-box" onclick="showMyProcessing()" style="cursor:pointer">
           <div class="home-stat-num" id="home-stat-myproc">-</div>
-          <div class="home-stat-lbl">내 처리중</div>
+          <div class="home-stat-lbl">나의 처리중</div>
         </div>
       </div>
     </div>
@@ -706,7 +706,7 @@
           <button class="filter-btn active" onclick="setFilter('전체',this)">전체</button>
           <button class="filter-btn" onclick="setFilter('배치완료',this)">배치완료</button>
           <button class="filter-btn" onclick="setFilter('처리중',this)">처리중</button>
-          <button class="filter-btn" onclick="setFilter('내처리중',this)">내 처리중</button>
+          <button class="filter-btn" onclick="setFilter('나의처리중',this)">나의 처리중</button>
           <div class="report-date-filter" style="display:flex;align-items:center;gap:6px;margin-left:auto">
             <label style="font-size:13px;color:#4a5568;white-space:nowrap">날짜:</label>
             <div style="position:relative;display:flex">
@@ -3386,7 +3386,7 @@
     currentFilter = f;
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    if (f === '내처리중') {
+    if (f === '나의처리중') {
       const fromInput = document.getElementById('report-month-from');
       const toInput = document.getElementById('report-month-to');
       if (fromInput) fromInput.value = '';
@@ -3417,7 +3417,7 @@
     switchSubTab('list');
     await new Promise(r => setTimeout(r, 400));
     const btn = document.querySelector('.filter-btn[onclick*="내처리중"]');
-    if (btn) setFilter('내처리중', btn);
+    if (btn) setFilter('나의처리중', btn);
   }
 
   function renderList() {
@@ -3425,7 +3425,7 @@
     const fromVal = document.getElementById('report-month-from')?.value || '';
     const toVal   = document.getElementById('report-month-to')?.value || '';
     let list = reports.filter(r => r.status !== '완료');
-    if (currentFilter === '내처리중') {
+    if (currentFilter === '나의처리중') {
       list = list.filter(r => r.status === '처리중' && r.completion_handler === currentUser?.username);
     } else if (currentFilter !== '전체') {
       list = list.filter(r => r.status === currentFilter);
