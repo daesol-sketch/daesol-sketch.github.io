@@ -2364,7 +2364,6 @@
     }
     if (tab === 'sites' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'holiday' && currentRole !== '관리자' && currentRole !== '마스터') return;
-    if (tab === 'call-logs' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'contracts' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'mgmt' && !currentRole) return;
     if (tab === 'jungong' && !currentRole) return;
@@ -3173,7 +3172,7 @@
     const isStaff = currentRole === '직원';
     document.getElementById('tab-sites-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-holiday-btn').style.display = isAdmin ? 'flex' : 'none';
-    document.getElementById('tab-call-logs-btn').style.display = isAdmin ? 'flex' : 'none';
+    document.getElementById('tab-call-logs-btn').style.display = 'flex';
     document.getElementById('tab-contracts-btn').style.display = isAdmin ? 'flex' : 'none';
     const cBtns = document.getElementById('contracts-upload-btns');
     if (cBtns) cBtns.style.display = isAdmin ? '' : 'none';
@@ -3195,7 +3194,7 @@
     const giInspCal = document.getElementById('home-gi-insp-calendar');
     if (giInspCal) giInspCal.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     const giCallLogs = document.getElementById('home-gi-call-logs');
-    if (giCallLogs) giCallLogs.style.display = isAdmin ? 'flex' : 'none';
+    if (giCallLogs) giCallLogs.style.display = 'flex';
     const giContracts = document.getElementById('home-gi-contracts');
     if (giContracts) giContracts.style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('sub-tab-done-btn').style.display = 'inline-block';
