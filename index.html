@@ -3416,7 +3416,7 @@
     switchTab('fault');
     switchSubTab('list');
     await new Promise(r => setTimeout(r, 400));
-    const btn = document.querySelector('.filter-btn[onclick*="내처리중"]');
+    const btn = document.querySelector('.filter-btn[onclick*="나의처리중"]');
     if (btn) setFilter('나의처리중', btn);
   }
 
