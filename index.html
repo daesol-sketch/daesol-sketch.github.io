@@ -3382,16 +3382,25 @@
     if (listBadge) { listBadge.textContent = count || 0; listBadge.style.display = (count > 0) ? 'inline' : 'none'; }
   }
 
+  let savedDateFilter = null;
+
   function setFilter(f, btn) {
+    const fromInput = document.getElementById('report-month-from');
+    const toInput = document.getElementById('report-month-to');
+    if (f === '나의처리중') {
+      if (savedDateFilter === null) {
+        savedDateFilter = { from: fromInput?.value || '', to: toInput?.value || '' };
+      }
+      if (fromInput) fromInput.value = '';
+      if (toInput) toInput.value = '';
+    } else if (savedDateFilter !== null) {
+      if (fromInput) fromInput.value = savedDateFilter.from;
+      if (toInput) toInput.value = savedDateFilter.to;
+      savedDateFilter = null;
+    }
     currentFilter = f;
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    if (f === '나의처리중') {
-      const fromInput = document.getElementById('report-month-from');
-      const toInput = document.getElementById('report-month-to');
-      if (fromInput) fromInput.value = '';
-      if (toInput) toInput.value = '';
-    }
     renderList();
   }
 
