@@ -6320,7 +6320,7 @@
     const reader = new FileReader();
     reader.onload = e => {
       const prev = jungongPhotoSets[setIdx].photos[idx];
-      jungongPhotoSets[setIdx].photos[idx] = { file, dataUrl: e.target.result, label: prev?.label || DEFAULT_PHOTO_LABELS[idx] };
+      jungongPhotoSets[setIdx].photos[idx] = { file, dataUrl: e.target.result, label: prev?.label ?? DEFAULT_PHOTO_LABELS[idx] };
       renderPhotoGrid(setIdx);
     };
     reader.readAsDataURL(file);
@@ -6328,7 +6328,7 @@
 
   function removeJungongPhoto(setIdx, idx) {
     const prev = jungongPhotoSets[setIdx].photos[idx];
-    jungongPhotoSets[setIdx].photos[idx] = { dataUrl: null, label: prev?.label || DEFAULT_PHOTO_LABELS[idx] };
+    jungongPhotoSets[setIdx].photos[idx] = { dataUrl: null, label: prev?.label ?? DEFAULT_PHOTO_LABELS[idx] };
     renderPhotoGrid(setIdx);
   }
 
@@ -6414,7 +6414,7 @@
     const reader = new FileReader();
     reader.onload = e => {
       const prev = gcPhotoSets[setIdx].photos[idx];
-      gcPhotoSets[setIdx].photos[idx] = { file, dataUrl: e.target.result, label: prev?.label || DEFAULT_PHOTO_LABELS[idx] };
+      gcPhotoSets[setIdx].photos[idx] = { file, dataUrl: e.target.result, label: prev?.label ?? DEFAULT_PHOTO_LABELS[idx] };
       gcRenderPhotoGrid(setIdx);
     };
     reader.readAsDataURL(file);
@@ -6422,7 +6422,7 @@
 
   function gcRemovePhoto(setIdx, idx) {
     const prev = gcPhotoSets[setIdx].photos[idx];
-    gcPhotoSets[setIdx].photos[idx] = { dataUrl: null, label: prev?.label || DEFAULT_PHOTO_LABELS[idx] };
+    gcPhotoSets[setIdx].photos[idx] = { dataUrl: null, label: prev?.label ?? DEFAULT_PHOTO_LABELS[idx] };
     gcRenderPhotoGrid(setIdx);
   }
 
