@@ -6307,7 +6307,7 @@
           <div style="display:flex;align-items:center;padding:6px 10px;border-top:1px solid #e2e8f0;background:white">
             <span style="font-size:12px;color:#718096;white-space:nowrap;margin-right:4px">작업명:</span>
             <select onchange="jungongPhotoSets[${setIdx}].photos[${i}].label=this.value" style="flex:1;border:none;font-size:13px;font-family:inherit;outline:none;background:white;cursor:pointer">
-              ${PHOTO_LABEL_OPTIONS.map(o => `<option value="${o}" ${o === label ? 'selected' : ''}>${o || '(빈칸)'}</option>`).join('')}
+              ${PHOTO_LABEL_OPTIONS.map(o => `<option value="${o}" ${o === label ? 'selected' : ''}>${o || '(없음)'}</option>`).join('')}
             </select>
           </div>
         </div>`;
@@ -6401,7 +6401,7 @@
           <div style="display:flex;align-items:center;padding:6px 10px;border-top:1px solid #e2e8f0;background:white">
             <span style="font-size:12px;color:#718096;white-space:nowrap;margin-right:4px">작업명:</span>
             <select onchange="gcPhotoSets[${setIdx}].photos[${i}].label=this.value" style="flex:1;border:none;font-size:13px;font-family:inherit;outline:none;background:white;cursor:pointer">
-              ${PHOTO_LABEL_OPTIONS.map(o => `<option value="${o}" ${o === label ? 'selected' : ''}>${o || '(빈칸)'}</option>`).join('')}
+              ${PHOTO_LABEL_OPTIONS.map(o => `<option value="${o}" ${o === label ? 'selected' : ''}>${o || '(없음)'}</option>`).join('')}
             </select>
           </div>
         </div>`;
