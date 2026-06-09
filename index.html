@@ -6296,7 +6296,7 @@
     grid.innerHTML = '';
     for (let i = 0; i < 6; i++) {
       const photo = set.photos[i];
-      const label = photo?.label || DEFAULT_PHOTO_LABELS[i];
+      const label = photo?.label ?? DEFAULT_PHOTO_LABELS[i];
       grid.innerHTML += `
         <div style="border:1.5px dashed #cbd5e0;border-radius:8px;overflow:hidden;background:#f7fafc">
           <div style="position:relative;height:140px;display:flex;align-items:center;justify-content:center;background:#edf2f7;cursor:pointer" onclick="document.getElementById('jg-pi-${setIdx}-${i}').click()">
@@ -6390,7 +6390,7 @@
     grid.innerHTML = '';
     for (let i = 0; i < 6; i++) {
       const photo = set.photos[i];
-      const label = photo?.label || DEFAULT_PHOTO_LABELS[i];
+      const label = photo?.label ?? DEFAULT_PHOTO_LABELS[i];
       grid.innerHTML += `
         <div style="border:1.5px dashed #cbd5e0;border-radius:8px;overflow:hidden;background:#f7fafc">
           <div style="position:relative;height:140px;display:flex;align-items:center;justify-content:center;background:#edf2f7;cursor:pointer" onclick="document.getElementById('gc-pi-${setIdx}-${i}').click()">
@@ -6492,7 +6492,7 @@
         ws.getCell('B3').value = siteVal || ''; ws.getCell('B3').font = { ...HY, size: 12 };
         ws.getCell('B4').value = ttl; ws.getCell('B4').font = { ...HY, size: 12 };
         [['B7',0],['D7',1],['B9',2],['D9',3],['B11',4],['D11',5]].forEach(([a,i]) => {
-          ws.getCell(a).value = set.photos[i]?.label || DEFAULT_PHOTO_LABELS[i];
+          ws.getCell(a).value = set.photos[i]?.label ?? DEFAULT_PHOTO_LABELS[i];
         });
         [[0,0,5,2,6],[1,2,5,4,6],[2,0,7,2,8],[3,2,7,4,8],[4,0,9,2,10],[5,2,9,4,10]].forEach(([pi,tlC,tlR,brC,brR]) => {
           const photo = set.photos[pi];
@@ -6626,7 +6626,7 @@
       html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px 16px;">';
       for (let i = 0; i < 6; i++) {
         const photo = set.photos[i];
-        const label = photo?.label || DEFAULT_PHOTO_LABELS[i];
+        const label = photo?.label ?? DEFAULT_PHOTO_LABELS[i];
         html += `
           <div>
             <div style="border:1px solid #aaa;height:245px;display:flex;align-items:center;justify-content:center;background:#f9f9f9;overflow:hidden">
