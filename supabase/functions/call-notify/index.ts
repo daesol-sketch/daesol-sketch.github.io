@@ -93,6 +93,17 @@ Deno.serve(async (req) => {
 
     console.log(`[call-notify] siteName=${siteName} employeeName=${employeeName}`);
 
+    // call_logs 자동 기록
+    try {
+      await db.from('call_logs').insert({
+        sender,
+        site_name: siteName,
+        employee_name: employeeName
+      });
+    } catch (e: any) {
+      console.log(`[call-notify] call_logs insert failed: ${e.message}`);
+    }
+
     const title = '📞 전화 착신';
     const body  = siteName ? `${siteName} (${sender})` : employeeName ? `직원 ${employeeName} (${sender})` : `미등록 번호 (${sender})`;
 
@@ -128,7 +139,7 @@ Deno.serve(async (req) => {
         webpush.sendNotification(
           s.subscription,
           JSON.stringify({ title, body, type: 'call', siteName: siteName || null, phone: sender }),
-          { TTL: 30 }
+          { TTL: 120 }
         )
       )
     );
