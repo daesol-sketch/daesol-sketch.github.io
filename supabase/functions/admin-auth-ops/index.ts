@@ -29,9 +29,26 @@ Deno.serve(async (req) => {
 
     if (action === 'reset_password' || action === 'change_password') {
       const email = `${account_id}@daesol.el`;
-      const { data: users } = await admin.auth.admin.listUsers();
-      const user = users?.users?.find((u: any) => u.email === email);
-      if (!user) return new Response(JSON.stringify({ error: 'user not found' }), { status: 404, headers: { 'Access-Control-Allow-Origin': '*' } });
+      // 페이지네이션 없이 한 번에 다 가져오기 (perPage 1000)
+      let user: any = null;
+      let page = 1;
+      while (true) {
+        const { data: result } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+        user = result?.users?.find((u: any) => u.email === email);
+        if (user) break;
+        if (!result?.users || result.users.length < 1000) break;
+        page++;
+      }
+      if (!user) {
+        // 유저 없으면 새로 생성 (accounts에 있지만 Auth에 없을 때)
+        const { data: created, error: createErr } = await admin.auth.admin.createUser({
+          email,
+          password: String(password),
+          email_confirm: true
+        });
+        if (createErr) return new Response(JSON.stringify({ error: 'user not found, create failed: ' + createErr.message }), { status: 404, headers: { 'Access-Control-Allow-Origin': '*' } });
+        return new Response(JSON.stringify({ ok: true, created: true }), { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
+      }
       const { error } = await admin.auth.admin.updateUserById(user.id, { password: String(password) });
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { 'Access-Control-Allow-Origin': '*' } });
       return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });

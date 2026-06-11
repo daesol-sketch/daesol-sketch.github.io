@@ -4059,6 +4059,7 @@
       }).then(r => r.json())
     ]);
     if (error) { showToast('❌ 초기화 실패: ' + error.message); return; }
+    if (res?.error) { showToast('❌ Auth 비번 초기화 실패: ' + res.error); return; }
     showToast('✅ 비밀번호가 000000으로 초기화되었습니다.');
     closeModal('edit-account-modal');
   }
