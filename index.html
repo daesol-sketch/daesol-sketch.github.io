@@ -4726,7 +4726,7 @@
     const el = document.getElementById('elevator-list');
     el.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
     const refreshBtn = document.getElementById('elevator-modal-refresh-btn');
-    if (refreshBtn) refreshBtn.style.display = (currentRole === '관리자' || currentRole === '마스터') ? 'inline-block' : 'none';
+    if (refreshBtn) refreshBtn.style.display = (currentRole === '관리자' || currentRole === '마스터' || currentRole === '직원') ? 'inline-block' : 'none';
     const { data, error } = await db.from('site_elevators').select('*').eq('site_id', currentSiteForElevator.id);
     if (error) { el.innerHTML = '<div class="loading-state">불러오기 실패</div>'; return; }
     if (data) data.sort((a, b) => {
