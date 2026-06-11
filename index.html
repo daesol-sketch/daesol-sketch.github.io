@@ -5360,9 +5360,9 @@
     const name = document.getElementById('mgmt-name').value.trim();
     const ctype = document.getElementById('mgmt-contract-type').value;
     if (!name) { showToast('현장명은 필수입니다.'); return; }
-    // 호기명 미입력 행 검사
-    const badElev = pendingElevators.find(e => !e._deleted && !e.unit_name.trim());
-    if (badElev) { showToast('호기명을 입력하지 않은 행이 있습니다.'); return; }
+    // 호기명/승강기번호 둘 다 미입력 행 검사
+    const badElev = pendingElevators.find(e => !e._deleted && !e.unit_name?.trim() && !e.elevator_number?.trim());
+    if (badElev) { showToast('호기명 또는 승강기번호 입력 안 한 행이 있습니다.'); return; }
 
     const payload = {
       site_name:         name,
