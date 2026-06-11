@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
         console.log(`[call-notify] push[${i}] (${username}) failed: ${r.reason}`);
         const errMsg = String(r.reason);
         if (errMsg.includes('410') || errMsg.includes('unexpected response')) {
-          await db.from('push_subscriptions').delete().eq('account_id', accountId);
+          await db.from('push_subscriptions').delete().eq('endpoint', subs[i].subscription.endpoint);
           console.log(`[call-notify] push[${i}] (${username}) expired sub removed`);
         }
       } else {

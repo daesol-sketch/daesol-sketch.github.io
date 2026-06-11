@@ -3212,9 +3212,14 @@
     const logoutUserId = currentUser ? String(currentUser.id) : null;
     if (logoutUserId && 'serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then(reg => {
-        reg.pushManager.getSubscription().then(sub => { if (sub) sub.unsubscribe(); });
+        reg.pushManager.getSubscription().then(sub => {
+          if (sub) {
+            const ep = sub.endpoint;
+            sub.unsubscribe();
+            db.from('push_subscriptions').delete().eq('endpoint', ep).then(() => {});
+          }
+        });
       });
-      db.from('push_subscriptions').delete().eq('account_id', logoutUserId).then(() => {});
     }
     currentRole = null; currentSite = null; currentUser = null;
     localStorage.removeItem('daesol_autologin');
