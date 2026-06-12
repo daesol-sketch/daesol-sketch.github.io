@@ -4289,6 +4289,8 @@
     if (!targets.length) { showToast('승강기번호를 먼저 입력하세요.'); return; }
     showToast('⏳ 정보 가져오는 중... ' + targets.length + '건');
     let success = 0, fail = 0;
+    const _fmtD = (v) => { if (!v) return null; if (/^\d{8}$/.test(v)) return v.slice(0,4)+'-'+v.slice(4,6)+'-'+v.slice(6,8); if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; return null; };
+    let siteAddrFilled = false;
     for (const target of targets) {
       const no = target.elevator_number.replace(/-/g, '');
       if (no.length < 7) { fail++; continue; }
@@ -4299,11 +4301,26 @@
         const data = await res.json();
         const item = data.item;
         if (!item) { fail++; continue; }
+        // 비어있을 때만 채우기 (입력 도우미 본질)
         if (item.elvtrModel && !target.elevator_model) target.elevator_model = item.elvtrModel;
-        if (item.elvtrAsignNo) target.assign_no = parseInt(item.elvtrAsignNo, 10) || null;
-        if (item.elvtrKindNm) target.kind_name = item.elvtrKindNm;
-        if (target.assign_no && target.kind_name) {
+        if (item.elvtrAsignNo && !target.assign_no) target.assign_no = parseInt(item.elvtrAsignNo, 10) || null;
+        if (item.elvtrKindNm && !target.kind_name) target.kind_name = item.elvtrKindNm;
+        if (item.installationPlace && !target.installation_place) target.installation_place = item.installationPlace;
+        const _inspD = _fmtD(item.applcEnDt);
+        if (_inspD && !target.inspection_due_date) target.inspection_due_date = _inspD;
+        if (item.resultNm && !target.last_inspection_result) target.last_inspection_result = item.resultNm;
+        const _instD = _fmtD(item.frstInstallationDe);
+        if (_instD && !target.install_date) target.install_date = _instD;
+        if (target.assign_no && target.kind_name && !target.unit_name) {
           target.unit_name = target.assign_no + ' ' + target.kind_name;
+        }
+        // 현장 주소 입력란이 비어있으면 한 번만 채움
+        if (!siteAddrFilled) {
+          const addrInput = document.getElementById('mgmt-elevator-address');
+          if (addrInput && !addrInput.value.trim()) {
+            const loc = [item.address1, item.address2].filter(Boolean).join(' ').trim();
+            if (loc) { addrInput.value = loc; siteAddrFilled = true; }
+          }
         }
         success++;
       } catch(e) { fail++; }
@@ -4847,11 +4864,12 @@
   }
 
   async function refreshAllElevatorInfo() {
-    if (!confirm('이 현장의 모든 호기 정보를 API로 새로고침합니다.\n호기번호/종류/모델이 자동으로 채워집니다.\n계속할까요?')) return;
+    if (!confirm('이 현장의 모든 호기 정보와 현장 주소를 API로 새로고침합니다.\n계속할까요?')) return;
     const { data } = await db.from('site_elevators').select('*').eq('site_id', currentSiteForElevator.id);
     if (!data?.length) { showToast('호기가 없습니다.'); return; }
     showToast('⏳ 새로고침 중... ' + data.length + '건');
     let success = 0, fail = 0;
+    let siteAddrUpdated = false;
     for (const e of data) {
       if (!e.elevator_number) { fail++; continue; }
       const no = e.elevator_number.replace(/-/g, '');
@@ -4878,6 +4896,17 @@
         }
         if (Object.keys(update).length) {
           await db.from('site_elevators').update(update).eq('id', e.id);
+        }
+        // 현장 주소 한 번만 갱신 (비어있을 때만)
+        if (!siteAddrUpdated) {
+          const loc = [item.address1, item.address2].filter(Boolean).join(' ').trim();
+          if (loc) {
+            await db.from('managed_sites')
+              .update({ elevator_address: loc })
+              .eq('id', currentSiteForElevator.id)
+              .is('elevator_address', null);
+            siteAddrUpdated = true;
+          }
         }
         success++;
       } catch(err) {
@@ -5407,25 +5436,23 @@
         const kind_name = e.kind_name || null;
         const generated_name = (assign_no && kind_name) ? (assign_no + ' ' + kind_name) : (e.elevator_number?.trim() || '');
         const final_name = e.unit_name?.trim() || generated_name;
+        const payload = {
+          unit_name: final_name,
+          elevator_number: e.elevator_number?.trim() || null,
+          elevator_model: e.elevator_model?.trim() || null,
+          assign_no,
+          kind_name,
+          notes: e.notes?.trim() || null,
+        };
+        // 보라색 정보 새로고침이 채운 API 부가 정보 (값 있을 때만 포함)
+        if (e.installation_place) payload.installation_place = e.installation_place;
+        if (e.inspection_due_date) payload.inspection_due_date = e.inspection_due_date;
+        if (e.last_inspection_result) payload.last_inspection_result = e.last_inspection_result;
+        if (e.install_date) payload.install_date = e.install_date;
         if (e.id) {
-          await db.from('site_elevators').update({
-            unit_name: final_name,
-            elevator_number: e.elevator_number?.trim() || null,
-            elevator_model: e.elevator_model?.trim() || null,
-            assign_no,
-            kind_name,
-            notes: e.notes?.trim() || null,
-          }).eq('id', e.id);
+          await db.from('site_elevators').update(payload).eq('id', e.id);
         } else {
-          await db.from('site_elevators').insert({
-            site_id: siteId,
-            unit_name: final_name,
-            elevator_number: e.elevator_number?.trim() || null,
-            elevator_model: e.elevator_model?.trim() || null,
-            assign_no,
-            kind_name,
-            notes: e.notes?.trim() || null,
-          });
+          await db.from('site_elevators').insert({ site_id: siteId, ...payload });
         }
       }
     }
