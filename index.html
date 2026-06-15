@@ -512,7 +512,7 @@
   <!-- 대시보드 홈 -->
   <div class="page active" id="page-home">
     <div class="home-profile-card" style="position:relative">
-      <button onclick="window.open('https://cloverstyle1970.github.io/DS_Material', '_blank')" style="position:absolute;top:16px;right:16px;padding:8px 14px;background:#2b6cb0;color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(43,108,176,0.3)">
+      <button onclick="openMaterialSite()" style="position:absolute;top:16px;right:16px;padding:8px 14px;background:#2b6cb0;color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(43,108,176,0.3)">
         📦 자재관리
       </button>
       <div class="home-greeting">안녕하세요 <span id="home-greeting-name"></span>님 <span style="font-size:22px">👋</span></div>
@@ -3204,6 +3204,18 @@
     // 반복고장현황 서브탭: 직원/관리자만
     document.getElementById('sub-tab-repeat-btn').style.display = (isAdmin || isStaff) ? 'inline-block' : 'none';
     updateDrawerProfile();
+  }
+
+  // 자재관리 사이트로 이동 (SSO 토큰 hash로 전달)
+  async function openMaterialSite() {
+    const URL_TARGET = 'https://met.daesol.kr';
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) { window.location.href = URL_TARGET; return; }
+      window.location.href = `${URL_TARGET}/#access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`;
+    } catch {
+      window.location.href = URL_TARGET;
+    }
   }
 
   function doLogout() {
@@ -6202,6 +6214,29 @@
   // 자동로그인 시도 → 완료 후 페이지 초기화
   (async () => {
     try {
+      // ① SSO 토큰으로 세션 설정 (자재관리에서 넘어온 경우, 자동로그인 체크보다 먼저)
+      const hash = window.location.hash;
+      if (hash.includes('access_token=')) {
+        const params = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+        if (accessToken && refreshToken) {
+          try {
+            const { error } = await db.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            if (error) console.error('[SSO] setSession 실패:', error);
+            else localStorage.setItem('daesol_autologin', 'true');
+          } catch (e) {
+            console.error('[SSO] setSession 예외:', e);
+          } finally {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+        }
+      }
+
+      // ② 자동로그인 체크
       const autoLogin = localStorage.getItem('daesol_autologin');
       if (autoLogin) {
         const { data: { session } } = await db.auth.getSession();
