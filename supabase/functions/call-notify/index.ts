@@ -60,20 +60,39 @@ Deno.serve(async (req) => {
       .select(SITE_SELECT);
 
     let siteName: string | null = null;
+    let elevLabel: string | null = null;
     if (sites) {
-      const matched = sites.find((s: any) => {
+      for (const s of sites as any[]) {
+        let isMatch = false;
         // 일반 전화 컬럼: 정규화 후 정확 일치
         for (const col of PHONE_COLS) {
-          if (s[col] && normalizePhone(s[col]) === normalizedSender) return true;
+          if (s[col] && normalizePhone(s[col]) === normalizedSender) {
+            isMatch = true;
+            break;
+          }
         }
-        // 비상통화장치 컬럼: 텍스트에서 전화번호 패턴 추출 후 매칭 (메모 형식 지원)
-        for (const col of EMERG_COLS) {
-          if (s[col] && extractPhones(s[col]).includes(normalizedSender)) return true;
+        if (!isMatch) {
+          // 비상통화장치 컬럼: 텍스트에서 전화번호 패턴 추출 후 매칭
+          for (const col of EMERG_COLS) {
+            if (s[col] && extractPhones(s[col]).includes(normalizedSender)) {
+              isMatch = true;
+              // 라벨 추출 (예: "2호기: 010-XXXX" → "2호기")
+              const val = String(s[col]);
+              const idx = val.indexOf(': ');
+              if (idx > 0) {
+                elevLabel = val.slice(0, idx).trim();
+              }
+              break;
+            }
+          }
         }
-        return false;
-      });
-      if (matched) siteName = matched.site_name;
+        if (isMatch) {
+          siteName = s.site_name;
+          break;
+        }
+      }
     }
+    const fullSiteName = siteName && elevLabel ? `${siteName} ${elevLabel}` : siteName;
 
     // 현장에서 못 찾으면 직원 전화번호에서 조회
     let employeeName: string | null = null;
@@ -97,7 +116,7 @@ Deno.serve(async (req) => {
     try {
       await db.from('call_logs').insert({
         sender,
-        site_name: siteName,
+        site_name: fullSiteName,
         employee_name: employeeName
       });
     } catch (e: any) {
@@ -105,7 +124,7 @@ Deno.serve(async (req) => {
     }
 
     const title = '📞 전화 착신';
-    const body  = siteName ? `${siteName} (${sender})` : employeeName ? `직원 ${employeeName} (${sender})` : `미등록 번호 (${sender})`;
+    const body  = fullSiteName ? `${fullSiteName} (${sender})` : employeeName ? `직원 ${employeeName} (${sender})` : `미등록 번호 (${sender})`;
 
     const { data: admins } = await db
       .from('accounts')
@@ -138,7 +157,7 @@ Deno.serve(async (req) => {
       subs.map((s: any) =>
         webpush.sendNotification(
           s.subscription,
-          JSON.stringify({ title, body, type: 'call', siteName: siteName || null, phone: sender }),
+          JSON.stringify({ title, body, type: 'call', siteName: fullSiteName || null, phone: sender }),
           { TTL: 120 }
         )
       )
