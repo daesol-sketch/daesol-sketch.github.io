@@ -3210,6 +3210,8 @@
   async function openMaterialSite() {
     const URL_TARGET = 'https://met.daesol.kr';
     try {
+      // 토큰 최신화 (session_not_found 방지)
+      await db.auth.refreshSession();
       const { data: { session } } = await db.auth.getSession();
       if (!session) { window.location.href = URL_TARGET; return; }
       window.location.href = `${URL_TARGET}/#access_token=${encodeURIComponent(session.access_token)}&refresh_token=${encodeURIComponent(session.refresh_token)}`;
