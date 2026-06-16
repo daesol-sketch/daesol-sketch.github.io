@@ -1409,6 +1409,21 @@
           </div>
         </div>
       </div>
+      <div id="duty-preregister-section" style="margin-bottom:24px;padding:16px;background:#1a1a2e;border:1.5px solid #2d2d4e;border-radius:10px">
+        <div style="font-size:14px;font-weight:700;color:#a78bfa;margin-bottom:4px">📅 내일 사전등록 <span style="font-size:11px;font-weight:400;color:#888">(내일 8:30부터 적용)</span></div>
+        <div style="font-size:12px;color:#888;margin-bottom:10px">내일 당직을 미리 등록해 두세요</div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:12px;font-weight:600;color:#aaa;margin-bottom:6px">☀️ 주간</div>
+          <button id="duty-pre-btn-주간" onclick="togglePreDutyShift('주간',null)" style="width:100%;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">☀️ 주간 등록</button>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#aaa;margin-bottom:6px">🌙 평일숙직</div>
+          <div style="display:flex;gap:10px">
+            <button id="duty-pre-btn-평일-풍동" onclick="togglePreDutyShift('평일당직','풍동숙직')" style="flex:1;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">🌙 풍동숙직</button>
+            <button id="duty-pre-btn-평일-파주" onclick="togglePreDutyShift('평일당직','파주대기')" style="flex:1;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">🌙 파주대기</button>
+          </div>
+        </div>
+      </div>
       <div style="font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:12px">오늘 당직 현황</div>
       <div id="duty-today-list"><div class="loading-state">불러오는 중...</div></div>
     </div>
@@ -2020,6 +2035,13 @@
     return toLocalDate(now);
   }
 
+  function getTomorrowDate() {
+    const now = new Date();
+    const toLocalDate = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    return toLocalDate(tomorrow);
+  }
+
   async function toggleDutyShift(shiftType, teamOverride) {
     if (!currentUser || currentRole === '관리자' || currentRole === '마스터') return showToast('❌ 직원 계정으로 로그인하세요.');
     const team = teamOverride || currentUser.team;
@@ -2061,6 +2083,37 @@
     loadDutyPage();
   }
 
+  async function togglePreDutyShift(shiftType, teamOverride) {
+    if (!currentUser || currentRole === '관리자' || currentRole === '마스터') return showToast('❌ 직원 계정으로 로그인하세요.');
+    const team = teamOverride || currentUser.team;
+    const handler = currentUser.username;
+    if (!team) return showToast('❌ 계정에 팀 정보가 없습니다. 관리자에게 문의하세요.');
+    const date = getTomorrowDate();
+    const { data: existing } = await db.from('duty_roster').select('id')
+      .eq('date', date).eq('shift_type', shiftType).eq('team', team).eq('handler_name', handler).maybeSingle();
+    if (existing) {
+      const { error } = await db.from('duty_roster').delete().eq('id', existing.id);
+      if (error) { showToast('❌ 해제 실패: ' + error.message); return; }
+      showToast('🗑️ 사전등록이 해제되었습니다.');
+    } else {
+      const maxCount = team === '풍동숙직' ? 3 : (team === '1팀' || team === '2팀' || team === '3팀') ? 2 : 1;
+      const { error } = await db.from('duty_roster').insert(
+        { date, shift_type: shiftType, team, handler_name: handler, account_id: String(currentUser.id) }
+      );
+      if (error) { showToast('❌ 등록 실패: ' + error.message); return; }
+      const { data: afterInsert } = await db.from('duty_roster').select('id')
+        .eq('date', date).eq('shift_type', shiftType).eq('team', team);
+      if (afterInsert && afterInsert.length > maxCount) {
+        await db.from('duty_roster').delete()
+          .eq('date', date).eq('shift_type', shiftType).eq('team', team).eq('account_id', String(currentUser.id));
+        showToast('❌ 이미 정원이 찼습니다. 다시 시도해주세요.');
+        return;
+      }
+      showToast('✅ 사전등록 완료!');
+    }
+    loadDutyPage();
+  }
+
   async function loadDutyPage() {
     const shiftType = getCurrentShiftType();
     const shiftEl = document.getElementById('duty-current-shift');
@@ -2085,6 +2138,9 @@
 
     const date = getShiftDate();
     const { data } = await db.from('duty_roster').select('*').eq('date', date).order('team');
+    const tomorrowDate = getTomorrowDate();
+    const { data: tomorrowData } = await db.from('duty_roster').select('*').eq('date', tomorrowDate).order('team');
+    const tomorrowDay = new Date(tomorrowDate).getDate();
 
     const myName = currentUser ? (currentUser.username) : null;
     const myTeam = currentUser ? currentUser.team : null;
@@ -2101,6 +2157,19 @@
       if (!btn) return;
       const isMe = (data||[]).some(r => r.shift_type===shift && r.team===team && r.handler_name===myName);
       btn.style.cssText = w + ';padding:14px;border:none;border-radius:8px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s;' + (isMe ? cancelStyle : reg);
+      btn.textContent = isMe ? cancelText : regText;
+    });
+
+    const preBtnDefs = [
+      { id:'duty-pre-btn-주간',      shift:'주간',     team:myTeam,     reg:'background:linear-gradient(135deg,#553c9a,#6b46c1);color:white', regText:'☀️ 주간 등록',    cancelText:'☀️ 주간 해제',    w:'width:100%' },
+      { id:'duty-pre-btn-평일-풍동', shift:'평일당직', team:'풍동숙직', reg:'background:linear-gradient(135deg,#553c9a,#6b46c1);color:white', regText:'🌙 풍동숙직',     cancelText:'🌙 풍동숙직 해제', w:'flex:1' },
+      { id:'duty-pre-btn-평일-파주', shift:'평일당직', team:'파주대기', reg:'background:linear-gradient(135deg,#553c9a,#6b46c1);color:white', regText:'🌙 파주대기',     cancelText:'🌙 파주대기 해제', w:'flex:1' },
+    ];
+    preBtnDefs.forEach(({ id, shift, team, reg, regText, cancelText, w }) => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      const isMe = (tomorrowData||[]).some(r => r.shift_type===shift && r.team===team && r.handler_name===myName);
+      btn.style.cssText = w + ';padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s;' + (isMe ? cancelStyle : reg);
       btn.textContent = isMe ? cancelText : regText;
     });
 
@@ -2125,8 +2194,11 @@
       const color = shiftColor[row.shift], bg = shiftBg[row.shift], border = shiftBorder[row.shift];
       const colHtml = row.cols.map(col => {
         const found = (data||[]).filter(r => r.shift_type===row.shift && r.team===col.key);
-        const nameHtml = found.length
-          ? found.map(r => '<span style="font-size:15px;font-weight:700;color:'+color+'">'+r.handler_name+'</span>').join('<br>')
+        const tomorrowFound = (tomorrowData||[]).filter(r => r.shift_type===row.shift && r.team===col.key);
+        const todayHtml = found.map(r => '<span style="font-size:15px;font-weight:700;color:'+color+'">'+r.handler_name+'</span>').join('<br>');
+        const tmrHtml = tomorrowFound.map(r => '<span style="font-size:13px;color:#a0aec0">'+r.handler_name+' <span style="font-size:11px;background:#2d2d4e;color:#a78bfa;padding:1px 5px;border-radius:4px">('+tomorrowDay+'일)</span></span>').join('<br>');
+        const nameHtml = (found.length || tomorrowFound.length)
+          ? [todayHtml, tmrHtml].filter(Boolean).join(found.length && tomorrowFound.length ? '<br>' : '')
           : '<span style="font-size:13px;color:#a0aec0">미등록</span>';
         return '<div style="flex:1;background:white;border-radius:8px;padding:10px 12px;border:1px solid '+border+'">'
           + '<div style="font-size:11px;color:#718096;font-weight:600;margin-bottom:4px">'+col.label+'</div>'
