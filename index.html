@@ -5350,7 +5350,10 @@
     const idx = MGMT_FIELD_ORDER.indexOf(el.id);
     if (idx >= 0 && idx < MGMT_FIELD_ORDER.length - 1) {
       const next = document.getElementById(MGMT_FIELD_ORDER[idx + 1]);
-      if (next) next.focus();
+      if (next) {
+        next.focus();
+        if (next.select) next.select();
+      }
     }
   }
 
