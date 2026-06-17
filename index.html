@@ -2196,7 +2196,7 @@
         const found = (data||[]).filter(r => r.shift_type===row.shift && r.team===col.key);
         const tomorrowFound = (tomorrowData||[]).filter(r => r.shift_type===row.shift && r.team===col.key);
         const todayHtml = found.map(r => '<span style="font-size:15px;font-weight:700;color:'+color+'">'+r.handler_name+'</span>').join('<br>');
-        const tmrHtml = tomorrowFound.map(r => '<span style="font-size:13px;color:#a0aec0">'+r.handler_name+' <span style="font-size:11px;background:#2d2d4e;color:#a78bfa;padding:1px 5px;border-radius:4px">('+tomorrowDay+'일)</span></span>').join('<br>');
+        const tmrHtml = tomorrowFound.map(r => '<span style="font-size:13px;font-weight:700;color:#4a5568">'+r.handler_name+' <span style="font-size:11px;background:#ede9fe;color:#6b46c1;border-radius:4px;padding:1px 5px;white-space:nowrap">('+tomorrowDay+'일)</span></span>').join('<br>');
         const nameHtml = (found.length || tomorrowFound.length)
           ? [todayHtml, tmrHtml].filter(Boolean).join(found.length && tomorrowFound.length ? '<br>' : '')
           : '<span style="font-size:13px;color:#a0aec0">미등록</span>';
