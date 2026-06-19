@@ -5909,12 +5909,12 @@
       else { infoEl.style.display = 'none'; infoEl.innerHTML = ''; }
     }
     if (!siteData) { resetElevatorInput(); return; }
-    const { data: elevData } = await db.from('site_elevators').select('unit_name,elevator_number,installation_place,assign_no').eq('site_id', siteData.id).order('assign_no', { nullsFirst: false });
+    const { data: elevData } = await db.from('site_elevators').select('unit_name,elevator_number,installation_place,assign_no,elevator_model').eq('site_id', siteData.id).order('assign_no', { nullsFirst: false });
     if (!elevData || !elevData.length) { resetElevatorInput(); return; }
     document.getElementById('f-regno').value = '';
     wrap.innerHTML = `<select id="f-elevator" required onchange="fillRegno(this)" style="padding:10px 14px;padding-right:36px;border:1.5px solid #333;border-radius:8px;font-size:14px;font-family:inherit;color:#e2e8f0;background:#1a1a1a url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 12 12%27%3E%3Ctext x=%270%27 y=%2710%27 font-size=%2710%27 fill=%27%23888888%27%3E%E2%96%BC%3C/text%3E%3C/svg%3E') no-repeat right 12px center / 12px;-webkit-appearance:none;appearance:none;width:100%">
       <option value="" data-regno="">-- 호기 선택 --</option>
-      ${elevData.map(e => { const place = e.installation_place ? ' - ' + e.installation_place : ''; const fullName = e.unit_name + place; return `<option value="${escHtml(fullName)}" data-regno="${escHtml(e.elevator_number||'')}">${escHtml(fullName)}${e.elevator_number ? ' (' + escHtml(e.elevator_number) + ')' : ''}</option>`; }).join('')}
+      ${elevData.map(e => { const place = e.installation_place ? ' - ' + e.installation_place : ''; const fullName = e.unit_name + place; return `<option value="${escHtml(fullName)}" data-regno="${escHtml(e.elevator_number||'')}">${escHtml(fullName)}${e.elevator_number ? ' (' + escHtml(e.elevator_number) + ')' : ''}${e.elevator_model ? ' ' + escHtml(e.elevator_model) : ''}</option>`; }).join('')}
     </select>`;
   }
 
