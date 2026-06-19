@@ -2621,7 +2621,7 @@
       const handlerSel = document.getElementById('rdm-handler');
       handlerSel.innerHTML = (handlerAccs || []).map(a => `<option value="${escHtml(a.username)}">${escHtml(a.username)}</option>`).join('');
       handlerSel.value = r.completion_handler || (currentUser ? currentUser.username : '');
-      handlerSel.disabled = r.status === '처리중' && currentRole !== '마스터';
+      handlerSel.disabled = r.status === '처리중' && currentRole === '직원';
       const todayStr = new Date().toLocaleDateString('sv');
       const receivedDateStr = r.created_at ? new Date(r.created_at).toLocaleDateString('sv') : todayStr;
       document.getElementById('rdm-arr-date-picker').min = receivedDateStr;
