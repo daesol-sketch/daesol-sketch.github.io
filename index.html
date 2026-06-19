@@ -2554,6 +2554,11 @@
     // 항상 DB에서 최신 데이터 가져옴 (다른 사용자 변경사항 반영)
     const { data: r, error } = await db.from('reports').select('*').eq('id', id).maybeSingle();
     if (!r || error) return;
+    let rdmElevModel = '';
+    if (r.regno) {
+      const { data: elevInfo } = await db.from('site_elevators').select('elevator_model').eq('elevator_number', r.regno).maybeSingle();
+      if (elevInfo?.elevator_model) rdmElevModel = elevInfo.elevator_model;
+    }
     // 배치완료/접수중 상태면 배치 버튼 안내만 표시
     if ((r.status === '배치완료' || r.status === '접수중') && currentRole === '직원') {
       showToast('⚠️ 배치 버튼을 눌러 처리를 시작하세요.');
@@ -2587,6 +2592,7 @@
       infoRow('신고자', escHtml(r.name||'-')) +
       infoRow('연락처', escHtml(r.phone||'-')) +
       (r.regno ? infoRow('승강기번호', escHtml(r.regno)) : '<div></div>') +
+      (rdmElevModel ? infoRow('엘리베이터 모델', escHtml(rdmElevModel)) : '<div></div>') +
       '</div>' +
       (r.description ? '<div style="margin-top:10px;padding:10px 12px;background:#f7fafc;border-radius:8px;border-left:3px solid #bee3f8">' +
       '<span style="color:#718096;font-size:11px;font-weight:700;display:block;margin-bottom:4px">신고내용</span>' +
