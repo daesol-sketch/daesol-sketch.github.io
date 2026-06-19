@@ -3430,6 +3430,15 @@
     const { data, error } = await q;
     if (error) { showToast('❌ 데이터 로드 실패'); return; }
     reports = data || [];
+    const regnos = [...new Set(reports.map(r => r.regno).filter(Boolean))];
+    if (regnos.length) {
+      const { data: elevData } = await db.from('site_elevators').select('elevator_number,elevator_model').in('elevator_number', regnos);
+      if (elevData) {
+        const modelMap = {};
+        elevData.forEach(e => { if (e.elevator_model) modelMap[e.elevator_number] = e.elevator_model; });
+        reports.forEach(r => { if (r.regno && modelMap[r.regno]) r._elevator_model = modelMap[r.regno]; });
+      }
+    }
   }
 
   async function loadRepeatCountMap() {
@@ -3584,6 +3593,7 @@
         '<div class=report-meta>' +
         '<span class=meta-item>🔧 ' + escHtml(r.type||'') + '</span>' +
         (r.regno ? '<span class=meta-item>🔖 승강기번호: ' + escHtml(r.regno) + '</span>' : '') +
+        (r._elevator_model ? '<span class=meta-item>🏷️ ' + escHtml(r._elevator_model) + '</span>' : '') +
         '<span class=meta-item>👤 ' + escHtml(r.name||'') + '</span>' +
         (r.phone ? '<span class=meta-item>📞 신고자 연락처: ' + escHtml(r.phone) + '</span>' : '') +
         '<span class=report-date>📅 ' + dt + '</span>' +
