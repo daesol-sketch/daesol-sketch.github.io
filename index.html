@@ -1414,15 +1414,24 @@
       <div id="duty-preregister-section" style="margin-bottom:24px;padding:16px;background:#1a1a2e;border:1.5px solid #2d2d4e;border-radius:10px">
         <div style="font-size:14px;font-weight:700;color:#a78bfa;margin-bottom:4px">📅 내일 사전등록 <span style="font-size:11px;font-weight:400;color:#888">(내일 8:30부터 적용)</span></div>
         <div style="font-size:12px;color:#888;margin-bottom:10px">내일 당직을 미리 등록해 두세요</div>
-        <div style="margin-bottom:10px">
-          <div style="font-size:12px;font-weight:600;color:#aaa;margin-bottom:6px">☀️ 주간</div>
-          <button id="duty-pre-btn-주간" onclick="togglePreDutyShift('주간',null)" style="width:100%;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">☀️ 주간 등록</button>
+        <div id="duty-pre-weekday-section">
+          <div style="margin-bottom:10px">
+            <div style="font-size:12px;font-weight:600;color:#aaa;margin-bottom:6px">☀️ 주간</div>
+            <button id="duty-pre-btn-주간" onclick="togglePreDutyShift('주간',null)" style="width:100%;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">☀️ 주간 등록</button>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:#aaa;margin-bottom:6px">🌙 평일숙직</div>
+            <div style="display:flex;gap:10px">
+              <button id="duty-pre-btn-평일-풍동" onclick="togglePreDutyShift('평일당직','풍동숙직')" style="flex:1;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">🌙 풍동숙직</button>
+              <button id="duty-pre-btn-평일-파주" onclick="togglePreDutyShift('평일당직','파주대기')" style="flex:1;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">🌙 파주대기</button>
+            </div>
+          </div>
         </div>
-        <div>
-          <div style="font-size:12px;font-weight:600;color:#aaa;margin-bottom:6px">🌙 평일숙직</div>
+        <div id="duty-pre-weekend-section" style="display:none">
+          <div style="font-size:12px;font-weight:600;color:#aaa;margin-bottom:6px">📅 주말/휴일</div>
           <div style="display:flex;gap:10px">
-            <button id="duty-pre-btn-평일-풍동" onclick="togglePreDutyShift('평일당직','풍동숙직')" style="flex:1;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">🌙 풍동숙직</button>
-            <button id="duty-pre-btn-평일-파주" onclick="togglePreDutyShift('평일당직','파주대기')" style="flex:1;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">🌙 파주대기</button>
+            <button id="duty-pre-btn-주말-풍동" onclick="togglePreDutyShift('주말당직','풍동숙직')" style="flex:1;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">📅 풍동숙직</button>
+            <button id="duty-pre-btn-주말-파주" onclick="togglePreDutyShift('주말당직','파주숙직')" style="flex:1;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all 0.2s">📅 파주숙직</button>
           </div>
         </div>
       </div>
@@ -1999,12 +2008,13 @@
 
   async function loadHolidays() {
     const now = new Date();
-    const y = now.getFullYear(), m = now.getMonth() + 1;
-    const from = y + '-' + String(m).padStart(2,'0') + '-01';
-    const toDate = new Date(y, m + 1, 1);
-    const to = toDate.getFullYear() + '-' + String(toDate.getMonth()+1).padStart(2,'0') + '-01';
+    const y = now.getFullYear(), m = now.getMonth();
+    const fmt = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    const from = fmt(new Date(y, m - 1, 1));   // 전월 1일
+    const to = fmt(new Date(y, m + 2, 1));      // 익익월 1일 (미포함)
     const { data } = await db.from('holidays').select('date').gte('date', from).lt('date', to);
     holidayDates = new Set((data||[]).map(r => r.date));
+    holidaysLoaded = true;
   }
 
   function isHoliday(dateStr) { return holidayDates.has(dateStr); }
@@ -2118,6 +2128,7 @@
   }
 
   async function loadDutyPage() {
+    if (!holidaysLoaded) await loadHolidays();
     const shiftType = getCurrentShiftType();
     const shiftEl = document.getElementById('duty-current-shift');
     const shiftNames = { '주간': '☀️ 주간 (08:30~17:30)', '평일당직': '🌙 평일 숙직 (17:30~익일 08:30)', '주말당직': '📅 주말/휴일 당직' };
@@ -2132,6 +2143,15 @@
     if (wdSec) wdSec.style.display = isWeekend ? 'none' : 'block';
     if (weSec) weSec.style.display = isWeekend ? 'block' : 'none';
 
+    // 내일 시간대(평일/주말·휴일) 판정 → 사전등록 섹션 전환
+    const tmrDateObj = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const toLocalDate = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    const tomorrowIsWeekend = (tmrDateObj.getDay() === 0 || tmrDateObj.getDay() === 6 || isHoliday(toLocalDate(tmrDateObj)));
+    const preWd = document.getElementById('duty-pre-weekday-section');
+    const preWe = document.getElementById('duty-pre-weekend-section');
+    if (preWd) preWd.style.display = tomorrowIsWeekend ? 'none' : 'block';
+    if (preWe) preWe.style.display = tomorrowIsWeekend ? 'block' : 'none';
+
     const myEl = document.getElementById('duty-my-info');
     if (myEl && currentUser) {
       const team = currentUser.team || '미설정';
@@ -2143,7 +2163,7 @@
     const { data } = await db.from('duty_roster').select('*').eq('date', date).order('team');
     const tomorrowDate = getTomorrowDate();
     const { data: tomorrowData } = await db.from('duty_roster').select('*').eq('date', tomorrowDate).order('team');
-    const tomorrowDay = new Date(tomorrowDate).getDate();
+    const tomorrowDay = tmrDateObj.getDate();
 
     const myName = currentUser ? (currentUser.username) : null;
     const myTeam = currentUser ? currentUser.team : null;
@@ -2163,7 +2183,10 @@
       btn.textContent = isMe ? cancelText : regText;
     });
 
-    const preBtnDefs = [
+    const preBtnDefs = tomorrowIsWeekend ? [
+      { id:'duty-pre-btn-주말-풍동', shift:'주말당직', team:'풍동숙직', reg:'background:linear-gradient(135deg,#553c9a,#6b46c1);color:white', regText:'📅 풍동숙직',     cancelText:'📅 풍동숙직 해제', w:'flex:1' },
+      { id:'duty-pre-btn-주말-파주', shift:'주말당직', team:'파주숙직', reg:'background:linear-gradient(135deg,#553c9a,#6b46c1);color:white', regText:'📅 파주숙직',     cancelText:'📅 파주숙직 해제', w:'flex:1' },
+    ] : [
       { id:'duty-pre-btn-주간',      shift:'주간',     team:myTeam,     reg:'background:linear-gradient(135deg,#553c9a,#6b46c1);color:white', regText:'☀️ 주간 등록',    cancelText:'☀️ 주간 해제',    w:'width:100%' },
       { id:'duty-pre-btn-평일-풍동', shift:'평일당직', team:'풍동숙직', reg:'background:linear-gradient(135deg,#553c9a,#6b46c1);color:white', regText:'🌙 풍동숙직',     cancelText:'🌙 풍동숙직 해제', w:'flex:1' },
       { id:'duty-pre-btn-평일-파주', shift:'평일당직', team:'파주대기', reg:'background:linear-gradient(135deg,#553c9a,#6b46c1);color:white', regText:'🌙 파주대기',     cancelText:'🌙 파주대기 해제', w:'flex:1' },
@@ -2189,19 +2212,17 @@
       { shift:'주말당직', label:'📅 주말/휴일', time:'08:30~익일 08:30',
         cols:[ {key:'풍동숙직',label:'풍동숙직(최대3명)'}, {key:'파주숙직',label:'파주숙직(1명)'} ] },
     ];
-    const curShift = getCurrentShiftType();
-    const rows = curShift === '주말당직'
+    const pickRows = weekend => weekend
       ? allRows.filter(r => r.shift === '주말당직')
       : allRows.filter(r => r.shift !== '주말당직');
-    el.innerHTML = rows.map(row => {
-      const color = shiftColor[row.shift], bg = shiftBg[row.shift], border = shiftBorder[row.shift];
+    const renderBlock = (rowsList, dayData, tmrMode) => rowsList.map(row => {
+      const color = tmrMode ? '#6b46c1' : shiftColor[row.shift];
+      const bg = tmrMode ? '#faf5ff' : shiftBg[row.shift];
+      const border = tmrMode ? '#d6bcfa' : shiftBorder[row.shift];
       const colHtml = row.cols.map(col => {
-        const found = (data||[]).filter(r => r.shift_type===row.shift && r.team===col.key);
-        const tomorrowFound = (tomorrowData||[]).filter(r => r.shift_type===row.shift && r.team===col.key);
-        const todayHtml = found.map(r => '<span style="font-size:15px;font-weight:700;color:'+color+'">'+r.handler_name+'</span>').join('<br>');
-        const tmrHtml = tomorrowFound.map(r => '<span style="font-size:13px;font-weight:700;color:#4a5568">'+r.handler_name+' <span style="font-size:11px;background:#ede9fe;color:#6b46c1;border-radius:4px;padding:1px 5px;white-space:nowrap">('+tomorrowDay+'일)</span></span>').join('<br>');
-        const nameHtml = (found.length || tomorrowFound.length)
-          ? [todayHtml, tmrHtml].filter(Boolean).join(found.length && tomorrowFound.length ? '<br>' : '')
+        const found = (dayData||[]).filter(r => r.shift_type===row.shift && r.team===col.key);
+        const nameHtml = found.length
+          ? found.map(r => '<span style="font-size:15px;font-weight:700;color:'+color+'">'+r.handler_name+'</span>').join('<br>')
           : '<span style="font-size:13px;color:#a0aec0">미등록</span>';
         return '<div style="flex:1;background:white;border-radius:8px;padding:10px 12px;border:1px solid '+border+'">'
           + '<div style="font-size:11px;color:#718096;font-weight:600;margin-bottom:4px">'+col.label+'</div>'
@@ -2211,6 +2232,9 @@
         + '<div style="font-size:14px;font-weight:700;color:'+color+';margin-bottom:10px">'+row.label+' <span style="font-size:11px;font-weight:400;color:#718096">'+row.time+'</span></div>'
         + '<div style="display:flex;gap:8px;flex-wrap:wrap">'+colHtml+'</div></div>';
     }).join('');
+    el.innerHTML = renderBlock(pickRows(isWeekend), data, false)
+      + '<div style="margin-top:20px;margin-bottom:10px;font-size:15px;font-weight:700;color:#6b46c1">📅 내일(' + tomorrowDay + '일) 사전등록 예정</div>'
+      + renderBlock(pickRows(tomorrowIsWeekend), tomorrowData, true);
   }
 
   function renderTeamOptions() {
@@ -2303,6 +2327,7 @@
   let currentUser = null;   // 로그인된 계정 객체
   let reports = [];
   let holidayDates = new Set();
+  let holidaysLoaded = false;
   let currentFilter = '전체';
   let repeatCountMap = {};
 
