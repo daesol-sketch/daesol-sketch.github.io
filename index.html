@@ -2050,9 +2050,11 @@
 
   function getTomorrowDate() {
     const now = new Date();
+    const t = now.getHours() * 60 + now.getMinutes();
     const toLocalDate = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    return toLocalDate(tomorrow);
+    // 당직 기준일(오전 8:30 경계) + 1일 — 자정~8:30엔 오늘 당직이 전날이므로 "내일"은 오늘 날짜
+    const base = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (t < 8*60+30 ? 0 : 1));
+    return toLocalDate(base);
   }
 
   async function toggleDutyShift(shiftType, teamOverride) {
@@ -2143,8 +2145,9 @@
     if (wdSec) wdSec.style.display = isWeekend ? 'none' : 'block';
     if (weSec) weSec.style.display = isWeekend ? 'block' : 'none';
 
-    // 내일 시간대(평일/주말·휴일) 판정 → 사전등록 섹션 전환
-    const tmrDateObj = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    // 내일 시간대(평일/주말·휴일) 판정 → 사전등록 섹션 전환 (당직 기준일 8:30 경계 + 1일)
+    const tmrMin = now.getHours() * 60 + now.getMinutes();
+    const tmrDateObj = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (tmrMin < 8*60+30 ? 0 : 1));
     const toLocalDate = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     const tomorrowIsWeekend = (tmrDateObj.getDay() === 0 || tmrDateObj.getDay() === 6 || isHoliday(toLocalDate(tmrDateObj)));
     const preWd = document.getElementById('duty-pre-weekday-section');
