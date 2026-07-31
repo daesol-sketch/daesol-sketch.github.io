@@ -829,6 +829,7 @@
               <option>층표시기불량</option><option>카내부조명미점등</option><option>인터폰불량</option>
               <option>침수&amp;정전</option><option>기타</option>
             </select>
+            <button onclick="exportRepeatExcel()" style="margin-left:auto;padding:6px 14px;background:#1d6f42;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">📥 엑셀</button>
           </div>
         </div>
         <div id="repeat-list"></div>
@@ -2333,6 +2334,7 @@
   let holidaysLoaded = false;
   let currentFilter = '전체';
   let repeatCountMap = {};
+  let repeatGroups = [];
 
   /* ── CLOCK ── */
   function updateClock() {
@@ -3106,6 +3108,7 @@
     const fromStr = fromDate.toLocaleDateString('sv');
 
     document.getElementById('repeat-list').innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
+    repeatGroups = [];
 
     const { data } = await db.from('reports')
       .select('id, building, elevator, type, completion_at, created_at, completion_handler')
@@ -3134,6 +3137,7 @@
       })
       .filter(g => g.items.length >= minCount)
       .sort((a, b) => b.items.length - a.items.length);
+    repeatGroups = filtered;
 
     if (!filtered.length) {
       document.getElementById('repeat-list').innerHTML = '<div class="empty-state"><div class="icon">🔁</div>해당 기간 내 반복고장 없음</div>';
@@ -3166,6 +3170,57 @@
         </div>
       </div>`;
     }).join('');
+  }
+
+  function exportRepeatExcel() {
+    if (!repeatGroups || !repeatGroups.length) { showToast('내보낼 반복고장 내역이 없습니다.'); return; }
+    const pad = (n) => String(n).padStart(2, '0');
+    const fmtDate = (v) => { if (!v) return ''; const d = new Date(v); return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); };
+
+    // 요약 시트 (건물·호기별 한 줄)
+    const summaryRows = repeatGroups.map((g, i) => {
+      const typeCounts = {};
+      g.items.forEach(r => { if (r.type) typeCounts[r.type] = (typeCounts[r.type] || 0) + 1; });
+      const sortedTypes = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]);
+      const topType = sortedTypes[0] ? sortedTypes[0][0] : '';
+      const typeBreakdown = sortedTypes.map(([t, c]) => t + c + '회').join(', ');
+      const lastDate = (g.items[0] && g.items[0].completion_at) ? fmtDate(g.items[0].completion_at) : '';
+      return {
+        '번호': i + 1,
+        '건물명': g.building || '',
+        '호기': g.elevator || '',
+        '반복횟수': g.items.length,
+        '주요유형': topType,
+        '최근처리일': lastDate,
+        '유형내역': typeBreakdown,
+      };
+    });
+
+    // 상세 시트 (개별 고장 한 줄씩, 그룹별로 묶음)
+    const detailRows = [];
+    repeatGroups.forEach(g => {
+      g.items.forEach(r => {
+        detailRows.push({
+          '건물명': g.building || '',
+          '호기': g.elevator || '',
+          '반복횟수': g.items.length,
+          '유형': r.type || '',
+          '처리일': fmtDate(r.completion_at),
+          '처리담당자': r.completion_handler || '',
+        });
+      });
+    });
+
+    const wb = XLSX.utils.book_new();
+    const wsSum = XLSX.utils.json_to_sheet(summaryRows);
+    wsSum['!cols'] = [{wch:6},{wch:25},{wch:12},{wch:10},{wch:14},{wch:14},{wch:30}];
+    XLSX.utils.book_append_sheet(wb, wsSum, '요약');
+    const wsDet = XLSX.utils.json_to_sheet(detailRows);
+    wsDet['!cols'] = [{wch:25},{wch:12},{wch:10},{wch:14},{wch:14},{wch:12}];
+    XLSX.utils.book_append_sheet(wb, wsDet, '상세');
+    const dateStr = new Date().toLocaleDateString('sv');
+    XLSX.writeFile(wb, `대솔이엘_반복고장현황_${dateStr}.xlsx`);
+    showToast(`📥 ${repeatGroups.length}개 현장, ${detailRows.length}건 다운로드 완료`);
   }
 
   function clearDoneFilter() {
