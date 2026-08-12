@@ -5137,12 +5137,13 @@
 
     const BATCH = 50;
     try {
-      let offset = 0, totalUpdated = 0;
+      let offset = 0, totalUpdated = 0, totalSkipped = 0;
       const ESTIMATED = 2400;
       while (true) {
         const pct = Math.min(Math.round(offset / ESTIMATED * 100), 95);
         document.getElementById('sync-prog-bar').style.width = pct + '%';
-        document.getElementById('sync-prog-status').textContent = `${offset}대 처리 중... (${pct}%)`;
+        document.getElementById('sync-prog-status').textContent =
+          `${offset}대 처리 중... (${pct}%)` + (totalSkipped ? ` · 실패 ${totalSkipped}` : '');
 
         const res = await fetch(`${SUPABASE_URL}/functions/v1/inspection-sync`, {
           method: 'POST',
@@ -5152,6 +5153,7 @@
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         totalUpdated += data.updated || 0;
+        totalSkipped += data.skipped || 0;
         if (data.done || typeof data.next !== 'number') break;
         offset = data.next;
       }
@@ -5159,7 +5161,9 @@
       document.getElementById('sync-prog-bar').style.width = '100%';
       document.getElementById('sync-prog-status').textContent = '완료!';
       localStorage.setItem('insp_last_sync', new Date().toISOString());
-      showToast(`✅ ${totalUpdated}개 호기 정보 갱신 완료`);
+      showToast(totalSkipped
+        ? `✅ ${totalUpdated}개 갱신 / ⚠️ ${totalSkipped}개 실패 (API 응답 없음)`
+        : `✅ ${totalUpdated}개 호기 정보 갱신 완료`);
       loadMgmt();
     } catch(e) {
       showToast('❌ 갱신 실패: ' + e.message);
