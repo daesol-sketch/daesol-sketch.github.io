@@ -5596,6 +5596,8 @@
   }
 
   async function mgmtConfirm() {
+    const errEl = document.getElementById('mgmt-error');
+    if (errEl) errEl.style.display = 'none';
     const name = document.getElementById('mgmt-name').value.trim();
     const ctype = document.getElementById('mgmt-contract-type').value;
     if (!name) { showToast('현장명은 필수입니다.'); return; }
