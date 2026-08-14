@@ -8001,17 +8001,23 @@
       const k = String(r.account_id);
       if (!lastMap[k] || r.logged_in_at > lastMap[k].logged_in_at) lastMap[k] = r;
     });
+    // 계정별 총 접속 일수 (하루 1건이므로 행 수 = 일수)
+    const totalDayMap = {};
+    accessLogs.forEach(r => {
+      const k = String(r.account_id);
+      totalDayMap[k] = (totalDayMap[k] || 0) + 1;
+    });
+
     const gapDays = parseInt(document.getElementById('acc-inactive-days')?.value ?? '0', 10);
     const rows = accessAccounts.map(a => {
       const l = lastMap[String(a.id)];
       const diff = l ? Math.floor((now - new Date(l.logged_in_at)) / 86400000) : null;
-      return { acc: a, last: l ? l.logged_in_at : null, diff };
+      return { acc: a, last: l ? l.logged_in_at : null, diff, days: totalDayMap[String(a.id)] || 0 };
     }).filter(x => gapDays === 0 ? true : (x.diff === null || x.diff >= gapDays))
       .sort((a, b) => {
-        if (a.diff === null && b.diff === null) return (a.acc.username || '').localeCompare(b.acc.username || '', 'ko');
-        if (a.diff === null) return -1;
-        if (b.diff === null) return 1;
-        return b.diff - a.diff;
+        if (b.days !== a.days) return b.days - a.days;                       // 접속 일수 많은 순
+        if (a.diff !== b.diff) return (a.diff ?? 99999) - (b.diff ?? 99999);  // 최근 접속 순
+        return (a.acc.username || '').localeCompare(b.acc.username || '', 'ko');
       });
 
     const cntEl = document.getElementById('acc-inactive-count');
@@ -8022,7 +8028,7 @@
         el.innerHTML = '<div class="empty-state" style="padding:24px 0"><div class="icon">✅</div>해당하는 직원이 없습니다.</div>';
       } else {
         el.innerHTML = '<table class="site-table"><thead><tr>'
-          + '<th>#</th><th>이름</th><th>직급</th><th>팀</th><th>마지막 접속</th><th>경과</th>'
+          + '<th>#</th><th>이름</th><th>직급</th><th>팀</th><th>접속 일수</th><th>마지막 접속</th><th>경과</th>'
           + '</tr></thead><tbody>'
           + rows.map((x, i) => {
               const d = x.last ? new Date(x.last) : null;
@@ -8038,6 +8044,7 @@
                 + '<td><strong>' + escHtml(x.acc.username || '') + '</strong></td>'
                 + '<td>' + escHtml(x.acc.position || '-') + '</td>'
                 + '<td>' + escHtml(x.acc.team || '-') + '</td>'
+                + '<td>' + (x.days ? '<strong>' + x.days + '</strong>일' : '<span style="color:var(--tx-4)">0일</span>') + '</td>'
                 + '<td>' + dateStr + '</td>'
                 + '<td style="color:' + color + ';font-weight:600">' + gapStr + '</td>'
                 + '</tr>';
