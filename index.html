@@ -20,6 +20,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
     :root {
       --bg: #0d0d0d; --bg-card: #1a1a1a; --bg-high: #222222; --bg-head: #111111;
@@ -462,6 +463,7 @@
   <button class="drawer-menu-item tab-btn" id="tab-holiday-btn" onclick="switchTab('holiday');closeNavMenu()" style="display:none"><span class="menu-icon">📅</span> 휴일 관리</button>
   <button class="drawer-menu-item tab-btn" id="tab-call-logs-btn" onclick="switchTab('call-logs');closeNavMenu()" style="display:none"><span class="menu-icon">📞</span> 전화 기록</button>
   <button class="drawer-menu-item tab-btn" id="tab-contracts-btn" onclick="switchTab('contracts');closeNavMenu()" style="display:none"><span class="menu-icon">📄</span> 계약서</button>
+  <button class="drawer-menu-item tab-btn" id="tab-stats-btn" onclick="switchTab('stats');closeNavMenu()" style="display:none"><span class="menu-icon">📊</span> 통계</button>
   <div style="flex:1"></div>
   <button class="drawer-logout" onclick="doLogout()">로그아웃</button>
 </div>
@@ -560,6 +562,9 @@
       </button>
       <button class="home-grid-item" onclick="switchTab('contracts')" id="home-gi-contracts" style="display:none">
         <span class="gi-icon">📄</span><span class="gi-label">계약서</span>
+      </button>
+      <button class="home-grid-item" onclick="switchTab('stats')" id="home-gi-stats" style="display:none">
+        <span class="gi-icon">📊</span><span class="gi-label">통계</span>
       </button>
     </div>
   </div>
@@ -1438,6 +1443,108 @@
       </div>
       <div style="font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:12px">오늘 당직 현황</div>
       <div id="duty-today-list"><div class="loading-state">불러오는 중...</div></div>
+    </div>
+  </div>
+
+  <!-- 통계 -->
+  <div class="page" id="page-stats">
+    <div class="sub-tabs">
+      <button class="sub-tab-btn active" id="stats-tab-access-btn" onclick="switchStatsTab('access')">📈 접속 통계</button>
+      <button class="sub-tab-btn" id="stats-tab-fault-btn" onclick="switchStatsTab('fault')">🔧 고장 통계</button>
+    </div>
+
+    <!-- 접속 통계 -->
+    <div id="stats-page-access">
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card all"><div class="num" id="acc-stat-today">-</div><div class="lbl">오늘 접속</div></div>
+        <div class="stat-card wip"><div class="num" id="acc-stat-week">-</div><div class="lbl">이번주 접속</div></div>
+        <div class="stat-card done"><div class="num" id="acc-stat-month">-</div><div class="lbl">이번달 접속</div></div>
+      </div>
+
+      <div class="card">
+        <h2>📅 일별 접속자 추이 <span style="font-size:12px;font-weight:400;color:var(--tx-3)">최근 30일</span></h2>
+        <div style="position:relative;height:260px"><canvas id="acc-chart-daily"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h2>👥 팀별 사용률 <span style="font-size:12px;font-weight:400;color:var(--tx-3)">이번달 기준</span></h2>
+        <div id="acc-team-list"></div>
+      </div>
+
+      <div class="card">
+        <h2>📱 기기 비율 <span style="font-size:12px;font-weight:400;color:var(--tx-3)">최근 30일</span></h2>
+        <div id="acc-device-list"></div>
+      </div>
+
+      <div class="card">
+        <h2>⚠️ 미접속자 <span id="acc-inactive-count" style="font-size:12px;font-weight:400;color:var(--tx-3)"></span></h2>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+          <label style="font-size:13px;color:var(--tx-3)">기준</label>
+          <select id="acc-inactive-days" onchange="renderAccessStats()" style="padding:6px 10px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg-card);color:var(--tx)">
+            <option value="7">7일 이상</option>
+            <option value="14">14일 이상</option>
+            <option value="30" selected>30일 이상</option>
+            <option value="0">전체 보기</option>
+          </select>
+        </div>
+        <div class="site-table-wrap"><div id="acc-inactive-list"></div></div>
+      </div>
+
+      <div id="acc-notice" style="font-size:12px;color:var(--tx-4);text-align:center;padding:4px 0 20px"></div>
+    </div>
+
+    <!-- 고장 통계 -->
+    <div id="stats-page-fault" style="display:none">
+      <div class="card" style="padding:16px 18px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label style="font-size:13px;color:var(--tx-3);font-weight:600">기간</label>
+          <select id="flt-period" onchange="loadFaultStats()" style="padding:7px 12px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg-card);color:var(--tx)">
+            <option value="1">오늘</option>
+            <option value="3">최근 3일</option>
+            <option value="7">최근 7일</option>
+            <option value="14">최근 14일</option>
+            <option value="30">최근 1개월</option>
+            <option value="60">최근 2개월</option>
+            <option value="90">최근 3개월</option>
+            <option value="180">최근 6개월</option>
+            <option value="365" selected>최근 12개월</option>
+          </select>
+          <span id="flt-range-label" style="font-size:12px;color:var(--tx-4)"></span>
+          <button onclick="exportFaultStatsExcel()" style="margin-left:auto;padding:7px 14px;background:#1d6f42;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">📥 엑셀</button>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card all"><div class="num" id="flt-stat-total">-</div><div class="lbl">총 접수</div></div>
+        <div class="stat-card done"><div class="num" id="flt-stat-done">-</div><div class="lbl">완료</div></div>
+        <div class="stat-card wip"><div class="num" id="flt-stat-open">-</div><div class="lbl">미완료</div></div>
+        <div class="stat-card new"><div class="num" id="flt-stat-avg" style="font-size:24px">-</div><div class="lbl">평균 처리시간</div></div>
+      </div>
+
+      <div class="card">
+        <h2 id="flt-title-trend">📈 월별 고장 접수 추이</h2>
+        <div style="position:relative;height:260px"><canvas id="flt-chart-month"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h2>🔧 고장 유형별 비율</h2>
+        <div style="position:relative;height:450px"><canvas id="flt-chart-type"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h2>🏢 현장별 고장 빈도 <span style="font-size:12px;font-weight:400;color:var(--tx-3)">Top 10</span></h2>
+        <div id="flt-site-list"></div>
+      </div>
+
+      <div class="card">
+        <h2>👷 담당자별 처리 건수 <span style="font-size:12px;font-weight:400;color:var(--tx-3)">완료 기준</span></h2>
+        <div id="flt-handler-list"></div>
+      </div>
+
+      <div class="card">
+        <h2 id="flt-title-time">⏱ 월별 평균 처리 시간 <span style="font-size:12px;font-weight:400;color:var(--tx-3)">접수 → 완료</span></h2>
+        <div style="position:relative;height:240px"><canvas id="flt-chart-time"></canvas></div>
+      </div>
     </div>
   </div>
 
@@ -2346,7 +2453,7 @@
   updateClock(); setInterval(updateClock, 1000);
 
   /* ── NAV MENU (사이드 드로어) ── */
-  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', gongsa:'📸 공사팀 사진철', holiday:'📅 휴일 관리', 'insp-calendar':'🗓️ 검사일정', docket:'📝 서비스다켓', 'call-logs':'📞 전화 기록', contracts:'📄 계약서' };
+  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', gongsa:'📸 공사팀 사진철', holiday:'📅 휴일 관리', 'insp-calendar':'🗓️ 검사일정', docket:'📝 서비스다켓', 'call-logs':'📞 전화 기록', contracts:'📄 계약서', stats:'📊 통계' };
   function toggleNavMenu() {
     if (!currentUser) return;
     document.getElementById('side-drawer').classList.toggle('open');
@@ -2473,6 +2580,7 @@
     if (tab === 'sites' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'holiday' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'contracts' && currentRole !== '관리자' && currentRole !== '마스터') return;
+    if (tab === 'stats' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'mgmt' && !currentRole) return;
     if (tab === 'jungong' && !currentRole) return;
     if (!_isPopState && tab !== _currentHistoryTab) history.pushState({ tab }, '', location.pathname);
@@ -2493,6 +2601,7 @@
     if (tab === 'docket') initDocketTab();
     if (tab === 'call-logs') loadCallLogs();
     if (tab === 'contracts') loadContracts();
+    if (tab === 'stats') initStatsTab();
     const lbl = document.getElementById('current-tab-label');
     if (lbl) lbl.textContent = TAB_LABELS[tab] || '';
   }
@@ -3341,6 +3450,7 @@
     document.getElementById('tab-holiday-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-call-logs-btn').style.display = 'flex';
     document.getElementById('tab-contracts-btn').style.display = isAdmin ? 'flex' : 'none';
+    document.getElementById('tab-stats-btn').style.display = isAdmin ? 'flex' : 'none';
     const cBtns = document.getElementById('contracts-upload-btns');
     if (cBtns) cBtns.style.display = isAdmin ? '' : 'none';
     document.getElementById('tab-insp-calendar-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
@@ -3364,6 +3474,8 @@
     if (giCallLogs) giCallLogs.style.display = 'flex';
     const giContracts = document.getElementById('home-gi-contracts');
     if (giContracts) giContracts.style.display = isAdmin ? 'flex' : 'none';
+    const giStats = document.getElementById('home-gi-stats');
+    if (giStats) giStats.style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('sub-tab-done-btn').style.display = 'inline-block';
     // 반복고장현황 서브탭: 직원/관리자만
     document.getElementById('sub-tab-repeat-btn').style.display = (isAdmin || isStaff) ? 'inline-block' : 'none';
@@ -6132,6 +6244,7 @@
       _currentHistoryTab = 'home';
       goDashboard();
       subscribePush();
+      recordAccess();
       startReportsRealtime();
       if (currentRole === '관리자' || currentRole === '마스터') startAdminUnackCheck();
       if (currentRole === '직원' || currentRole === '마스터') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
@@ -6448,6 +6561,7 @@
             setBuildingField(); initReportTime();
             setReporterField();
             subscribePush();
+            recordAccess();
             startReportsRealtime();
             if (currentRole === '관리자' || currentRole === '마스터') startAdminUnackCheck();
             if (currentRole !== '관리자' && currentRole !== '마스터') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
@@ -7638,6 +7752,476 @@
     const filename = `서비스다켓_${d.site_name || '현장'}_${d.elevator || ''}_${new Date().toLocaleDateString('sv')}.pdf`;
     pdf.save(filename);
     showToast('PDF가 다운로드되었습니다.');
+  }
+
+  /* ═══════════════════════════════════════════
+     통계 (접속 / 고장)
+  ═══════════════════════════════════════════ */
+
+  // 접속 기록 — 하루 1회만 저장. 같은 날 다시 열면 무시되어 그날 '첫 접속 시각'이 유지된다.
+  async function recordAccess() {
+    if (!currentUser) return;
+    try {
+      const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+      await db.from('app_access_logs').upsert({
+        account_id: String(currentUser.id),
+        username:   currentUser.username,
+        role:       currentUser.role || null,
+        team:       currentUser.team || null,
+        login_date: new Date().toLocaleDateString('sv'),
+        is_mobile:  isMobile
+      }, { onConflict: 'account_id,login_date', ignoreDuplicates: true });
+    } catch (e) { console.warn('접속 기록 실패:', e); }
+  }
+
+  let accessLogs = [];
+  let accessAccounts = [];
+  let _accDailyChart = null;
+
+  function initStatsTab() {
+    switchStatsTab('access');
+  }
+
+  function switchStatsTab(which) {
+    const aBtn = document.getElementById('stats-tab-access-btn');
+    const fBtn = document.getElementById('stats-tab-fault-btn');
+    if (aBtn) aBtn.classList.toggle('active', which === 'access');
+    if (fBtn) fBtn.classList.toggle('active', which === 'fault');
+    document.getElementById('stats-page-access').style.display = which === 'access' ? 'block' : 'none';
+    document.getElementById('stats-page-fault').style.display  = which === 'fault'  ? 'block' : 'none';
+    if (which === 'access') loadAccessStats();
+    if (which === 'fault')  loadFaultStats();
+  }
+
+  /* 차트 공통 색상 (다크/라이트 대응) */
+  function chartColors() {
+    const isLight = document.body.classList.contains('light-mode');
+    return {
+      grid: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)',
+      tick: isLight ? '#4a5568' : '#aaaaaa'
+    };
+  }
+  const CHART_PALETTE = ['#4299e1','#f6ad55','#68d391','#fc8181','#b794f4','#f687b3','#4fd1c5','#ecc94b','#a0aec0','#9f7aea','#38b2ac','#ed8936','#63b3ed','#e53e3e'];
+
+  /* 가로 막대 리스트 (팀별·현장별·담당자별 공통) */
+  function renderBarList(el, items, maxCount, color) {
+    if (!el) return;
+    if (!items.length) { el.innerHTML = '<div style="font-size:13px;color:var(--tx-4);padding:8px 0">데이터 없음</div>'; return; }
+    el.innerHTML = items.map((it, i) => {
+      const pct = maxCount ? Math.round(it.count / maxCount * 100) : 0;
+      return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">'
+        + '<span style="width:20px;flex-shrink:0;font-size:12px;color:var(--tx-4);text-align:right">' + (i + 1) + '</span>'
+        + '<span style="width:150px;flex-shrink:0;font-size:13px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + escHtml(it.name) + '">' + escHtml(it.name) + '</span>'
+        + '<div style="flex:1;background:var(--bg-high);border-radius:20px;height:18px;overflow:hidden;min-width:40px">'
+        + '<div style="width:' + pct + '%;height:100%;background:' + color + ';border-radius:20px"></div></div>'
+        + '<span style="width:52px;text-align:right;flex-shrink:0;font-size:13px;font-weight:600;color:var(--tx-2)">' + it.count + '건</span>'
+        + '</div>';
+    }).join('');
+  }
+
+  async function loadAccessStats() {
+    const listEl = document.getElementById('acc-inactive-list');
+    if (listEl) listEl.innerHTML = '<div class="loading-state">불러오는 중...</div>';
+    const from = new Date();
+    from.setDate(from.getDate() - 365);
+    const [logRes, accRes] = await Promise.all([
+      db.from('app_access_logs').select('*').gte('login_date', from.toLocaleDateString('sv')).order('login_date', { ascending: false }),
+      db.from('accounts').select('id, username, position, team, role')
+    ]);
+    if (logRes.error) {
+      if (listEl) listEl.innerHTML = '<div class="empty-state">❌ ' + escHtml(logRes.error.message) + '</div>';
+      return;
+    }
+    accessLogs = logRes.data || [];
+    accessAccounts = accRes.data || [];
+    renderAccessStats();
+  }
+
+  function renderAccessStats() {
+    const toStr = d => d.toLocaleDateString('sv');
+    const now = new Date();
+    const todayStr2 = toStr(now);
+    // 이번주 = 이번 월요일부터
+    const monStart = new Date(now);
+    monStart.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    const weekStr = toStr(monStart);
+    const monthStr = toStr(new Date(now.getFullYear(), now.getMonth(), 1));
+
+    const uniqCount = rows => new Set(rows.map(r => String(r.account_id))).size;
+    const total = accessAccounts.length;
+    const monthLogs = accessLogs.filter(r => r.login_date >= monthStr);
+
+    const setStat = (id, n) => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = n + '<span style="font-size:15px;font-weight:600;color:var(--tx-3)"> / ' + total + '</span>';
+    };
+    setStat('acc-stat-today', uniqCount(accessLogs.filter(r => r.login_date === todayStr2)));
+    setStat('acc-stat-week',  uniqCount(accessLogs.filter(r => r.login_date >= weekStr)));
+    setStat('acc-stat-month', uniqCount(monthLogs));
+
+    /* ── 일별 추이 (최근 30일) ── */
+    const days = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      days.push(toStr(d));
+    }
+    const counts = days.map(d => uniqCount(accessLogs.filter(r => r.login_date === d)));
+    const canvas = document.getElementById('acc-chart-daily');
+    if (canvas && typeof Chart !== 'undefined') {
+      const isLight = document.body.classList.contains('light-mode');
+      const grid = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)';
+      const tick = isLight ? '#4a5568' : '#aaaaaa';
+      if (_accDailyChart) _accDailyChart.destroy();
+      _accDailyChart = new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: days.map(d => d.slice(5).replace('-', '/')),
+          datasets: [{
+            data: counts,
+            borderColor: '#4299e1',
+            backgroundColor: 'rgba(66,153,225,0.15)',
+            fill: true, tension: 0.3, pointRadius: 2, borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.y + '명' } } },
+          scales: {
+            y: { beginAtZero: true, suggestedMax: Math.max(4, total), ticks: { precision: 0, color: tick }, grid: { color: grid } },
+            x: { ticks: { color: tick, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    /* ── 팀별 사용률 (이번달) ── */
+    const teams = {};
+    accessAccounts.forEach(a => {
+      const t = a.team || '미지정';
+      if (!teams[t]) teams[t] = { total: 0, active: new Set() };
+      teams[t].total++;
+    });
+    const accById = {};
+    accessAccounts.forEach(a => { accById[String(a.id)] = a; });
+    monthLogs.forEach(r => {
+      const t = (accById[String(r.account_id)] || {}).team || r.team || '미지정';
+      if (teams[t]) teams[t].active.add(String(r.account_id));
+    });
+    const teamEl = document.getElementById('acc-team-list');
+    if (teamEl) {
+      const order = ['1팀','2팀','3팀','상주','관리팀','미지정'];
+      const names = Object.keys(teams).sort((a,b) => {
+        const ai = order.indexOf(a), bi = order.indexOf(b);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+      teamEl.innerHTML = names.map(t => {
+        const g = teams[t];
+        const n = g.active.size;
+        const pct = g.total ? Math.round(n / g.total * 100) : 0;
+        const color = pct >= 70 ? '#38a169' : pct >= 40 ? '#dd6b20' : '#e53e3e';
+        return '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'
+          + '<span style="width:56px;flex-shrink:0;font-size:13px;font-weight:600;color:var(--tx)">' + escHtml(t) + '</span>'
+          + '<div style="flex:1;background:var(--bg-high);border-radius:20px;height:18px;overflow:hidden">'
+          + '<div style="width:' + pct + '%;height:100%;background:' + color + ';border-radius:20px;transition:width 0.4s"></div></div>'
+          + '<span style="width:78px;text-align:right;flex-shrink:0;font-size:13px;color:var(--tx-2)">' + n + '/' + g.total + ' (' + pct + '%)</span>'
+          + '</div>';
+      }).join('');
+    }
+
+    /* ── 기기 비율 (최근 30일) ── */
+    const recent = accessLogs.filter(r => r.login_date >= days[0]);
+    const mob = recent.filter(r => r.is_mobile === true).length;
+    const pc  = recent.filter(r => r.is_mobile === false).length;
+    const sum = mob + pc;
+    const devEl = document.getElementById('acc-device-list');
+    if (devEl) {
+      if (!sum) {
+        devEl.innerHTML = '<div style="font-size:13px;color:var(--tx-4)">기록 없음</div>';
+      } else {
+        const bar = (label, n, color) => {
+          const pct = Math.round(n / sum * 100);
+          return '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'
+            + '<span style="width:56px;flex-shrink:0;font-size:13px;font-weight:600;color:var(--tx)">' + label + '</span>'
+            + '<div style="flex:1;background:var(--bg-high);border-radius:20px;height:18px;overflow:hidden">'
+            + '<div style="width:' + pct + '%;height:100%;background:' + color + ';border-radius:20px"></div></div>'
+            + '<span style="width:78px;text-align:right;flex-shrink:0;font-size:13px;color:var(--tx-2)">' + n + '건 (' + pct + '%)</span>'
+            + '</div>';
+        };
+        devEl.innerHTML = bar('📱 모바일', mob, '#805ad5') + bar('💻 PC', pc, '#3182ce');
+      }
+    }
+
+    /* ── 미접속자 ── */
+    const lastMap = {};
+    accessLogs.forEach(r => {
+      const k = String(r.account_id);
+      if (!lastMap[k] || r.logged_in_at > lastMap[k].logged_in_at) lastMap[k] = r;
+    });
+    const gapDays = parseInt(document.getElementById('acc-inactive-days')?.value ?? '30', 10);
+    const rows = accessAccounts.map(a => {
+      const l = lastMap[String(a.id)];
+      const diff = l ? Math.floor((now - new Date(l.logged_in_at)) / 86400000) : null;
+      return { acc: a, last: l ? l.logged_in_at : null, diff };
+    }).filter(x => gapDays === 0 ? true : (x.diff === null || x.diff >= gapDays))
+      .sort((a, b) => {
+        if (a.diff === null && b.diff === null) return (a.acc.username || '').localeCompare(b.acc.username || '', 'ko');
+        if (a.diff === null) return -1;
+        if (b.diff === null) return 1;
+        return b.diff - a.diff;
+      });
+
+    const cntEl = document.getElementById('acc-inactive-count');
+    if (cntEl) cntEl.textContent = rows.length + '명';
+    const el = document.getElementById('acc-inactive-list');
+    if (el) {
+      if (!rows.length) {
+        el.innerHTML = '<div class="empty-state" style="padding:24px 0"><div class="icon">✅</div>해당하는 직원이 없습니다.</div>';
+      } else {
+        el.innerHTML = '<table class="site-table"><thead><tr>'
+          + '<th>#</th><th>이름</th><th>직급</th><th>팀</th><th>마지막 접속</th><th>경과</th>'
+          + '</tr></thead><tbody>'
+          + rows.map((x, i) => {
+              const d = x.last ? new Date(x.last) : null;
+              const dateStr = d
+                ? (d.getMonth()+1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0')
+                : '<span style="color:#e53e3e">기록 없음</span>';
+              const gapStr = x.diff === null
+                ? '-'
+                : (x.diff === 0 ? '오늘' : x.diff + '일 전');
+              const color = x.diff === null ? '#e53e3e' : x.diff >= 30 ? '#e53e3e' : x.diff >= 14 ? '#dd6b20' : 'var(--tx-2)';
+              return '<tr>'
+                + '<td>' + (i+1) + '</td>'
+                + '<td><strong>' + escHtml(x.acc.username || '') + '</strong></td>'
+                + '<td>' + escHtml(x.acc.position || '-') + '</td>'
+                + '<td>' + escHtml(x.acc.team || '-') + '</td>'
+                + '<td>' + dateStr + '</td>'
+                + '<td style="color:' + color + ';font-weight:600">' + gapStr + '</td>'
+                + '</tr>';
+            }).join('')
+          + '</tbody></table>';
+      }
+    }
+
+    /* ── 안내 문구 ── */
+    const noticeEl = document.getElementById('acc-notice');
+    if (noticeEl) {
+      const first = accessLogs.length ? accessLogs[accessLogs.length - 1].login_date : null;
+      noticeEl.textContent = first
+        ? '접속 기록은 ' + first + '부터 수집되고 있습니다. 그 이전 접속은 집계되지 않습니다.'
+        : '아직 접속 기록이 없습니다. 오늘부터 수집됩니다.';
+    }
+  }
+
+  /* ── 고장 통계 ── */
+  let faultReports = [];
+  let _fltMonthChart = null, _fltTypeChart = null, _fltTimeChart = null;
+
+  function fmtDuration(h) {
+    if (h === null || h === undefined || isNaN(h)) return '-';
+    if (h < 1)  return Math.round(h * 60) + '분';
+    if (h < 24) return h.toFixed(1) + '시간';
+    return (h / 24).toFixed(1) + '일';
+  }
+
+  async function loadFaultStats() {
+    const days = parseInt(document.getElementById('flt-period')?.value || '365', 10);
+    const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (days - 1));
+    const fromStr = from.toLocaleDateString('sv');
+    const label = document.getElementById('flt-range-label');
+    if (label) label.textContent = fromStr + ' ~ ' + now.toLocaleDateString('sv');
+    const siteEl = document.getElementById('flt-site-list');
+    if (siteEl) siteEl.innerHTML = '<div class="loading-state">불러오는 중...</div>';
+
+    // PostgREST는 한 번에 1000건까지만 반환하므로 페이지네이션
+    let all = [], offset = 0;
+    while (offset < 100000) {
+      const { data, error } = await db.from('reports')
+        .select('id, building, elevator, type, status, created_at, completion_at, completion_handler')
+        .gte('created_at', fromStr)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + 999);
+      if (error) {
+        if (siteEl) siteEl.innerHTML = '<div class="empty-state">❌ ' + escHtml(error.message) + '</div>';
+        return;
+      }
+      if (!data || !data.length) break;
+      all = all.concat(data);
+      if (data.length < 1000) break;
+      offset += 1000;
+    }
+    faultReports = all;
+    renderFaultStats(days);
+  }
+
+  // 기간에 따라 집계 단위를 자동 전환한다. 31일 이하면 일별, 그보다 길면 월별.
+  function faultBuckets(days) {
+    const now = new Date();
+    const useMonth = days > 31;
+    const list = [];
+    if (useMonth) {
+      const from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (days - 1));
+      const cur = new Date(from.getFullYear(), from.getMonth(), 1);
+      while (cur <= now) {
+        const k = cur.getFullYear() + '-' + String(cur.getMonth() + 1).padStart(2, '0');
+        list.push({ key: k, label: k.slice(2).replace('-', '/') });
+        cur.setMonth(cur.getMonth() + 1);
+      }
+    } else {
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+        list.push({ key: d.toLocaleDateString('sv'), label: (d.getMonth() + 1) + '/' + d.getDate() });
+      }
+    }
+    return { list, useMonth, keyLen: useMonth ? 7 : 10 };
+  }
+
+  function renderFaultStats(days) {
+    days = days || parseInt(document.getElementById('flt-period')?.value || '365', 10);
+    const now = new Date();
+    const rows = faultReports;
+    const done = rows.filter(r => r.status === '완료');
+
+    const setNum = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    setNum('flt-stat-total', rows.length);
+    setNum('flt-stat-done',  done.length);
+    setNum('flt-stat-open',  rows.length - done.length);
+
+    const durOf = r => (new Date(r.completion_at) - new Date(r.created_at)) / 3600000;
+    const durs = done.filter(r => r.created_at && r.completion_at).map(durOf).filter(h => h >= 0);
+    setNum('flt-stat-avg', durs.length ? fmtDuration(durs.reduce((s, v) => s + v, 0) / durs.length) : '-');
+
+    const colors = chartColors();
+
+    /* 기간별 접수 추이 (일별 또는 월별) */
+    const B = faultBuckets(days);
+    const unit = B.useMonth ? '월별' : '일별';
+    const ttl1 = document.getElementById('flt-title-trend');
+    if (ttl1) ttl1.textContent = '📈 ' + unit + ' 고장 접수 추이';
+    const ttl2 = document.getElementById('flt-title-time');
+    if (ttl2) ttl2.innerHTML = '⏱ ' + unit + ' 평균 처리 시간 <span style="font-size:12px;font-weight:400;color:var(--tx-3)">접수 → 완료</span>';
+
+    const monthCounts = B.list.map(b => rows.filter(r => (r.created_at || '').slice(0, B.keyLen) === b.key).length);
+    const mCanvas = document.getElementById('flt-chart-month');
+    if (mCanvas && typeof Chart !== 'undefined') {
+      if (_fltMonthChart) _fltMonthChart.destroy();
+      _fltMonthChart = new Chart(mCanvas, {
+        type: 'bar',
+        data: { labels: B.list.map(b => b.label), datasets: [{ data: monthCounts, backgroundColor: '#4299e1', borderRadius: 4 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.y + '건' } } },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0, color: colors.tick }, grid: { color: colors.grid } },
+            x: { ticks: { color: colors.tick }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    /* 유형별 도넛 */
+    const typeMap = {};
+    rows.forEach(r => { const t = r.type || '미분류'; typeMap[t] = (typeMap[t] || 0) + 1; });
+    const typeArr = Object.entries(typeMap).sort((a, b) => b[1] - a[1]);
+    const tCanvas = document.getElementById('flt-chart-type');
+    if (tCanvas && typeof Chart !== 'undefined') {
+      if (_fltTypeChart) _fltTypeChart.destroy();
+      _fltTypeChart = new Chart(tCanvas, {
+        type: 'doughnut',
+        data: {
+          labels: typeArr.map(x => x[0]),
+          datasets: [{ data: typeArr.map(x => x[1]), backgroundColor: typeArr.map((_, i) => CHART_PALETTE[i % CHART_PALETTE.length]), borderWidth: 0 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: window.innerWidth < 700 ? 'bottom' : 'right',
+              labels: { color: colors.tick, boxWidth: 18, boxHeight: 18, padding: 13, font: { size: 16 } }
+            },
+            tooltip: { callbacks: { label: c => c.label + ' ' + c.parsed + '건 (' + (rows.length ? Math.round(c.parsed / rows.length * 100) : 0) + '%)' } }
+          }
+        }
+      });
+    }
+
+    /* 현장별 Top 10 */
+    const siteMap = {};
+    rows.forEach(r => { const b = r.building || '미상'; siteMap[b] = (siteMap[b] || 0) + 1; });
+    const siteArr = Object.entries(siteMap).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10);
+    renderBarList(document.getElementById('flt-site-list'), siteArr, siteArr.length ? siteArr[0].count : 0, '#ed8936');
+
+    /* 담당자별 처리 건수 */
+    const hMap = {};
+    done.forEach(r => { if (r.completion_handler) hMap[r.completion_handler] = (hMap[r.completion_handler] || 0) + 1; });
+    const hArr = Object.entries(hMap).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+    renderBarList(document.getElementById('flt-handler-list'), hArr, hArr.length ? hArr[0].count : 0, '#38a169');
+
+    /* 기간별 평균 처리시간 (완료 시점 기준) */
+    const timeData = B.list.map(b => {
+      const list = done.filter(r => (r.completion_at || '').slice(0, B.keyLen) === b.key && r.created_at).map(durOf).filter(h => h >= 0);
+      return list.length ? +(list.reduce((s, v) => s + v, 0) / list.length).toFixed(1) : null;
+    });
+    const tmCanvas = document.getElementById('flt-chart-time');
+    if (tmCanvas && typeof Chart !== 'undefined') {
+      if (_fltTimeChart) _fltTimeChart.destroy();
+      _fltTimeChart = new Chart(tmCanvas, {
+        type: 'line',
+        data: {
+          labels: B.list.map(b => b.label),
+          datasets: [{ data: timeData, borderColor: '#805ad5', backgroundColor: 'rgba(128,90,213,0.15)', fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2, spanGaps: true }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.y == null ? '데이터 없음' : fmtDuration(c.parsed.y) } } },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: colors.tick, callback: v => v + 'h' }, grid: { color: colors.grid } },
+            x: { ticks: { color: colors.tick }, grid: { display: false } }
+          }
+        }
+      });
+    }
+  }
+
+  function exportFaultStatsExcel() {
+    if (!faultReports.length) { showToast('내보낼 데이터가 없습니다.'); return; }
+    const days = parseInt(document.getElementById('flt-period')?.value || '365', 10);
+    const now = new Date();
+    const rows = faultReports;
+    const done = rows.filter(r => r.status === '완료');
+    const durOf = r => (new Date(r.completion_at) - new Date(r.created_at)) / 3600000;
+
+    const B = faultBuckets(days);
+    const monthRows = B.list.map(b => {
+      const list = done.filter(r => (r.completion_at || '').slice(0, B.keyLen) === b.key && r.created_at).map(durOf).filter(h => h >= 0);
+      return {
+        [B.useMonth ? '월' : '날짜']: b.key,
+        '접수': rows.filter(r => (r.created_at || '').slice(0, B.keyLen) === b.key).length,
+        '완료': done.filter(r => (r.completion_at || '').slice(0, B.keyLen) === b.key).length,
+        '평균 처리시간(시간)': list.length ? +(list.reduce((s, v) => s + v, 0) / list.length).toFixed(1) : '',
+      };
+    });
+
+    const cnt = (arr, key) => {
+      const map = {};
+      arr.forEach(r => { const k = r[key] || '미상'; map[k] = (map[k] || 0) + 1; });
+      return Object.entries(map).sort((a, b) => b[1] - a[1]);
+    };
+
+    const wb = XLSX.utils.book_new();
+    const add = (name, data, cols) => {
+      const ws = XLSX.utils.json_to_sheet(data);
+      if (cols) ws['!cols'] = cols;
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    };
+    add(B.useMonth ? '월별' : '일별', monthRows, [{wch:12},{wch:8},{wch:8},{wch:18}]);
+    add('유형별', cnt(rows, 'type').map(([k, v]) => ({ '고장유형': k, '건수': v, '비율(%)': Math.round(v / rows.length * 100) })), [{wch:18},{wch:8},{wch:10}]);
+    add('현장별', cnt(rows, 'building').map(([k, v]) => ({ '현장명': k, '건수': v })), [{wch:30},{wch:8}]);
+    add('담당자별', cnt(done, 'completion_handler').map(([k, v]) => ({ '담당자': k, '처리건수': v })), [{wch:14},{wch:10}]);
+
+    XLSX.writeFile(wb, `대솔이엘_고장통계_${now.toLocaleDateString('sv')}.xlsx`);
+    showToast('📥 고장 통계 엑셀 다운로드 완료');
   }
 
 </script>
