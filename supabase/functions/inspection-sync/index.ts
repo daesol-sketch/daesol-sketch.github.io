@@ -135,12 +135,13 @@ Deno.serve(async (req) => {
         updated++;
       }
 
+      // 현장 주소는 승강기 등록정보를 따라간다. 값을 받았으면 기존 주소를 덮어쓴다.
+      // (현장당 1번만 — 같은 배치에서 같은 현장이 여러 번 나와도 중복 update 안 함)
       const loc = [addr1, addr2].filter(Boolean).join(' ').trim();
       if (loc && !updatedSiteLocations.has(elev.site_id)) {
         await db.from('managed_sites')
           .update({ elevator_address: loc })
-          .eq('id', elev.site_id)
-          .is('elevator_address', null);
+          .eq('id', elev.site_id);
         updatedSiteLocations.add(elev.site_id);
       }
 

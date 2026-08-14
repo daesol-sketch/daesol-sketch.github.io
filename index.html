@@ -4629,10 +4629,10 @@
         if (target.assign_no && target.kind_name && !target.unit_name) {
           target.unit_name = target.assign_no + ' ' + target.kind_name;
         }
-        // 현장 주소 입력란이 비어있으면 한 번만 채움
+        // 현장 주소 입력란도 승강기 등록정보로 덮어씀 (한 번만)
         if (!siteAddrFilled) {
           const addrInput = document.getElementById('mgmt-elevator-address');
-          if (addrInput && !addrInput.value.trim()) {
+          if (addrInput) {
             const loc = [item.address1, item.address2].filter(Boolean).join(' ').trim();
             if (loc) { addrInput.value = loc; siteAddrFilled = true; }
           }
@@ -5224,14 +5224,18 @@
         if (Object.keys(update).length) {
           await db.from('site_elevators').update(update).eq('id', e.id);
         }
-        // 현장 주소 한 번만 갱신 (비어있을 때만)
+        // 현장 주소는 승강기 등록정보를 따라간다. 값을 받았으면 덮어쓴다 (현장당 한 번만)
         if (!siteAddrUpdated) {
           const loc = [item.address1, item.address2].filter(Boolean).join(' ').trim();
           if (loc) {
-            await db.from('managed_sites')
+            const { error: locErr } = await db.from('managed_sites')
               .update({ elevator_address: loc })
-              .eq('id', currentSiteForElevator.id)
-              .is('elevator_address', null);
+              .eq('id', currentSiteForElevator.id);
+            if (!locErr) {
+              currentSiteForElevator.elevator_address = loc;
+              const _m = mgmtData.find(x => x.id === currentSiteForElevator.id);
+              if (_m) _m.elevator_address = loc;
+            }
             siteAddrUpdated = true;
           }
         }
