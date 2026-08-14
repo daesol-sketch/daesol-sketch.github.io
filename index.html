@@ -1472,19 +1472,36 @@
       </div>
 
       <div class="card">
+        <h2>👤 직원별 접속 일수 <span id="acc-person-count" style="font-size:12px;font-weight:400;color:var(--tx-3)"></span></h2>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+          <label style="font-size:13px;color:var(--tx-3)">기간</label>
+          <select id="acc-person-period" onchange="renderAccessStats()" style="padding:6px 10px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg-card);color:var(--tx)">
+            <option value="7">최근 7일</option>
+            <option value="14">최근 14일</option>
+            <option value="30" selected>최근 30일</option>
+            <option value="90">최근 90일</option>
+            <option value="0">전체 기간</option>
+          </select>
+        </div>
+        <div id="acc-person-list"></div>
+      </div>
+
+      <div class="card">
         <h2>📱 기기 비율 <span style="font-size:12px;font-weight:400;color:var(--tx-3)">최근 30일</span></h2>
         <div id="acc-device-list"></div>
       </div>
 
       <div class="card">
-        <h2>⚠️ 미접속자 <span id="acc-inactive-count" style="font-size:12px;font-weight:400;color:var(--tx-3)"></span></h2>
+        <h2>👥 직원별 접속 현황 <span id="acc-inactive-count" style="font-size:12px;font-weight:400;color:var(--tx-3)"></span></h2>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
           <label style="font-size:13px;color:var(--tx-3)">기준</label>
           <select id="acc-inactive-days" onchange="renderAccessStats()" style="padding:6px 10px;border:1.5px solid var(--br-mid);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg-card);color:var(--tx)">
-            <option value="7">7일 이상</option>
-            <option value="14">14일 이상</option>
-            <option value="30" selected>30일 이상</option>
-            <option value="0">전체 보기</option>
+            <option value="0" selected>전체 보기</option>
+            <option value="1">1일 이상 미접속</option>
+            <option value="3">3일 이상 미접속</option>
+            <option value="7">7일 이상 미접속</option>
+            <option value="14">14일 이상 미접속</option>
+            <option value="30">30일 이상 미접속</option>
           </select>
         </div>
         <div class="site-table-wrap"><div id="acc-inactive-list"></div></div>
@@ -7804,17 +7821,19 @@
   const CHART_PALETTE = ['#4299e1','#f6ad55','#68d391','#fc8181','#b794f4','#f687b3','#4fd1c5','#ecc94b','#a0aec0','#9f7aea','#38b2ac','#ed8936','#63b3ed','#e53e3e'];
 
   /* 가로 막대 리스트 (팀별·현장별·담당자별 공통) */
-  function renderBarList(el, items, maxCount, color) {
+  function renderBarList(el, items, maxCount, color, unit) {
     if (!el) return;
+    unit = unit || '건';
     if (!items.length) { el.innerHTML = '<div style="font-size:13px;color:var(--tx-4);padding:8px 0">데이터 없음</div>'; return; }
     el.innerHTML = items.map((it, i) => {
       const pct = maxCount ? Math.round(it.count / maxCount * 100) : 0;
+      const sub = it.sub ? '<span style="font-size:11px;color:var(--tx-4);margin-left:5px">' + escHtml(it.sub) + '</span>' : '';
       return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">'
         + '<span style="width:20px;flex-shrink:0;font-size:12px;color:var(--tx-4);text-align:right">' + (i + 1) + '</span>'
-        + '<span style="width:150px;flex-shrink:0;font-size:13px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + escHtml(it.name) + '">' + escHtml(it.name) + '</span>'
+        + '<span style="width:150px;flex-shrink:0;font-size:13px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + escHtml(it.name) + '">' + escHtml(it.name) + sub + '</span>'
         + '<div style="flex:1;background:var(--bg-high);border-radius:20px;height:18px;overflow:hidden;min-width:40px">'
         + '<div style="width:' + pct + '%;height:100%;background:' + color + ';border-radius:20px"></div></div>'
-        + '<span style="width:52px;text-align:right;flex-shrink:0;font-size:13px;font-weight:600;color:var(--tx-2)">' + it.count + '건</span>'
+        + '<span style="width:52px;text-align:right;flex-shrink:0;font-size:13px;font-weight:600;color:var(--tx-2)">' + it.count + unit + '</span>'
         + '</div>';
     }).join('');
   }
@@ -7929,6 +7948,30 @@
       }).join('');
     }
 
+    /* ── 직원별 접속 일수 ── */
+    const pDays = parseInt(document.getElementById('acc-person-period')?.value ?? '30', 10);
+    let pLogs = accessLogs;
+    if (pDays > 0) {
+      const pFrom = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (pDays - 1));
+      const pFromStr = toStr(pFrom);
+      pLogs = accessLogs.filter(r => r.login_date >= pFromStr);
+    }
+    const personMap = {};
+    pLogs.forEach(r => {
+      const k = String(r.account_id);
+      if (!personMap[k]) personMap[k] = 0;
+      personMap[k]++;   // login_date가 하루 1건이므로 행 수 = 접속 일수
+    });
+    const personArr = Object.entries(personMap).map(([id, count]) => {
+      const a = accById[id] || {};
+      const nm = a.username || (pLogs.find(r => String(r.account_id) === id) || {}).username || id;
+      const team = a.team || '';
+      return { name: nm, sub: team, count };
+    }).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ko'));
+    const pCntEl = document.getElementById('acc-person-count');
+    if (pCntEl) pCntEl.textContent = personArr.length + '명 접속 / 전체 ' + total + '명';
+    renderBarList(document.getElementById('acc-person-list'), personArr, personArr.length ? personArr[0].count : 0, '#4299e1', '일');
+
     /* ── 기기 비율 (최근 30일) ── */
     const recent = accessLogs.filter(r => r.login_date >= days[0]);
     const mob = recent.filter(r => r.is_mobile === true).length;
@@ -7958,7 +8001,7 @@
       const k = String(r.account_id);
       if (!lastMap[k] || r.logged_in_at > lastMap[k].logged_in_at) lastMap[k] = r;
     });
-    const gapDays = parseInt(document.getElementById('acc-inactive-days')?.value ?? '30', 10);
+    const gapDays = parseInt(document.getElementById('acc-inactive-days')?.value ?? '0', 10);
     const rows = accessAccounts.map(a => {
       const l = lastMap[String(a.id)];
       const diff = l ? Math.floor((now - new Date(l.logged_in_at)) / 86400000) : null;
