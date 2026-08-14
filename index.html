@@ -8181,7 +8181,27 @@
           plugins: {
             legend: {
               position: window.innerWidth < 700 ? 'bottom' : 'right',
-              labels: { color: colors.tick, boxWidth: 18, boxHeight: 18, padding: 13, font: { size: 16 } }
+              labels: {
+                color: colors.tick, boxWidth: 18, boxHeight: 18, padding: 13, font: { size: 16 },
+                // 범례에 비율까지 같이 표기
+                generateLabels: chart => {
+                  const ds = chart.data.datasets[0];
+                  const sum = ds.data.reduce((s, v) => s + v, 0);
+                  return chart.data.labels.map((label, i) => {
+                    const v = ds.data[i];
+                    const p = sum ? (v / sum * 100) : 0;
+                    const pct = p >= 1 ? Math.round(p) : p.toFixed(1);
+                    return {
+                      text: label + '  ' + pct + '%',
+                      fillStyle: ds.backgroundColor[i],
+                      strokeStyle: ds.backgroundColor[i],
+                      lineWidth: 0,
+                      hidden: !chart.getDataVisibility(i),
+                      index: i
+                    };
+                  });
+                }
+              }
             },
             tooltip: { callbacks: { label: c => c.label + ' ' + c.parsed + '건 (' + (rows.length ? Math.round(c.parsed / rows.length * 100) : 0) + '%)' } }
           }
