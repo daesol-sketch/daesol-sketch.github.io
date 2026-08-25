@@ -2924,6 +2924,7 @@
       confirmed_at: new Date().toISOString()
     }).eq('id', id);
     if (error) { showToast('❌ 오류: ' + error.message); return; }
+    recordAccess();
     showToast('✅ 처리중으로 변경되었습니다.');
     if (!directId) closeReportDetail();
     await loadReports();
@@ -3068,6 +3069,7 @@
     const { error } = await db.from('reports').update(update).eq('id', currentReportId);
     btn.disabled = false; btn.textContent = '저장';
     if (error) { showToast('저장 실패: ' + error.message); return; }
+    recordAccess();
 
     // 처리담당자가 변경된 경우 즉시 알림 발송
     if (handler && handler !== prevHandler) {
@@ -3620,6 +3622,7 @@
         ...(reportedAt ? { created_at: reportedAt } : {}),
       });
       if (error) throw error;
+      recordAccess();
       if (assignedHandler && assignedUsername) {
         const building = document.getElementById('f-building').value.trim();
         const elevator = document.getElementById('f-elevator').value.trim();
@@ -6615,9 +6618,11 @@
   }
 
   // 앱 포그라운드 복귀 시 구독 갱신 (구독이 만료/변경돼도 DB 최신 유지)
+  // PWA는 한 번 켜두면 페이지가 다시 로드되지 않으므로 접속 기록도 여기서 남긴다.
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && currentUser) {
       subscribePush();
+      recordAccess();
     }
   });
 
@@ -7780,18 +7785,24 @@
   ═══════════════════════════════════════════ */
 
   // 접속 기록 — 하루 1회만 저장. 같은 날 다시 열면 무시되어 그날 '첫 접속 시각'이 유지된다.
+  // 여러 곳에서 자주 불리므로, 이번 세션에서 이미 기록한 날짜는 DB에 요청하지 않는다.
+  let _lastAccessDate = null;
   async function recordAccess() {
     if (!currentUser) return;
+    const today = new Date().toLocaleDateString('sv');
+    if (_lastAccessDate === today) return;
     try {
       const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-      await db.from('app_access_logs').upsert({
+      const { error } = await db.from('app_access_logs').upsert({
         account_id: String(currentUser.id),
         username:   currentUser.username,
         role:       currentUser.role || null,
         team:       currentUser.team || null,
-        login_date: new Date().toLocaleDateString('sv'),
+        login_date: today,
         is_mobile:  isMobile
       }, { onConflict: 'account_id,login_date', ignoreDuplicates: true });
+      if (error) { console.warn('접속 기록 실패:', error); return; }
+      _lastAccessDate = today;
     } catch (e) { console.warn('접속 기록 실패:', e); }
   }
 
