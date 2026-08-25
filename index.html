@@ -7845,15 +7845,16 @@
     const today = new Date().toLocaleDateString('sv');
     if (_lastAccessDate === today) return;
     try {
+      // 테이블에 직접 쓰면 조회 권한이 없는 직원은 저장이 막힌다.
+      // 메뉴 기록과 같은 방식으로 DB 함수를 통해 저장한다.
       const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-      const { error } = await db.from('app_access_logs').upsert({
-        account_id: String(currentUser.id),
-        username:   currentUser.username,
-        role:       currentUser.role || null,
-        team:       currentUser.team || null,
-        login_date: today,
-        is_mobile:  isMobile
-      }, { onConflict: 'account_id,login_date', ignoreDuplicates: true });
+      const { error } = await db.rpc('log_app_access', {
+        p_account_id: String(currentUser.id),
+        p_username:   currentUser.username,
+        p_role:       currentUser.role || null,
+        p_team:       currentUser.team || null,
+        p_is_mobile:  isMobile
+      });
       if (error) { console.warn('접속 기록 실패:', error); return; }
       _lastAccessDate = today;
     } catch (e) { console.warn('접속 기록 실패:', e); }
