@@ -2587,6 +2587,7 @@
 
   function switchTab(tab, e) {
     hideToast();
+    recordAccess();   // 메뉴 이동도 앱 사용 (같은 날 중복은 내부에서 걸러짐)
     if (tab === 'home') { goDashboard(); return; }
     // report/list/done은 fault 탭 안의 서브탭으로 처리
     if (tab === 'report' || tab === 'list' || tab === 'done') {
@@ -2626,6 +2627,7 @@
   /* ── 대시보드 홈 ── */
   function goDashboard() {
     if (!currentUser) { goHome(); return; }
+    recordAccess();
     if (!_isPopState) history.replaceState({ tab: 'home' }, '', location.pathname);
     _currentHistoryTab = 'home';
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
