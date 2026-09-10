@@ -2051,16 +2051,43 @@
 
 <div id="toast"></div>
 
-<!-- 직원 비고 수정 모달 -->
+<!-- 직원 현장 정보 수정 모달 -->
 <div class="modal-overlay" id="notes-modal" style="display:none">
-  <div class="modal-box" style="width:400px;max-width:calc(100vw - 40px);padding:28px">
-    <h3 style="margin:0 0 6px;font-size:17px;font-weight:800" id="notes-modal-title">비고 수정</h3>
-    <p style="margin:0 0 16px;font-size:13px;color:#718096" id="notes-modal-site"></p>
-    <textarea class="modal-input normal" id="notes-modal-input" placeholder="비고 내용 입력" style="min-height:100px;resize:vertical;margin-bottom:0"></textarea>
-    <div class="modal-error" id="notes-modal-error" style="display:none;margin-top:8px"></div>
-    <div class="modal-btn-row" style="margin-top:16px">
-      <button class="modal-btn cancel" onclick="closeModal('notes-modal')">취소</button>
-      <button class="modal-btn confirm" onclick="saveNotes()">저장</button>
+  <div class="modal-box" style="width:460px;max-width:calc(100vw - 40px);text-align:left;padding:0;display:flex;flex-direction:column;max-height:90vh">
+    <div style="padding:28px 28px 0;flex-shrink:0">
+      <div style="font-size:24px;text-align:center;margin-bottom:8px">🏢</div>
+      <h3 style="margin:0 0 6px;font-size:17px;font-weight:800;text-align:center" id="notes-modal-title">정보 수정</h3>
+      <p style="margin:0 0 16px;font-size:13px;color:var(--tx-3);text-align:center" id="notes-modal-site"></p>
+    </div>
+    <div style="overflow-y:auto;overflow-x:hidden;padding:0 28px;flex:1;display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:4px">주점검자</label>
+        <input type="text" class="modal-input normal" id="staff-main-inspector" placeholder="주점검자 이름" style="margin-bottom:0" />
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:4px">보조점검자1</label>
+        <input type="text" class="modal-input normal" id="staff-sub-inspector" placeholder="보조점검자1 이름" style="margin-bottom:0" />
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:4px">보조점검자2</label>
+        <input type="text" class="modal-input normal" id="staff-sub-inspector2" placeholder="보조점검자2 이름" style="margin-bottom:0" />
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:4px">비상통화장치번호</label>
+        <div id="staff-emergency-phone-list"></div>
+        <button type="button" id="staff-emergency-add-btn" onclick="addEmergencyPhoneField('','staff')" style="margin-top:4px;padding:5px 12px;font-size:12px;background:var(--bg-high);border:1px solid var(--br-mid);border-radius:6px;cursor:pointer;color:var(--tx-2);font-family:inherit">+ 회선 추가</button>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:4px">비고</label>
+        <textarea class="modal-input normal" id="notes-modal-input" placeholder="비고 내용 입력" style="min-height:80px;resize:vertical;margin-bottom:0"></textarea>
+      </div>
+    </div>
+    <div style="padding:0 28px 28px;flex-shrink:0">
+      <div class="modal-error" id="notes-modal-error" style="display:none;margin-top:12px"></div>
+      <div class="modal-btn-row" style="margin-top:16px">
+        <button class="modal-btn cancel" onclick="closeModal('notes-modal')">취소</button>
+        <button class="modal-btn confirm" onclick="saveNotes()">저장</button>
+      </div>
     </div>
   </div>
 </div>
@@ -5071,7 +5098,7 @@
           <button class="btn-sm" style="border-color:#bee3f8;color:#2b6cb0" onclick="showEditMgmtModal(${m.id})">수정</button>
           <button class="btn-sm del" onclick="deleteMgmt(${m.id},'${(m.site_name||'').replace(/'/g,"\\'")}')">삭제</button>
         </td>` : currentRole === '직원' ? `<td onclick="event.stopPropagation()">
-          <button class="btn-sm" style="border-color:#68d391;color:#68d391" onclick="showNotesModal(${m.id})">비고 수정</button>
+          <button class="btn-sm" style="border-color:#68d391;color:#68d391" onclick="showNotesModal(${m.id})">정보 수정</button>
         </td>` : ''}
       </tr>`;
       }).join('')}</tbody>
@@ -5658,8 +5685,9 @@
     if (idx > 0) return { label: val.slice(0, idx), phone: val.slice(idx + 2) };
     return { label: '', phone: val };
   }
-  function addEmergencyPhoneField(value) {
-    const list = document.getElementById('mgmt-emergency-phone-list');
+  function addEmergencyPhoneField(value, prefix) {
+    prefix = prefix || 'mgmt';
+    const list = document.getElementById(prefix + '-emergency-phone-list');
     if (list.children.length >= 10) return showToast('최대 10개까지 추가 가능합니다.');
     const parsed = parseEmergencyValue(value);
     const row = document.createElement('div');
@@ -5683,35 +5711,39 @@
     delBtn.type = 'button';
     delBtn.textContent = '✕';
     delBtn.style.cssText = 'padding:6px 10px;background:#fed7d7;border:1px solid #fc8181;border-radius:6px;cursor:pointer;color:#c53030;font-size:13px;flex-shrink:0';
-    delBtn.onclick = () => { if (list.children.length > 1) { row.remove(); updateEmergencyAddBtn(); } };
+    delBtn.onclick = () => { if (list.children.length > 1) { row.remove(); updateEmergencyAddBtn(prefix); } };
     row.appendChild(delBtn);
     list.appendChild(row);
-    updateEmergencyAddBtn();
+    updateEmergencyAddBtn(prefix);
   }
-  function updateEmergencyAddBtn() {
-    const list = document.getElementById('mgmt-emergency-phone-list');
-    const btn = document.getElementById('mgmt-emergency-add-btn');
-    if (btn) btn.style.display = list.children.length >= 10 ? 'none' : '';
+  function updateEmergencyAddBtn(prefix) {
+    prefix = prefix || 'mgmt';
+    const list = document.getElementById(prefix + '-emergency-phone-list');
+    const btn = document.getElementById(prefix + '-emergency-add-btn');
+    if (list && btn) btn.style.display = list.children.length >= 10 ? 'none' : '';
   }
-  function resetEmergencyPhones() {
-    const list = document.getElementById('mgmt-emergency-phone-list');
+  function resetEmergencyPhones(prefix) {
+    prefix = prefix || 'mgmt';
+    const list = document.getElementById(prefix + '-emergency-phone-list');
     if (!list) return;
     list.innerHTML = '';
-    addEmergencyPhoneField('');
-    updateEmergencyAddBtn();
+    addEmergencyPhoneField('', prefix);
+    updateEmergencyAddBtn(prefix);
   }
-  function setEmergencyPhones(m) {
-    const list = document.getElementById('mgmt-emergency-phone-list');
+  function setEmergencyPhones(m, prefix) {
+    prefix = prefix || 'mgmt';
+    const list = document.getElementById(prefix + '-emergency-phone-list');
     if (!list) return;
     list.innerHTML = '';
     const keys = ['emergency_phone','emergency_phone2','emergency_phone3','emergency_phone4','emergency_phone5','emergency_phone6','emergency_phone7','emergency_phone8','emergency_phone9','emergency_phone10'];
     const values = keys.map(k => m[k] || '').filter(Boolean);
     if (!values.length) values.push('');
-    values.forEach(v => addEmergencyPhoneField(v));
-    updateEmergencyAddBtn();
+    values.forEach(v => addEmergencyPhoneField(v, prefix));
+    updateEmergencyAddBtn(prefix);
   }
-  function getEmergencyPhoneValues() {
-    const list = document.getElementById('mgmt-emergency-phone-list');
+  function getEmergencyPhoneValues(prefix) {
+    prefix = prefix || 'mgmt';
+    const list = document.getElementById(prefix + '-emergency-phone-list');
     if (!list) return Array(10).fill(null);
     const result = Array(10).fill(null);
     Array.from(list.children).forEach((row, i) => {
@@ -5866,6 +5898,10 @@
     if (!m) return;
     editingNotesId = id;
     document.getElementById('notes-modal-site').textContent = m.site_name || '';
+    document.getElementById('staff-main-inspector').value = m.main_inspector || '';
+    document.getElementById('staff-sub-inspector').value = m.sub_inspector || '';
+    document.getElementById('staff-sub-inspector2').value = m.sub_inspector2 || '';
+    setEmergencyPhones(m, 'staff');
     document.getElementById('notes-modal-input').value = m.notes || '';
     document.getElementById('notes-modal-error').style.display = 'none';
     openModal('notes-modal');
@@ -5873,12 +5909,22 @@
 
   async function saveNotes() {
     if (!editingNotesId) return;
-    const notes = document.getElementById('notes-modal-input').value.trim() || null;
     const errEl = document.getElementById('notes-modal-error');
-    const { error } = await db.from('managed_sites').update({ notes }).eq('id', editingNotesId);
+    const ep = getEmergencyPhoneValues('staff');
+    const payload = {
+      main_inspector: document.getElementById('staff-main-inspector').value.trim() || null,
+      sub_inspector: document.getElementById('staff-sub-inspector').value.trim() || null,
+      sub_inspector2: document.getElementById('staff-sub-inspector2').value.trim() || null,
+      emergency_phone: ep[0]||null, emergency_phone2: ep[1]||null, emergency_phone3: ep[2]||null,
+      emergency_phone4: ep[3]||null, emergency_phone5: ep[4]||null, emergency_phone6: ep[5]||null,
+      emergency_phone7: ep[6]||null, emergency_phone8: ep[7]||null, emergency_phone9: ep[8]||null,
+      emergency_phone10: ep[9]||null,
+      notes: document.getElementById('notes-modal-input').value.trim() || null,
+    };
+    const { error } = await db.from('managed_sites').update(payload).eq('id', editingNotesId);
     if (error) { errEl.textContent = '저장 실패: ' + error.message; errEl.style.display = 'block'; return; }
     closeModal('notes-modal');
-    showToast('✅ 비고가 저장되었습니다.');
+    showToast('✅ 저장되었습니다.');
     await loadMgmt();
   }
 
