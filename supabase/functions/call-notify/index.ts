@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
         webpush.sendNotification(
           s.subscription,
           JSON.stringify({ title, body, type: 'call', siteName: fullSiteName || null, phone: sender }),
-          { TTL: 120 }
+          { TTL: 120, urgency: 'high' }
         )
       )
     );

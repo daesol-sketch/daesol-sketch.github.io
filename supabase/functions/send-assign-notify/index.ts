@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
           reportId,
           requireInteraction: sub.is_mobile === true
         }),
-        { TTL: 120 }
+        { TTL: 1800, urgency: 'high' }
       );
       sent++;
     } catch (e: any) {

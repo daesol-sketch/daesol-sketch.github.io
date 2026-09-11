@@ -41,7 +41,7 @@ self.addEventListener('push', event => {
         icon: './icon-192.png',
         badge: './icon-192.png',
         image: './icon-512.png',
-        vibrate: [300, 150, 300, 150, 300],
+        vibrate: [500, 200, 500, 200, 500, 200, 500],
         requireInteraction,
         data: { reportId: data.reportId || null, type: data.type || null, siteName: data.siteName || null, phone: data.phone || null }
       }).then(() => {

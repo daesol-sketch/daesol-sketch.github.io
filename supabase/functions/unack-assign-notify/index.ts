@@ -50,7 +50,7 @@ Deno.serve(async () => {
             title: '⚠️ 담당자 신고접수 미확인 알림',
             body: `${handler}담당자가 배치받은 알림을 확인하지 않았습니다. 전화로 신고내용을 전달해주세요.`
           }),
-          { TTL: 120 }
+          { TTL: 120, urgency: 'high' }
         );
         sent++;
       } catch(e: any) {
