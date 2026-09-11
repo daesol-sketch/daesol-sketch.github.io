@@ -464,6 +464,7 @@
   <button class="drawer-menu-item tab-btn" id="tab-call-logs-btn" onclick="switchTab('call-logs');closeNavMenu()" style="display:none"><span class="menu-icon">📞</span> 전화 기록</button>
   <button class="drawer-menu-item tab-btn" id="tab-contracts-btn" onclick="switchTab('contracts');closeNavMenu()" style="display:none"><span class="menu-icon">📄</span> 계약서</button>
   <button class="drawer-menu-item tab-btn" id="tab-stats-btn" onclick="switchTab('stats');closeNavMenu()" style="display:none"><span class="menu-icon">📊</span> 통계</button>
+  <button class="drawer-menu-item tab-btn" id="tab-push-test-btn" onclick="switchTab('push-test');closeNavMenu()" style="display:none"><span class="menu-icon">🔔</span> 알림 테스트</button>
   <div style="flex:1"></div>
   <button class="drawer-logout" onclick="doLogout()">로그아웃</button>
 </div>
@@ -1599,6 +1600,33 @@
     </div>
   </div>
 
+  <!-- 🔔 알림 테스트 -->
+  <div class="page" id="page-push-test">
+    <div class="card" style="text-align:center;padding:26px 20px">
+      <div style="font-size:38px;margin-bottom:8px">🔔</div>
+      <div style="font-size:17px;font-weight:800;color:var(--tx);margin-bottom:8px">알림 테스트</div>
+      <p style="font-size:13px;color:var(--tx-3);margin:0 0 20px;line-height:1.7">
+        화면이 꺼진 상태에서도 알림이 제대로 오는지 확인합니다.<br />
+        버튼을 누른 뒤 <strong style="color:var(--tx)">앱을 닫고 화면을 꺼주세요.</strong>
+      </p>
+      <button id="push-test-start-btn" onclick="startPushTest()"
+        style="padding:14px 34px;background:var(--btn-bg);color:var(--btn-tx);border:none;border-radius:10px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">
+        테스트 시작
+      </button>
+      <div id="push-test-waiting" style="display:none"></div>
+    </div>
+
+    <div class="card">
+      <h2>📱 내 최근 결과</h2>
+      <div id="push-test-my-result"></div>
+    </div>
+
+    <div class="card" id="push-test-admin-card" style="display:none">
+      <h2>👥 직원별 현황 <span style="font-size:12px;font-weight:400;color:var(--tx-3)">기기별 최근 1회</span></h2>
+      <div id="push-test-admin-list"></div>
+    </div>
+  </div>
+
 </main>
 
 <!-- 신고 상세/처리 모달 -->
@@ -2531,7 +2559,7 @@
   updateClock(); setInterval(updateClock, 1000);
 
   /* ── NAV MENU (사이드 드로어) ── */
-  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', gongsa:'📸 공사팀 사진철', holiday:'📅 휴일 관리', 'insp-calendar':'🗓️ 검사일정', docket:'📝 서비스다켓', 'call-logs':'📞 전화 기록', contracts:'📄 계약서', stats:'📊 통계' };
+  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', gongsa:'📸 공사팀 사진철', holiday:'📅 휴일 관리', 'insp-calendar':'🗓️ 검사일정', docket:'📝 서비스다켓', 'call-logs':'📞 전화 기록', contracts:'📄 계약서', stats:'📊 통계', 'push-test':'🔔 알림 테스트' };
   function toggleNavMenu() {
     if (!currentUser) return;
     document.getElementById('side-drawer').classList.toggle('open');
@@ -2697,6 +2725,7 @@
     if (tab === 'call-logs') loadCallLogs();
     if (tab === 'contracts') loadContracts();
     if (tab === 'stats') initStatsTab();
+    if (tab === 'push-test') loadPushTest();
     const lbl = document.getElementById('current-tab-label');
     if (lbl) lbl.textContent = TAB_LABELS[tab] || '';
   }
@@ -3550,6 +3579,7 @@
     document.getElementById('tab-call-logs-btn').style.display = 'flex';
     document.getElementById('tab-contracts-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-stats-btn').style.display = isAdmin ? 'flex' : 'none';
+    document.getElementById('tab-push-test-btn').style.display = 'flex';   // 알림 테스트는 전 직원
     const cBtns = document.getElementById('contracts-upload-btns');
     if (cBtns) cBtns.style.display = isAdmin ? '' : 'none';
     document.getElementById('tab-insp-calendar-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
@@ -6609,6 +6639,9 @@
           });
         } catch(e) {}
       }
+      if (e.data?.action === 'showPushTest') {
+        switchTab('push-test', null);
+      }
       if (e.data?.action === 'fillReport') {
         switchTab('report', null);
         setTimeout(() => {
@@ -8494,6 +8527,193 @@
 
     XLSX.writeFile(wb, `대솔이엘_고장통계_${now.toLocaleDateString('sv')}.xlsx`);
     showToast('📥 고장 통계 엑셀 다운로드 완료');
+  }
+
+
+  /* ── 🔔 알림 테스트 ── */
+  const PUSH_TEST_KEY = 'daesol_push_test_pending';
+  let _pushTestTimer = null;
+
+  async function startPushTest() {
+    if (!currentUser) return;
+    const btn = document.getElementById('push-test-start-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '요청 중...'; }
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/push-test`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId: String(currentUser.id), username: currentUser.username })
+      });
+      const d = await res.json();
+      if (d.error === 'no_subscription') {
+        showToast('⚠️ 등록된 알림 구독이 없습니다. 앱을 새로고침한 뒤 다시 시도해주세요.');
+        return;
+      }
+      if (!d.ok) { showToast('❌ 테스트 요청 실패' + (d.error ? ' (' + d.error + ')' : '')); return; }
+      localStorage.setItem(PUSH_TEST_KEY, JSON.stringify({
+        sendAt: Date.now() + (d.delaySeconds || 60) * 1000,
+        devices: d.devices || 1
+      }));
+      renderPushTestWaiting();
+    } catch (e) {
+      showToast('❌ 테스트 요청 실패');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '테스트 시작'; }
+    }
+  }
+
+  function renderPushTestWaiting() {
+    const box = document.getElementById('push-test-waiting');
+    const btn = document.getElementById('push-test-start-btn');
+    if (!box) return;
+    if (_pushTestTimer) { clearInterval(_pushTestTimer); _pushTestTimer = null; }
+
+    let p = null;
+    try { p = JSON.parse(localStorage.getItem(PUSH_TEST_KEY) || 'null'); } catch (e) {}
+    if (!p || !p.sendAt) { box.style.display = 'none'; if (btn) btn.style.display = ''; return; }
+
+    box.style.display = '';
+    if (btn) btn.style.display = 'none';
+
+    const tick = () => {
+      const left = Math.ceil((p.sendAt - Date.now()) / 1000);
+      if (left <= 0) {
+        clearInterval(_pushTestTimer); _pushTestTimer = null;
+        localStorage.removeItem(PUSH_TEST_KEY);
+        box.innerHTML = `<div style="margin-top:18px;padding:18px;border:1.5px solid var(--br-mid);border-radius:12px;background:var(--bg-high)">
+          <div style="font-size:15px;font-weight:800;color:var(--tx);margin-bottom:6px">발송했습니다</div>
+          <div style="font-size:13px;color:var(--tx-3);line-height:1.6">알림이 오는지 확인해주세요.<br />아래 결과는 잠시 뒤 갱신됩니다.</div>
+          <button onclick="loadPushTest()" style="margin-top:12px;padding:8px 18px;background:var(--bg-card);border:1.5px solid var(--br-mid);border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;color:var(--tx)">결과 새로고침</button>
+        </div>`;
+        setTimeout(() => { if (document.getElementById('page-push-test')?.classList.contains('active')) loadPushTest(); }, 6000);
+        return;
+      }
+      const mm = Math.floor(left / 60), ss = left % 60;
+      box.innerHTML = `<div style="margin-top:18px;padding:20px 18px;border:2px solid #dd6b20;border-radius:12px;background:var(--bg-high)">
+        <div style="font-size:14px;font-weight:800;color:#dd6b20;margin-bottom:12px">지금 바로</div>
+        <div style="font-size:14px;color:var(--tx);line-height:1.9;text-align:left;display:inline-block">
+          ① 앱을 완전히 닫아주세요<br />
+          <span style="font-size:12px;color:var(--tx-3);padding-left:14px">(최근 앱 목록에서 밀어내기)</span><br />
+          ② 화면을 꺼주세요
+        </div>
+        <div style="margin-top:16px;font-size:12px;color:var(--tx-3)">남은 시간</div>
+        <div style="font-size:34px;font-weight:800;color:var(--tx);letter-spacing:1px;font-family:'Bebas Neue',inherit">${mm}:${String(ss).padStart(2,'0')}</div>
+        <div style="margin-top:10px;font-size:12px;color:var(--tx-4);line-height:1.6">알림이 도착하면 자동으로 기록됩니다.<br />앱을 닫아도 테스트는 계속 진행됩니다.</div>
+      </div>`;
+    };
+    tick();
+    _pushTestTimer = setInterval(tick, 1000);
+  }
+
+  // 결과 판정: 도착 여부와 소요 시간
+  function pushTestVerdict(t) {
+    if (t.received_at) {
+      const ms = t.delay_ms == null ? 0 : t.delay_ms;
+      const sec = ms / 1000;
+      const txt = sec < 60
+        ? (sec < 10 ? sec.toFixed(1) + '초' : Math.round(sec) + '초')
+        : Math.floor(sec / 60) + '분 ' + Math.round(sec % 60) + '초';
+      if (ms <= 10000) return { icon: '✅', label: txt + ' 만에 도착', color: '#38a169' };
+      return { icon: '🕐', label: txt + ' 걸려 도착', color: '#dd6b20' };
+    }
+    if (!t.sent_at) return { icon: '⏳', label: '발송 대기 중', color: 'var(--tx-3)' };
+    const since = Date.now() - new Date(t.sent_at).getTime();
+    if (since < 120000) return { icon: '⏳', label: '도착 대기 중', color: 'var(--tx-3)' };
+    return { icon: '⚠️', label: '미도착', color: '#e53e3e' };
+  }
+
+  function _pushTestWhen(v) {
+    if (!v) return '-';
+    return new Date(v).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function loadPushTest() {
+    if (!currentUser) return;
+    renderPushTestWaiting();
+
+    const isAdmin = currentRole === '관리자' || currentRole === '마스터';
+    const adminCard = document.getElementById('push-test-admin-card');
+    if (adminCard) adminCard.style.display = isAdmin ? '' : 'none';
+
+    const el = document.getElementById('push-test-my-result');
+    if (el) el.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
+
+    const { data: mine, error } = await db.from('app_push_tests')
+      .select('*')
+      .eq('account_id', String(currentUser.id))
+      .order('requested_at', { ascending: false })
+      .limit(6);
+
+    if (el) {
+      if (error) {
+        el.innerHTML = '<div class="loading-state">불러오기 실패</div>';
+      } else if (!mine || !mine.length) {
+        el.innerHTML = '<div class="empty-state" style="padding:20px 0"><div class="icon">🔔</div>아직 테스트한 기록이 없습니다.</div>';
+      } else {
+        el.innerHTML = mine.map(t => {
+          const v = pushTestVerdict(t);
+          return `<div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--br)">
+            <span style="width:56px;flex-shrink:0;font-size:13px;font-weight:700;color:var(--tx-2)">${t.is_mobile ? '📱 폰' : '💻 PC'}</span>
+            <span style="flex:1;font-size:14px;font-weight:700;color:${v.color}">${v.icon} ${v.label}</span>
+            <span style="font-size:12px;color:var(--tx-4);flex-shrink:0">${_pushTestWhen(t.requested_at)}</span>
+          </div>`;
+        }).join('');
+      }
+    }
+
+    if (isAdmin) loadPushTestAdmin();
+  }
+
+  async function loadPushTestAdmin() {
+    const el = document.getElementById('push-test-admin-list');
+    if (!el) return;
+    el.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
+
+    const [accRes, testRes] = await Promise.all([
+      db.from('accounts').select('id, username, role, team').order('username'),
+      db.from('app_push_tests').select('*').order('requested_at', { ascending: false }).limit(1000)
+    ]);
+    const accs = accRes.data || [];
+    const tests = testRes.data || [];
+
+    // 계정 + 기기별 최신 1건만 남김
+    const latest = {};
+    tests.forEach(t => {
+      const k = t.account_id + '|' + (t.is_mobile ? 'm' : 'p');
+      if (!latest[k]) latest[k] = t;
+    });
+
+    const cell = (t) => {
+      if (!t) return '<span style="color:var(--tx-5);font-size:12px">-</span>';
+      const v = pushTestVerdict(t);
+      return `<span style="font-size:12px;font-weight:700;color:${v.color};white-space:nowrap">${v.icon} ${v.label.replace(' 만에 도착','').replace(' 걸려 도착','')}</span>`;
+    };
+
+    const rows = accs.map(a => {
+      const m = latest[String(a.id) + '|m'];
+      const p = latest[String(a.id) + '|p'];
+      const recent = [m, p].filter(Boolean).sort((x, y) => new Date(y.requested_at) - new Date(x.requested_at))[0];
+      return { a, m, p, recent };
+    });
+    // 미실시를 위로 올려 눈에 띄게
+    rows.sort((x, y) => (x.recent ? 1 : 0) - (y.recent ? 1 : 0));
+
+    const done = rows.filter(r => r.recent).length;
+    el.innerHTML = `<div style="font-size:12px;color:var(--tx-3);margin-bottom:10px">전체 ${accs.length}명 중 <strong style="color:var(--tx)">${done}명</strong> 테스트 완료 · 미실시 <strong style="color:#e53e3e">${accs.length - done}명</strong></div>
+      <div style="overflow-x:auto"><table class="site-table" style="width:100%">
+      <thead><tr>
+        <th>이름</th><th style="width:70px">팀</th>
+        <th style="width:110px">📱 폰</th><th style="width:110px">💻 PC</th>
+        <th style="width:90px">최근</th>
+      </tr></thead>
+      <tbody>${rows.map(r => `<tr>
+        <td><strong>${escHtml(r.a.username || '')}</strong></td>
+        <td style="font-size:12px;color:var(--tx-3)">${escHtml(r.a.team || '-')}</td>
+        <td>${cell(r.m)}</td>
+        <td>${cell(r.p)}</td>
+        <td style="font-size:11px;color:var(--tx-4);white-space:nowrap">${r.recent ? _pushTestWhen(r.recent.requested_at) : '<span style="color:var(--tx-5)">미실시</span>'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
   }
 
 </script>

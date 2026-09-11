@@ -42,16 +42,18 @@ self.addEventListener('push', event => {
     image: './icon-512.png',
     vibrate: [500, 200, 500, 200, 500, 200, 500],
     requireInteraction,
-    data: { reportId: data.reportId || null, type: data.type || null, siteName: data.siteName || null, phone: data.phone || null }
+    data: { reportId: data.reportId || null, type: data.type || null, siteName: data.siteName || null, phone: data.phone || null, testId: data.testId || null }
   };
-  if (!isCall) {
+  if (isCall) {
+    // 전화는 건별로 다 보여야 하므로 합치지 않되, 자동 닫기 때 자기 것만 닫도록 고유 태그를 붙임
+    opts.tag = `call-${data.phone || ''}-${Date.now()}`;
+  } else if (data.testId) {
+    opts.tag = `test-${data.testId}`;   // 알림 테스트도 회차별로 따로 표시
+  } else {
     opts.tag = data.reportId
       ? `${data.type || 'report'}-${data.reportId}`
       : `notice-${data.body || data.title || ''}`;
     opts.renotify = true;   // 합쳐질 때도 소리·진동 다시 울림
-  } else {
-    // 전화는 건별로 다 보여야 하므로 합치지 않되, 자동 닫기 때 자기 것만 닫도록 고유 태그를 붙임
-    opts.tag = `call-${data.phone || ''}-${Date.now()}`;
   }
 
   event.waitUntil(
@@ -67,7 +69,20 @@ self.addEventListener('push', event => {
       }),
       clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
         list.forEach(client => client.postMessage({ action: 'playSound' }));
-      })
+      }),
+      // 알림 테스트: 도착 시각을 서버에 기록. 앱이 닫혀 있어도 여기는 실행되므로
+      // 화면 꺼진 상태에서 실제로 알림이 왔는지, 몇 초 걸렸는지 알 수 있다.
+      (data.type === 'push-test' && data.testId)
+        ? fetch(`${SUPABASE_URL}/rest/v1/rpc/mark_push_test_received`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ p_id: data.testId })
+          }).catch(() => {})
+        : Promise.resolve()
     ])
   );
 });
@@ -82,6 +97,7 @@ self.addEventListener('notificationclick', event => {
   const siteName = event.notification.data?.siteName;
   const phone = event.notification.data?.phone;
   const isCall = type === 'call';
+  const isPushTest = type === 'push-test';
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
@@ -90,6 +106,11 @@ self.addEventListener('notificationclick', event => {
         const msg = { action: 'fillReport', siteName, phone };
         if (list.length) { list[0].postMessage(msg); return list[0].focus(); }
         return clients.openWindow('./?fillReport=' + encodeURIComponent(siteName) + '&phone=' + encodeURIComponent(phone || ''));
+      } else if (isPushTest) {
+        // 알림 테스트: 결과 화면을 띄움
+        const msg = { action: 'showPushTest' };
+        if (list.length) { list[0].postMessage(msg); return list[0].focus(); }
+        return clients.openWindow('./?tab=push-test');
       } else if (isFeedback && reportId) {
         // 피드백 미처리: 해당 건 상세 모달로 이동
         const msg = { action: 'openReport', reportId };
