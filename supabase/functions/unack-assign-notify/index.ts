@@ -35,7 +35,7 @@ Deno.serve(async () => {
   // 관리자 푸시 구독 조회 (모바일/PC 모두)
   const { data: subs } = await db
     .from('push_subscriptions')
-    .select('account_id, subscription')
+    .select('account_id, subscription, is_mobile')
     .in('account_id', adminIds);
 
   if (!subs?.length) return new Response(JSON.stringify({ sent: 0 }), { headers: { 'Content-Type': 'application/json' } });
@@ -48,7 +48,8 @@ Deno.serve(async () => {
           sub.subscription,
           JSON.stringify({
             title: '⚠️ 담당자 신고접수 미확인 알림',
-            body: `${handler}담당자가 배치받은 알림을 확인하지 않았습니다. 전화로 신고내용을 전달해주세요.`
+            body: `${handler}담당자가 배치받은 알림을 확인하지 않았습니다. 전화로 신고내용을 전달해주세요.`,
+            requireInteraction: sub.is_mobile === true
           }),
           { TTL: 120, urgency: 'high' }
         );

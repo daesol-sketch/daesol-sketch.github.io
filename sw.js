@@ -49,6 +49,9 @@ self.addEventListener('push', event => {
       ? `${data.type || 'report'}-${data.reportId}`
       : `notice-${data.body || data.title || ''}`;
     opts.renotify = true;   // 합쳐질 때도 소리·진동 다시 울림
+  } else {
+    // 전화는 건별로 다 보여야 하므로 합치지 않되, 자동 닫기 때 자기 것만 닫도록 고유 태그를 붙임
+    opts.tag = `call-${data.phone || ''}-${Date.now()}`;
   }
 
   event.waitUntil(
@@ -56,7 +59,7 @@ self.addEventListener('push', event => {
       self.registration.showNotification(data.title, opts).then(() => {
         if (!requireInteraction) {
           return new Promise(resolve => setTimeout(resolve, 40000)).then(() =>
-            self.registration.getNotifications().then(notifications =>
+            self.registration.getNotifications({ tag: opts.tag }).then(notifications =>
               notifications.forEach(n => n.close())
             )
           );
