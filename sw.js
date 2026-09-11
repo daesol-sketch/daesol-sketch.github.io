@@ -34,17 +34,26 @@ self.addEventListener('push', event => {
 
   const requireInteraction = data.requireInteraction === true;
 
+  // 같은 건에 대한 반복 알림을 하나로 합침 (전화는 건별로 따로 표시)
+  const opts = {
+    body: data.body,
+    icon: './icon-192.png',
+    badge: './icon-192.png',
+    image: './icon-512.png',
+    vibrate: [500, 200, 500, 200, 500, 200, 500],
+    requireInteraction,
+    data: { reportId: data.reportId || null, type: data.type || null, siteName: data.siteName || null, phone: data.phone || null }
+  };
+  if (!isCall) {
+    opts.tag = data.reportId
+      ? `${data.type || 'report'}-${data.reportId}`
+      : `notice-${data.body || data.title || ''}`;
+    opts.renotify = true;   // 합쳐질 때도 소리·진동 다시 울림
+  }
+
   event.waitUntil(
     Promise.all([
-      self.registration.showNotification(data.title, {
-        body: data.body,
-        icon: './icon-192.png',
-        badge: './icon-192.png',
-        image: './icon-512.png',
-        vibrate: [500, 200, 500, 200, 500, 200, 500],
-        requireInteraction,
-        data: { reportId: data.reportId || null, type: data.type || null, siteName: data.siteName || null, phone: data.phone || null }
-      }).then(() => {
+      self.registration.showNotification(data.title, opts).then(() => {
         if (!requireInteraction) {
           return new Promise(resolve => setTimeout(resolve, 40000)).then(() =>
             self.registration.getNotifications().then(notifications =>
