@@ -1,8 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import webpush from 'npm:web-push';
 
-// 화면이 꺼지고 절전에 들어갈 시간을 준 뒤 발송한다. 나중에 조정하려면 이 값만 바꾸면 됨.
-const DELAY_SECONDS = 60;
+// 화면이 꺼지고 절전에 들어갈 시간을 준 뒤 발송한다.
+// Edge Function 실행 시간 제한(Pro 400초)이 있어 5분까지만 허용.
+const ALLOWED_DELAYS = [60, 180, 300];
+const DEFAULT_DELAY = 60;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -20,7 +22,8 @@ Deno.serve(async (req) => {
     webpush.setVapidDetails('mailto:admin@daesol.com', VAPID_PUBLIC, VAPID_PRIVATE);
 
     const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-    const { accountId, username } = await req.json();
+    const { accountId, username, delaySeconds } = await req.json();
+    const delay = ALLOWED_DELAYS.includes(Number(delaySeconds)) ? Number(delaySeconds) : DEFAULT_DELAY;
 
     if (!accountId) {
       return new Response(JSON.stringify({ error: 'no_account' }), { status: 400, headers: CORS });
@@ -54,7 +57,7 @@ Deno.serve(async (req) => {
 
     // 응답은 먼저 돌려주고, 대기 후 발송은 백그라운드에서 계속한다
     const job = (async () => {
-      await new Promise(resolve => setTimeout(resolve, DELAY_SECONDS * 1000));
+      await new Promise(resolve => setTimeout(resolve, delay * 1000));
 
       for (let i = 0; i < subs.length; i++) {
         const sub = subs[i];
@@ -97,7 +100,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       ok: true,
-      delaySeconds: DELAY_SECONDS,
+      delaySeconds: delay,
       devices: subs.length,
       testIds: tests.map((t: any) => t.id)
     }), { headers: CORS });
