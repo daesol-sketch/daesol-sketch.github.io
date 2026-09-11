@@ -8629,6 +8629,19 @@
     return { icon: '⚠️', label: '미도착', color: '#e53e3e' };
   }
 
+  // 같은 회차(requested_at)·같은 기기의 행을 한 줄로 합침.
+  // 구독이 여러 개면 죽은 구독 행은 미도착으로 남으므로, 도착한 행을 대표로 쓴다.
+  function dedupePushTests(rows) {
+    const map = new Map();
+    rows.forEach(t => {
+      const k = t.requested_at + '|' + (t.is_mobile ? 'm' : 'p');
+      const prev = map.get(k);
+      if (!prev || (!prev.received_at && t.received_at)) map.set(k, t);
+    });
+    return Array.from(map.values())
+      .sort((a, b) => new Date(b.requested_at) - new Date(a.requested_at));
+  }
+
   function _pushTestWhen(v) {
     if (!v) return '-';
     return new Date(v).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -8645,11 +8658,15 @@
     const el = document.getElementById('push-test-my-result');
     if (el) el.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
 
-    const { data: mine, error } = await db.from('app_push_tests')
+    const { data: rawMine, error } = await db.from('app_push_tests')
       .select('*')
       .eq('account_id', String(currentUser.id))
       .order('requested_at', { ascending: false })
-      .limit(6);
+      .limit(30);
+
+    // 한 회차에 구독이 여러 개였으면 행도 여러 개 생긴다.
+    // 회차·기기별로 한 줄만 보여주고, 하나라도 도착했으면 그것을 대표로 삼는다.
+    const mine = dedupePushTests(rawMine || []).slice(0, 6);
 
     if (el) {
       if (error) {
@@ -8683,11 +8700,18 @@
     const accs = accRes.data || [];
     const tests = testRes.data || [];
 
-    // 계정 + 기기별 최신 1건만 남김
+    // 계정 + 기기별 최신 1건만 남김.
+    // 한 회차에 구독이 여러 개면 행도 여러 개이고 requested_at이 모두 같아
+    // 정렬 순서가 불안정하다. 같은 회차라면 도착한 행을 대표로 삼아야
+    // 새로고침마다 결과가 달라 보이지 않는다.
     const latest = {};
     tests.forEach(t => {
       const k = t.account_id + '|' + (t.is_mobile ? 'm' : 'p');
-      if (!latest[k]) latest[k] = t;
+      const prev = latest[k];
+      if (!prev) { latest[k] = t; return; }
+      if (prev.requested_at === t.requested_at && !prev.received_at && t.received_at) {
+        latest[k] = t;
+      }
     });
 
     const cell = (t) => {
