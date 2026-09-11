@@ -54,8 +54,14 @@ Deno.serve(async () => {
           { TTL: 120, urgency: 'high' }
         );
         sent++;
-      } catch(e: any) {
+      } catch (e: any) {
         console.log(`push failed: ${e.message}`);
+        // 만료된 구독을 지우지 않으면 계속 쌓여서 한 사람에게 수십 번 발송을 시도하게 된다
+        const msg = String(e.message);
+        if (msg.includes('410') || msg.includes('404') || msg.includes('unexpected response')) {
+          await db.from('push_subscriptions').delete().eq('endpoint', sub.subscription.endpoint);
+          console.log('expired subscription removed');
+        }
       }
     }
   }
