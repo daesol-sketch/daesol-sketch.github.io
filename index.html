@@ -2545,6 +2545,16 @@
   const { createClient } = supabase;
   const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  // admin-auth-ops 호출: 로그인 세션 토큰으로 호출해야 서버가 호출자를 확인할 수 있음
+  async function callAuthOps(body) {
+    const { data: { session } } = await db.auth.getSession();
+    return fetch(`${SUPABASE_URL}/functions/v1/admin-auth-ops`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${session?.access_token || ''}`, 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(r => r.json());
+  }
+
   /* ── STATE ── */
   let currentRole = null;   // '직원' | '관리자'
   let currentSite = null;
@@ -2624,11 +2634,7 @@
       const { error } = await db.from('accounts').update(updateObj).eq('id', currentUser.id);
       if (error) { errEl.textContent = '저장 실패: ' + error.message; errEl.style.display = 'block'; return; }
       if (pwNew) {
-        const authRes = await fetch(`${SUPABASE_URL}/functions/v1/admin-auth-ops`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'change_password', account_id: currentUser.id, password: pwNew })
-        }).then(r => r.json());
+        const authRes = await callAuthOps({ action: 'change_password', account_id: currentUser.id, password: pwNew });
         if (authRes?.error) { errEl.textContent = '비밀번호 변경 실패: ' + authRes.error; errEl.style.display = 'block'; return; }
       }
       currentUser.team = team; currentUser.position = position; currentUser.phone = phone;
@@ -4433,11 +4439,7 @@
       errEl.style.display='block'; return;
     }
     // Supabase Auth 유저도 생성
-    await fetch(`https://bbnmxwpacdfqvicybhau.supabase.co/functions/v1/admin-auth-ops`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
-      body: JSON.stringify({ action: 'create', account_id: inserted.id, password: pw })
-    });
+    await callAuthOps({ action: 'create', account_id: inserted.id, password: pw });
     closeModal('add-account-modal');
     showToast('✅ 계정이 추가되었습니다.');
     loadSites();
@@ -4492,11 +4494,7 @@
     if (!editingAccountId) return;
     const [{ error }, res] = await Promise.all([
       db.from('accounts').update({ password: '000000' }).eq('id', editingAccountId),
-      fetch(`https://bbnmxwpacdfqvicybhau.supabase.co/functions/v1/admin-auth-ops`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
-        body: JSON.stringify({ action: 'reset_password', account_id: editingAccountId, password: '000000' })
-      }).then(r => r.json())
+      callAuthOps({ action: 'reset_password', account_id: editingAccountId, password: '000000' })
     ]);
     if (error) { showToast('❌ 초기화 실패: ' + error.message); return; }
     if (res?.error) { showToast('❌ Auth 비번 초기화 실패: ' + res.error); return; }
@@ -4554,11 +4552,7 @@
     if (newPw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 합니다.'; errEl.style.display = 'block'; return; }
     const [{ error }, authRes] = await Promise.all([
       db.from('accounts').update({ password: newPw }).eq('id', currentUser.id),
-      fetch(`${SUPABASE_URL}/functions/v1/admin-auth-ops`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'change_password', account_id: currentUser.id, password: newPw })
-      }).then(r => r.json())
+      callAuthOps({ action: 'change_password', account_id: currentUser.id, password: newPw })
     ]);
     if (error || authRes?.error) { errEl.textContent = '변경 실패: ' + (error?.message || authRes?.error); errEl.style.display = 'block'; return; }
     currentUser.password = newPw;
