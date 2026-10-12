@@ -4039,7 +4039,7 @@
       const senderEsc = escHtml(r.sender || '');
       const phoneAttr = (r.sender || '').replace(/'/g, '&#39;');
       const siteAttr = (r.site_name || '').replace(/'/g, '&#39;');
-      const onclick = `onclick="callLogToReport('${siteAttr}','${phoneAttr}')" style="cursor:pointer"`;
+      const onclick = `onclick="callLogToReport('${siteAttr}','${phoneAttr}','${r.received_at || ''}')" style="cursor:pointer"`;
       return '<div class="report-item" ' + onclick + ' style="display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px 18px;margin-bottom:10px">' +
         '<div class="report-left">' +
         '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
@@ -4052,7 +4052,7 @@
     }).join('');
   }
 
-  function callLogToReport(siteName, phone) {
+  function callLogToReport(siteName, phone, receivedAt) {
     switchTab('fault', null);
     setTimeout(() => {
       switchSubTab('report');
@@ -4061,6 +4061,13 @@
         if (bldg && siteName) { bldg.value = siteName; loadElevatorsForSite(siteName); }
         const ph = document.getElementById('f-phone');
         if (ph && phone) { ph.value = phone; autoFormatPhone(ph); }
+        // 접수일시 = 전화가 걸려온 시각 (당직자가 나중에 몰아서 접수해도 실제 시각으로 기록)
+        const recv = receivedAt ? new Date(receivedAt) : null;
+        if (recv && !isNaN(recv)) {
+          document.getElementById('f-report-date').value = recv.toLocaleDateString('sv');
+          document.getElementById('f-report-time').value = recv.toTimeString().slice(0, 5);
+          syncSelectFromTime('f-report-time', 'f-report-hour', 'f-report-min');
+        }
       }, 200);
     }, 100);
   }
