@@ -2629,8 +2629,8 @@
     }
     saveBtn.disabled = true; saveBtn.textContent = '저장 중...';
     try {
+      // 비밀번호는 accounts에 저장하지 않음 (Supabase Auth에만 암호화 저장)
       const updateObj = { team, position, phone };
-      if (pwNew) updateObj.password = pwNew;
       const { error } = await db.from('accounts').update(updateObj).eq('id', currentUser.id);
       if (error) { errEl.textContent = '저장 실패: ' + error.message; errEl.style.display = 'block'; return; }
       if (pwNew) {
@@ -2638,7 +2638,6 @@
         if (authRes?.error) { errEl.textContent = '비밀번호 변경 실패: ' + authRes.error; errEl.style.display = 'block'; return; }
       }
       currentUser.team = team; currentUser.position = position; currentUser.phone = phone;
-      if (pwNew) currentUser.password = pwNew;
       updateDrawerProfile();
       updateHomeProfile();
       closeMyPageModal();
@@ -4432,7 +4431,7 @@
     if (!username || !pw || !role) { errEl.textContent='아이디, 비밀번호, 유형을 모두 입력하세요.'; errEl.style.display='block'; return; }
     const team = document.getElementById('new-acc-team')?.value || null;
     const unit = document.getElementById('new-acc-unit')?.value || null;
-    const payload = { username, password: pw, role, site_name: null, name: null, phone: phone||null, position: position||null, team: team||null, unit: unit||null };
+    const payload = { username, role, site_name: null, name: null, phone: phone||null, position: position||null, team: team||null, unit: unit||null };
     const { data: inserted, error } = await db.from('accounts').insert(payload).select('id').single();
     if (error) {
       errEl.textContent = error.code==='23505' ? '이미 존재하는 아이디입니다.' : '추가 실패: ' + error.message;
@@ -4492,11 +4491,7 @@
 
   async function resetAccountPassword() {
     if (!editingAccountId) return;
-    const [{ error }, res] = await Promise.all([
-      db.from('accounts').update({ password: '000000' }).eq('id', editingAccountId),
-      callAuthOps({ action: 'reset_password', account_id: editingAccountId, password: '000000' })
-    ]);
-    if (error) { showToast('❌ 초기화 실패: ' + error.message); return; }
+    const res = await callAuthOps({ action: 'reset_password', account_id: editingAccountId, password: '000000' });
     if (res?.error) { showToast('❌ Auth 비번 초기화 실패: ' + res.error); return; }
     showToast('✅ 비밀번호가 000000으로 초기화되었습니다.');
     closeModal('edit-account-modal');
@@ -4547,15 +4542,13 @@
     const errEl   = document.getElementById('change-pw-error');
     errEl.style.display = 'none';
     if (!current || !newPw || !confirm) { errEl.textContent = '모든 항목을 입력하세요.'; errEl.style.display = 'block'; return; }
-    if (current !== currentUser.password) { errEl.textContent = '현재 비밀번호가 틀렸습니다.'; errEl.style.display = 'block'; return; }
     if (newPw !== confirm) { errEl.textContent = '새 비밀번호가 일치하지 않습니다.'; errEl.style.display = 'block'; return; }
     if (newPw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 합니다.'; errEl.style.display = 'block'; return; }
-    const [{ error }, authRes] = await Promise.all([
-      db.from('accounts').update({ password: newPw }).eq('id', currentUser.id),
-      callAuthOps({ action: 'change_password', account_id: currentUser.id, password: newPw })
-    ]);
-    if (error || authRes?.error) { errEl.textContent = '변경 실패: ' + (error?.message || authRes?.error); errEl.style.display = 'block'; return; }
-    currentUser.password = newPw;
+    // 현재 비밀번호 확인: 실제 로그인 시도로 검증 (accounts에 평문 비번을 두지 않음)
+    const { error: verifyErr } = await db.auth.signInWithPassword({ email: `${currentUser.id}@daesol.el`, password: current });
+    if (verifyErr) { errEl.textContent = '현재 비밀번호가 틀렸습니다.'; errEl.style.display = 'block'; return; }
+    const authRes = await callAuthOps({ action: 'change_password', account_id: currentUser.id, password: newPw });
+    if (authRes?.error) { errEl.textContent = '변경 실패: ' + authRes.error; errEl.style.display = 'block'; return; }
     closeModal('change-pw-modal');
     showToast('✅ 비밀번호가 변경되었습니다.');
   }
