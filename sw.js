@@ -1,4 +1,4 @@
-const CACHE_NAME = 'daesol-el-v11';
+const CACHE_NAME = 'daesol-el-v12';
 // index.html은 캐시하지 않음 — 항상 최신 버전 사용
 const STATIC_ASSETS = [
   './manifest.json',
@@ -130,6 +130,9 @@ self.addEventListener('fetch', event => {
 
   // Supabase API — 캐시 안 함
   if (url.hostname.includes('supabase.co')) return;
+
+  // version.json — 새 버전 확인용이라 캐시 안 함
+  if (url.pathname.endsWith('version.json')) return;
 
   // HTML(index.html) — 항상 네트워크에서 가져옴, 실패 시 캐시
   if (event.request.mode === 'navigate' || url.pathname.endsWith('.html')) {

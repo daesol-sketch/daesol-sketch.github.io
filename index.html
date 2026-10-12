@@ -218,6 +218,10 @@
     .modal-divider { border: none; border-top: 1px solid var(--br); margin: 16px 0; }
     .modal-link { font-size: 13px; color: var(--tx-2); cursor: pointer; text-decoration: underline; }
 
+    #update-banner { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); display: none; align-items: center; gap: 12px; background: var(--bg-card); color: var(--tx); border: 1.5px solid #3182ce; border-radius: 10px; padding: 10px 12px 10px 16px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 16px var(--sh2); z-index: 9998; max-width: calc(100vw - 24px); }
+    #update-banner button { padding: 8px 14px; border: none; border-radius: 8px; background: #3182ce; color: #fff; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap; }
+    #release-notes-list { text-align: left; margin: 0 0 18px; padding-left: 18px; font-size: 14px; line-height: 1.6; color: var(--tx-2); }
+    #release-notes-list li { margin-bottom: 6px; }
     #toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(calc(100% + 40px)); opacity: 0; visibility: hidden; background: #2a1e00; color: #f6ad55; border: 1px solid #b7791f; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 16px var(--sh2); transition: transform 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s; z-index: 9999; max-width: 90vw; text-align: center; }
     #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; transition: transform 0.3s ease, opacity 0.3s ease, visibility 0s linear 0s; }
 
@@ -2086,6 +2090,24 @@
 
 <div id="toast"></div>
 
+<!-- 새 버전 알림 배너 -->
+<div id="update-banner">
+  <span>🔄 새 버전이 있습니다</span>
+  <button onclick="applyUpdate()">지금 업데이트</button>
+</div>
+
+<!-- 업데이트 안내 팝업 -->
+<div class="modal-overlay" id="release-notes-modal" style="display:none">
+  <div class="modal-box" style="width:420px">
+    <div class="modal-icon">📢</div>
+    <h3 id="release-notes-title">업데이트 안내</h3>
+    <ul id="release-notes-list"></ul>
+    <div class="modal-btn-row">
+      <button class="modal-btn confirm" onclick="closeReleaseNotes()">확인</button>
+    </div>
+  </div>
+</div>
+
 <!-- 직원 현장 정보 수정 모달 -->
 <div class="modal-overlay" id="notes-modal" style="display:none">
   <div class="modal-box" style="width:460px;max-width:calc(100vw - 40px);text-align:left;padding:0;display:flex;flex-direction:column;max-height:90vh">
@@ -2554,6 +2576,49 @@
       body: JSON.stringify(body)
     }).then(r => r.json());
   }
+
+  /* ── 앱 버전 / 업데이트 안내 ──
+     배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
+     직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
+  const APP_VERSION = '2026.10.12-2';
+  const RELEASE_NOTES = [
+    { version: '2026.10.12-2', date: '10/12', items: [
+      { text: '📞 전화기록에서 신고 접수로 넘어가면 접수 시간이 <b>전화가 온 시각</b>으로 자동 입력됩니다.' },
+      { text: '🔄 새 버전이 나오면 화면 아래에 <b>지금 업데이트</b> 버튼이 표시됩니다.' },
+      { text: '🔒 계정·비밀번호 보안이 강화되었습니다.' },
+      { text: '🗑 계정을 삭제하면 해당 직원 기기의 로그인도 함께 해제됩니다.', roles: ['관리자', '마스터'] },
+    ]},
+  ];
+
+  let _lastUpdateCheck = 0;
+  async function checkForUpdate() {
+    if (Date.now() - _lastUpdateCheck < 60000) return;   // 1분에 한 번만
+    _lastUpdateCheck = Date.now();
+    try {
+      const res = await fetch('version.json?nc=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) return;
+      const { version } = await res.json();
+      if (version && version !== APP_VERSION) document.getElementById('update-banner').style.display = 'flex';
+    } catch (e) {}
+  }
+  function applyUpdate() { location.reload(); }
+
+  // 이번 버전 안내를 아직 안 봤으면 로그인 후 한 번 표시 (기기별 기억)
+  function showReleaseNotes() {
+    if (localStorage.getItem('daesol_seen_version') === APP_VERSION) return;
+    const note = RELEASE_NOTES.find(n => n.version === APP_VERSION);
+    const items = (note?.items || []).filter(i => !i.roles || i.roles.includes(currentRole));
+    if (!items.length) { localStorage.setItem('daesol_seen_version', APP_VERSION); return; }
+    document.getElementById('release-notes-title').textContent = '업데이트 안내 (' + note.date + ')';
+    document.getElementById('release-notes-list').innerHTML = items.map(i => '<li>' + i.text + '</li>').join('');
+    document.getElementById('release-notes-modal').style.display = 'flex';
+  }
+  function closeReleaseNotes() {
+    localStorage.setItem('daesol_seen_version', APP_VERSION);
+    document.getElementById('release-notes-modal').style.display = 'none';
+  }
+  setInterval(checkForUpdate, 30 * 60 * 1000);   // 켜둔 채로 있어도 30분마다 확인
+  setTimeout(checkForUpdate, 5000);
 
   /* ── STATE ── */
   let currentRole = null;   // '직원' | '관리자'
@@ -6402,6 +6467,7 @@
       goDashboard();
       subscribePush();
       recordAccess();
+      showReleaseNotes();
       startReportsRealtime();
       if (currentRole === '관리자' || currentRole === '마스터') startAdminUnackCheck();
       if (currentRole === '직원' || currentRole === '마스터') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
@@ -6722,6 +6788,7 @@
             setReporterField();
             subscribePush();
             recordAccess();
+            showReleaseNotes();
             startReportsRealtime();
             if (currentRole === '관리자' || currentRole === '마스터') startAdminUnackCheck();
             if (currentRole !== '관리자' && currentRole !== '마스터') { setTimeout(() => checkPendingAssignments(), 500); startPendingFeedbackCheck(); }
@@ -6756,6 +6823,7 @@
   // 앱 포그라운드 복귀 시 구독 갱신 (구독이 만료/변경돼도 DB 최신 유지)
   // PWA는 한 번 켜두면 페이지가 다시 로드되지 않으므로 접속 기록도 여기서 남긴다.
   document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') checkForUpdate();
     if (document.visibilityState === 'visible' && currentUser) {
       subscribePush();
       recordAccess();
