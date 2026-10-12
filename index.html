@@ -4518,6 +4518,9 @@
 
   async function deleteAccount(id, username) {
     if (!confirm(`"${username}" 계정을 삭제하시겠습니까?`)) return;
+    // 로그인 계정(Supabase Auth) 먼저 삭제 — 남아 있으면 삭제된 직원 기기에서 계속 접근 가능
+    const authRes = await callAuthOps({ action: 'delete', account_id: id });
+    if (authRes?.error) { showToast('❌ 삭제 실패: ' + authRes.error); return; }
     const { error } = await db.from('accounts').delete().eq('id', id);
     if (error) { showToast('❌ 삭제 실패'); return; }
     showToast('🗑 계정이 삭제되었습니다.'); loadSites();

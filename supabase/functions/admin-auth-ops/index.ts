@@ -34,9 +34,10 @@ Deno.serve(async (req) => {
     if (action === 'change_password') {
       // 본인 비밀번호만
       if (targetId !== String(me.id)) return json({ error: '본인 비밀번호만 변경할 수 있습니다.' }, 403);
-    } else if (action === 'create' || action === 'reset_password') {
+    } else if (action === 'create' || action === 'reset_password' || action === 'delete') {
       // 관리자·마스터만, 마스터 계정은 마스터만
       if (!isAdmin) return json({ error: '권한이 없습니다.' }, 403);
+      if (action === 'delete' && targetId === String(me.id)) return json({ error: '본인 계정은 삭제할 수 없습니다.' }, 403);
       const { data: target } = await admin.from('accounts').select('role').eq('id', targetId).maybeSingle();
       if (!target) return json({ error: '대상 계정을 찾을 수 없습니다.' }, 404);
       if (target.role === '마스터' && me.role !== '마스터') return json({ error: '마스터 계정은 마스터만 변경할 수 있습니다.' }, 403);
@@ -56,7 +57,7 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
-    // reset_password / change_password
+    // reset_password / change_password / delete
     const email = `${targetId}@daesol.el`;
     // 페이지네이션 없이 한 번에 다 가져오기 (perPage 1000)
     let user: any = null;
@@ -67,6 +68,13 @@ Deno.serve(async (req) => {
       if (user) break;
       if (!result?.users || result.users.length < 1000) break;
       page++;
+    }
+    if (action === 'delete') {
+      // 로그인 계정 삭제 (해당 계정의 모든 기기 로그인도 함께 끊김)
+      if (!user) return json({ ok: true, notFound: true });
+      const { error } = await admin.auth.admin.deleteUser(user.id);
+      if (error) return json({ error: error.message }, 400);
+      return json({ ok: true });
     }
     if (!user) {
       // 유저 없으면 새로 생성 (accounts에 있지만 Auth에 없을 때)
