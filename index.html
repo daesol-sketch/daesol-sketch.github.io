@@ -399,6 +399,39 @@
   body.light-mode [style*="border:1px solid #2a2a2a"] { border-color: var(--br) !important; }
   body.light-mode [style*="border:1px solid #222"] { border-color: var(--br) !important; }
   body.light-mode #site-inspector-info { color: #2b6cb0 !important; }
+    /* ── 사용 설명서 (page-manual) ── */
+    #page-manual .mn-wrap { max-width: 760px; margin: 0 auto; }
+    #page-manual .mn-toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 18px; }
+    #page-manual .mn-toc button { padding: 7px 12px; border: 1px solid var(--br-mid); background: var(--bg-card); color: var(--tx-2); border-radius: 18px; font-size: 13px; font-family: inherit; cursor: pointer; }
+    #page-manual .mn-sec { margin-bottom: 28px; scroll-margin-top: 70px; }
+    #page-manual .mn-h2 { font-size: 18px; font-weight: 800; color: var(--tx-head); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid #3182ce; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    #page-manual .mn-card { background: var(--bg-card); border: 1px solid var(--br); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; box-shadow: 0 1px 4px var(--sh1); color: var(--tx); font-size: 14px; line-height: 1.7; }
+    #page-manual .mn-card h3 { font-size: 15px; font-weight: 700; color: var(--tx); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    #page-manual .mn-steps { list-style: none; counter-reset: mnstep; padding: 0; margin: 0; }
+    #page-manual .mn-steps li { counter-increment: mnstep; position: relative; padding-left: 36px; margin-bottom: 10px; }
+    #page-manual .mn-steps li::before { content: counter(mnstep); position: absolute; left: 0; top: 2px; width: 24px; height: 24px; background: #2b6cb0; color: #fff; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    #page-manual .mn-tip { background: var(--bg-high); border: 1px dashed var(--br-hi); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--tx-2); margin-top: 10px; }
+    #page-manual .mn-tip strong { color: #3b82f6; }
+    #page-manual .mn-alert { border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; font-size: 14px; color: var(--tx); border-left: 4px solid; }
+    #page-manual .mn-blue { background: rgba(49,130,206,0.12); border-left-color: #3182ce; }
+    #page-manual .mn-yellow { background: rgba(214,158,46,0.14); border-left-color: #d69e2e; }
+    #page-manual .mn-red { background: rgba(229,62,62,0.12); border-left-color: #e53e3e; }
+    #page-manual .mn-green { background: rgba(56,161,105,0.12); border-left-color: #38a169; }
+    #page-manual .mn-flow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+    #page-manual .mn-flow-item { background: var(--bg-high); border-radius: 8px; padding: 6px 11px; font-size: 13px; font-weight: 600; color: var(--tx); }
+    #page-manual .mn-flow-arrow { color: var(--tx-4); font-size: 16px; }
+    #page-manual .mn-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+    #page-manual .mn-table th { background: var(--bg-high); padding: 8px 10px; text-align: left; font-weight: 700; color: var(--tx-2); }
+    #page-manual .mn-table td { padding: 8px 10px; border-bottom: 1px solid var(--br); vertical-align: top; color: var(--tx); }
+    #page-manual .mn-table tr:last-child td { border-bottom: none; }
+    #page-manual .mn-card, #page-manual .mn-alert { word-break: keep-all; overflow-wrap: anywhere; }
+    #page-manual .mn-table td:first-child { width: 36%; }
+    #page-manual .mn-tag { display: inline-block; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 700; }
+    #page-manual .mn-tag-admin { background: #fefcbf; color: #744210; }
+    #page-manual .mn-tag-staff { background: #c6f6d5; color: #22543d; }
+    #page-manual .mn-tag-all { background: #bee3f8; color: #1a365d; }
+    #page-manual .mn-ver { text-align: right; font-size: 12px; color: var(--tx-4); margin-top: 8px; }
+    #page-manual .mn-foot { text-align: center; font-size: 12px; color: var(--tx-4); padding: 10px 0 30px; }
   </style>
 </head>
 <body>
@@ -469,6 +502,7 @@
   <button class="drawer-menu-item tab-btn" id="tab-contracts-btn" onclick="switchTab('contracts');closeNavMenu()" style="display:none"><span class="menu-icon">📄</span> 계약서</button>
   <button class="drawer-menu-item tab-btn" id="tab-stats-btn" onclick="switchTab('stats');closeNavMenu()" style="display:none"><span class="menu-icon">📊</span> 통계</button>
   <button class="drawer-menu-item tab-btn" id="tab-push-test-btn" onclick="switchTab('push-test');closeNavMenu()" style="display:none"><span class="menu-icon">🔔</span> 알림 테스트</button>
+  <button class="drawer-menu-item tab-btn" id="tab-manual-btn" onclick="switchTab('manual');closeNavMenu()" style="display:none"><span class="menu-icon">📘</span> 사용 설명서</button>
   <div style="flex:1"></div>
   <button class="drawer-logout" onclick="doLogout()">로그아웃</button>
 </div>
@@ -1638,6 +1672,616 @@
     </div>
   </div>
 
+  <!-- 사용 설명서 -->
+  <div class="page" id="page-manual">
+    <div class="mn-wrap">
+      <div class="sub-tabs">
+        <button class="sub-tab-btn active" id="mn-tab-staff-btn" onclick="switchManualTab('staff')">📘 직원용</button>
+        <button class="sub-tab-btn" id="mn-tab-admin-btn" onclick="switchManualTab('admin')" style="display:none">👑 관리자용</button>
+      </div>
+      <div class="mn-ver">사용 설명서 v1.1 · 2026년 10월</div>
+      <div id="mn-staff">
+<div class="mn-toc"><button onclick="mnGo('mn-s-install')">📲 앱 설치 방법</button><button onclick="mnGo('mn-s-login')">🔐 로그인 · 내 정보</button><button onclick="mnGo('mn-s-noti')">🔔 알림 설정</button><button onclick="mnGo('mn-s-duty')">🕐 고장 담당자 현황</button><button onclick="mnGo('mn-s-fault')">🔧 고장 관리</button><button onclick="mnGo('mn-s-mgmt')">🏢 관리현장</button><button onclick="mnGo('mn-s-etc')">🗂 기타 메뉴</button><button onclick="mnGo('mn-s-tips')">💡 자주 묻는 질문</button></div>
+  <div class="mn-card">
+    <h3>👀 메뉴 한눈에 보기</h3>
+    <table class="mn-table">
+      <tr><td><strong>🔧 고장 관리</strong></td><td>신고 접수 · 신고 내역 · 고장처리내역 · 반복고장현황</td></tr>
+      <tr><td><strong>🕐 고장 담당자 현황</strong></td><td>오늘 당직 등록·해제 · 내일 사전등록 · 당직 현황</td></tr>
+      <tr><td><strong>🏢 관리현장</strong></td><td>현장 검색 · 점검자/비상통화장치 정보 수정</td></tr>
+      <tr><td><strong>🗓️ 검사일정</strong></td><td>날짜별 검사 일정 확인</td></tr>
+      <tr><td><strong>📋 준공계</strong></td><td>준공계 PDF 작성</td></tr>
+      <tr><td><strong>📸 공사팀 사진철</strong></td><td>준공 사진 엑셀 작성</td></tr>
+      <tr><td><strong>📞 전화 기록</strong></td><td>회사로 온 전화 기록 · 바로 신고 접수</td></tr>
+      <tr><td><strong>🔔 알림 테스트</strong></td><td>내 폰에 알림이 잘 오는지 확인</td></tr>
+    </table>
+    <div class="mn-tip">메뉴는 화면 우측 상단 <strong>☰</strong> 버튼 또는 홈 화면의 <strong>빠른 메뉴</strong>에서 열 수 있습니다. 왼쪽 위 <strong>DAESOL</strong> 글자를 누르면 홈으로 돌아갑니다.</div>
+  </div>
+
+  <!-- 1. 설치 -->
+  <section class="mn-sec" id="mn-s-install">
+    <h2 class="mn-h2">📲 앱 설치 방법</h2>
+    <div class="mn-alert mn-blue">🔗 앱 주소: <strong>https://men.daesol.kr</strong></div>
+
+    <div class="mn-card">
+      <h3>📱 아이폰 (iOS)</h3>
+      <ul class="mn-steps">
+        <li><strong>Safari</strong> 브라우저로 앱 주소 접속</li>
+        <li>하단 공유 버튼(□↑) 탭</li>
+        <li>"홈 화면에 추가" 선택</li>
+        <li>"추가" 버튼 탭 → 홈 화면에 아이콘 생성</li>
+      </ul>
+      <div class="mn-alert mn-red" style="margin-top:10px;margin-bottom:0">🚨 아이폰은 <strong>홈 화면에 추가한 아이콘으로 실행해야만</strong> 알림이 옵니다. Safari 창에서 그냥 열면 알림을 받을 수 없습니다.</div>
+    </div>
+
+    <div class="mn-card">
+      <h3>🤖 안드로이드</h3>
+      <ul class="mn-steps">
+        <li><strong>크롬</strong> 브라우저로 앱 주소 접속</li>
+        <li>"앱 설치" 배너 또는 메뉴(⋮) → "홈 화면에 추가" 선택</li>
+        <li>"설치" 버튼 탭 → 홈 화면에 아이콘 생성</li>
+      </ul>
+    </div>
+
+    <div class="mn-card">
+      <h3>💻 PC (윈도우 / Mac)</h3>
+      <ul class="mn-steps">
+        <li>크롬 브라우저로 앱 주소 접속</li>
+        <li>주소창 우측 설치 아이콘(⊕) 클릭 또는 메뉴(⋮) → "대솔이엘 설치"</li>
+        <li>"설치" 클릭 → 바탕화면 앱으로 실행 가능</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 2. 로그인 -->
+  <section class="mn-sec" id="mn-s-login">
+    <h2 class="mn-h2">🔐 로그인 · 내 정보</h2>
+
+    <div class="mn-card">
+      <h3>로그인</h3>
+      <ul class="mn-steps">
+        <li>앱 실행 후 <strong>아이디 / 비밀번호</strong> 입력</li>
+        <li><strong>자동 로그인</strong>을 체크하면 다음부터 바로 들어가집니다.</li>
+        <li>로그인 버튼 탭 → 홈 화면으로 이동</li>
+      </ul>
+      <div class="mn-tip"><strong>아이디·비밀번호는 관리자에게 문의하세요.</strong></div>
+    </div>
+
+    <div class="mn-card">
+      <h3>✏️ 내 정보 수정 · 비밀번호 변경</h3>
+      <ul class="mn-steps">
+        <li>우측 상단 ☰ 메뉴 → 맨 위 <strong>"✏️ 내 정보 수정하기"</strong></li>
+        <li>팀, 직급, 핸드폰 번호를 고칠 수 있습니다.</li>
+        <li>비밀번호를 바꾸려면 <strong>새 비밀번호</strong>와 <strong>새 비밀번호 확인</strong>에 같은 값을 넣고 저장하세요.</li>
+      </ul>
+      <div class="mn-tip">핸드폰 번호가 정확해야 회사로 전화했을 때 <strong>내 이름이 표시</strong>됩니다.</div>
+    </div>
+
+    <div class="mn-card">
+      <h3>🔄 새 버전 업데이트</h3>
+      <ul class="mn-steps">
+        <li>앱이 새로 바뀌면 화면 아래에 <strong>"🔄 새 버전이 있습니다 [지금 업데이트]"</strong>가 표시됩니다.</li>
+        <li><strong>지금 업데이트</strong>를 누르면 최신 버전으로 바뀝니다.</li>
+        <li>업데이트 후 처음 로그인하면 <strong>무엇이 바뀌었는지</strong> 안내 창이 한 번 뜹니다.</li>
+      </ul>
+    </div>
+
+    <div class="mn-alert mn-yellow">
+      ⚠️ 공용 기기에서는 사용 후 반드시 ☰ 메뉴 맨 아래 <strong>로그아웃</strong>을 눌러주세요.
+    </div>
+  </section>
+
+  <!-- 3. 알림 -->
+  <section class="mn-sec" id="mn-s-noti">
+    <h2 class="mn-h2">🔔 알림 설정</h2>
+
+    <div class="mn-alert mn-red">
+      🚨 알림을 허용해야 고장 신고 배정 알림을 받을 수 있습니다. 반드시 허용해주세요!
+    </div>
+
+    <div class="mn-card">
+      <h3>알림 허용 방법</h3>
+      <ul class="mn-steps">
+        <li>로그인 후 알림 허용 팝업이 뜨면 <strong>"허용"</strong> 클릭</li>
+        <li>팝업이 안 뜬 경우 → 브라우저 주소창 자물쇠 아이콘 → 알림 → <strong>허용</strong>으로 변경</li>
+      </ul>
+    </div>
+
+    <div class="mn-card">
+      <h3>🤖 안드로이드 — 알림이 늦거나 소리가 안 들릴 때</h3>
+      <ul class="mn-steps">
+        <li><strong>배터리 제한 풀기:</strong> 설정 → 애플리케이션 → Chrome → 배터리 → <strong>"제한 없음"</strong></li>
+        <li><strong>알림 볼륨 올리기:</strong> 설정 → 소리 및 진동 → 음량 → <strong>알림</strong> 음량을 올려주세요. (음악·동영상 음량과 따로입니다)</li>
+        <li><strong>진동도 받고 싶다면:</strong> 설정 → 소리 및 진동 → <strong>"소리 모드에서 진동"</strong> 켜기</li>
+      </ul>
+      <div class="mn-tip">⚠️ 배터리 설정을 안 하면 화면이 꺼진 상태에서 알림이 늦게 오거나 누락될 수 있습니다.<br>※ 이 앱은 카카오톡 같은 설치형 앱이 아니라서, 알림 소리 종류나 크기는 <strong>휴대폰 설정으로만</strong> 바꿀 수 있습니다.</div>
+    </div>
+
+    <div class="mn-card">
+      <h3>📱 아이폰 알림 설정</h3>
+      <ul class="mn-steps">
+        <li>반드시 <strong>홈 화면에 추가한 아이콘</strong>으로 앱 실행</li>
+        <li>설정 → 알림 → <strong>대솔이엘</strong>(또는 Safari) → <strong>알림 허용</strong> 켜기</li>
+      </ul>
+      <div class="mn-tip">⚠️ iOS 16.4 이상에서만 알림을 지원합니다.</div>
+    </div>
+
+    <div class="mn-card">
+      <h3>🔔 알림 테스트 — 내 폰에 알림이 잘 오는지 확인하기</h3>
+      <ul class="mn-steps">
+        <li>☰ 메뉴 → <strong>알림 테스트</strong></li>
+        <li><strong>1분 후 / 3분 후 / 5분 후</strong> 중 하나를 누릅니다. (제대로 확인하려면 <strong>5분</strong> 권장)</li>
+        <li>버튼을 누른 뒤 <strong>앱을 닫고 화면을 끄세요.</strong></li>
+        <li>정한 시간이 지나 알림이 오면 정상입니다. 앱을 다시 열면 <strong>내 최근 결과</strong>에 도착 여부와 걸린 시간이 표시됩니다.</li>
+      </ul>
+      <div class="mn-tip">알림이 안 오면 위의 배터리·알림 설정을 다시 확인하고 테스트해 보세요.</div>
+    </div>
+
+    <div class="mn-card">
+      <h3>📋 알림 종류</h3>
+      <div style="border:1px solid var(--br);border-radius:10px;overflow:hidden;margin-top:8px">
+
+        <div style="padding:14px 16px;border-bottom:1px solid var(--br)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-size:15px">🔧</span>
+            <strong style="font-size:14px">고장 신고 배정</strong>
+            
+          </div>
+          <div style="font-size:13px;color:var(--tx-2)">신고가 나에게 배정되면 즉시 옵니다. 알림을 누르면 해당 신고로 이동하고 상태가 <strong>"배치완료" → "처리중"</strong>으로 바뀝니다. 확인하지 않으면 <strong>2분마다 다시</strong> 옵니다.</div>
+        </div>
+
+        <div style="padding:14px 16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-size:15px">🚨</span>
+            <strong style="font-size:14px">피드백 미처리</strong>
+            
+          </div>
+          <div style="font-size:13px;color:var(--tx-2)">처리중으로 바뀐 뒤 <strong>8시간</strong> 동안 완료 처리를 하지 않으면 옵니다. 이후 <strong>30분마다 반복</strong>됩니다. (밤 11시 ~ 아침 7시에는 보내지 않습니다)</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 담당자현황 -->
+  <section class="mn-sec" id="mn-s-duty">
+    <h2 class="mn-h2">🕐 고장 담당자 현황 <span style="font-size:14px;font-weight:400;color:var(--tx-3)">(매일 오전 08:30에 초기화)</span></h2>
+
+    <div class="mn-card">
+      <h3>화면 구성</h3>
+      <ul class="mn-steps">
+        <li><strong>맨 위</strong> — 오늘 날짜·시각과 <strong>지금 시간대</strong>(☀️ 주간 / 🌙 평일 숙직 / 📅 주말·휴일 당직)</li>
+        <li><strong>내 당직 등록</strong> — 오늘 당직 등록·해제 버튼 (오늘이 평일이면 주간·평일숙직 버튼, 주말·휴일이면 주말 버튼만 보입니다)</li>
+        <li><strong>📅 내일 사전등록</strong> — 내일 당직을 미리 등록하는 보라색 버튼</li>
+        <li><strong>오늘 당직 현황</strong> — 자리별로 등록된 사람 이름. 비어 있으면 "미등록"</li>
+        <li><strong>📅 내일(N일) 사전등록 예정</strong> — 내일 미리 등록된 사람 (보라색)</li>
+      </ul>
+    </div>
+
+    <div class="mn-card">
+      <h3>시간대와 자리별 인원</h3>
+      <table class="mn-table">
+        <tr><th>시간대</th><th>자리 (최대 인원)</th></tr>
+        <tr><td>☀️ 평일 주간<br><span style="font-size:12px;color:var(--tx-3)">08:30~17:30</span></td><td>1팀 (2명) · 2팀 (2명) · 3팀 파주 (2명)<br><span style="font-size:12px;color:var(--tx-3)">※ 주간 등록은 <strong>내 계정의 팀</strong>으로 들어갑니다</span></td></tr>
+        <tr><td>🌙 평일 숙직<br><span style="font-size:12px;color:var(--tx-3)">17:30~다음날 08:30</span></td><td>풍동숙직 (최대 3명) · 파주대기 (1명)</td></tr>
+        <tr><td>📅 주말·휴일<br><span style="font-size:12px;color:var(--tx-3)">08:30~다음날 08:30</span></td><td>풍동숙직 (최대 3명) · 파주숙직 (1명)</td></tr>
+      </table>
+      <div class="mn-tip">휴일 관리에 등록된 날(공휴일·단체연차)은 평일이어도 <strong>주말·휴일 당직</strong>으로 바뀝니다.</div>
+    </div>
+
+    <div class="mn-card">
+      <h3>내 당직 등록 / 해제</h3>
+      <ul class="mn-steps">
+        <li>내 자리 버튼을 누르면 <strong>"✅ 등록 완료!"</strong>가 뜨고, 버튼이 빨간색 <strong>"○○ 해제"</strong>로 바뀝니다.</li>
+        <li>빨간 <strong>해제</strong> 버튼을 누르면 등록이 풀립니다.</li>
+        <li>같은 시간대에는 <strong>한 자리만</strong> 등록할 수 있습니다. (예: 풍동숙직과 파주대기 동시 등록 불가)</li>
+        <li>자리가 꽉 찼으면 <strong>"이미 정원이 찼습니다"</strong>가 뜹니다.</li>
+      </ul>
+      <div class="mn-tip">당직 등록은 <strong>직원 계정</strong>만 할 수 있습니다. 계정에 팀이 없으면 등록이 안 되니 관리자에게 팀 설정을 요청하세요.</div>
+    </div>
+
+    <div class="mn-card">
+      <h3>📅 내일 사전등록</h3>
+      <ul class="mn-steps">
+        <li>내일 당직을 오늘 미리 등록해 둘 수 있습니다. 내일 <strong>오전 8:30부터</strong> 그대로 적용됩니다.</li>
+        <li>내일이 주말·휴일이면 <strong>풍동숙직 / 파주숙직</strong> 버튼만, 평일이면 <strong>주간 / 풍동숙직 / 파주대기</strong> 버튼이 나옵니다.</li>
+        <li>등록·해제 방법은 오늘 당직과 같습니다.</li>
+      </ul>
+      <div class="mn-tip">"오늘·내일"은 <strong>오전 8:30 기준</strong>입니다. 예를 들어 새벽 2시에 누르는 "내일 사전등록"은 <strong>그날 아침 8:30부터</strong> 적용됩니다.</div>
+    </div>
+
+    <div class="mn-card">
+      <h3>고장 신고 담당자 목록과의 관계</h3>
+      <ul class="mn-steps">
+        <li><strong>평일 주간</strong>: 신고 접수 시 담당자 목록에는 그 팀 <strong>소속 직원 전원</strong>이 나옵니다.</li>
+        <li><strong>평일 숙직·주말·휴일</strong>: 여기 <strong>당직 등록한 사람만</strong> 담당자 목록에 나옵니다. 당직이면 반드시 등록해주세요.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 5. 고장신고 -->
+  <section class="mn-sec" id="mn-s-fault">
+    <h2 class="mn-h2">🔧 고장 관리</h2>
+
+    <div class="mn-card">
+      <h3>고장 관리 화면 구성</h3>
+      <table class="mn-table">
+        <tr><td><strong>📋 신고 접수</strong></td><td>새 고장 신고 등록</td></tr>
+        <tr><td><strong>📂 신고 내역</strong></td><td>진행 중인 신고(배치완료·처리중) 목록. <strong>나의 처리중</strong> 버튼으로 내 것만 보기</td></tr>
+        <tr><td><strong>✅ 고장처리내역</strong></td><td>완료된 신고. 오늘/이번주/이번달/전체, 유형 필터, 📥 엑셀</td></tr>
+        <tr><td><strong>🔁 반복고장현황</strong></td><td>같은 호기에서 고장이 여러 번 난 곳. 기간·횟수·유형 필터, 📥 엑셀</td></tr>
+      </table>
+    </div>
+
+    <div class="mn-card">
+      <h3>📋 신고 접수하기</h3>
+      <ul class="mn-steps">
+        <li><strong>접수 일시</strong> — 기본은 지금 시각. <strong>🕐 현재 시간</strong> 버튼으로 다시 맞출 수 있습니다.</li>
+        <li><strong>건물명</strong> — 몇 글자 입력하면 목록이 나옵니다. 목록에서 <strong>골라야</strong> 점검자·호기 정보가 연결됩니다.</li>
+        <li><strong>호기 · 고장 유형</strong> 선택</li>
+        <li><strong>담당팀 → 담당자</strong> 선택 — 평일 주간은 그 팀 직원 전원, 숙직·주말·휴일은 <strong>당직 등록한 사람</strong>만 나옵니다. 아무도 없으면 "⚠️ 현재 등록된 당직자가 없습니다"가 뜹니다.</li>
+        <li>접수자 이름, 신고자 연락처, 상세 내용 입력 → <strong>✅ 신고 접수하기</strong></li>
+      </ul>
+      <div class="mn-tip">담당자를 고르면 그 직원에게 <strong>바로 배정 알림</strong>이 갑니다. 담당팀을 <strong>기타</strong>로 접수하면 담당자 없이 등록되고, 직원이 직접 <strong>배치</strong>를 눌러 가져갈 수 있습니다.</div>
+    </div>
+
+    <div class="mn-card">
+      <h3>처리 흐름 — 담당자 지정 접수</h3>
+      <div class="mn-flow">
+        <div class="mn-flow-item">📩 배정 알림</div><div class="mn-flow-arrow">→</div>
+        <div class="mn-flow-item">알림 클릭</div><div class="mn-flow-arrow">→</div>
+        <div class="mn-flow-item">🔄 처리중</div><div class="mn-flow-arrow">→</div>
+        <div class="mn-flow-item">현장 출동</div><div class="mn-flow-arrow">→</div>
+        <div class="mn-flow-item">📝 처리내용 입력</div><div class="mn-flow-arrow">→</div>
+        <div class="mn-flow-item">✅ 완료</div>
+      </div>
+    </div>
+
+    <div class="mn-card">
+      <h3>처리 흐름 — 기타 접수 (담당자 없음)</h3>
+      <div class="mn-flow">
+        <div class="mn-flow-item">📂 신고 내역</div><div class="mn-flow-arrow">→</div>
+        <div class="mn-flow-item">✅ 배치 클릭</div><div class="mn-flow-arrow">→</div>
+        <div class="mn-flow-item">🔄 처리중</div><div class="mn-flow-arrow">→</div>
+        <div class="mn-flow-item">현장 출동</div><div class="mn-flow-arrow">→</div>
+        <div class="mn-flow-item">📝 처리내용 입력</div><div class="mn-flow-arrow">→</div>
+        <div class="mn-flow-item">✅ 완료</div>
+      </div>
+    </div>
+
+    <div class="mn-card">
+      <h3>신고 상태 안내</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="background:#2d3748;color:#e2e8f0;border:1.5px solid #4a5568;padding:4px 12px;border-radius:20px;font-weight:700;white-space:nowrap">접수중</span>
+          <span style="color:var(--tx-2)">신고가 접수됐지만 아직 담당자가 없는 상태</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="background:#1a2a3a;color:#63b3ed;border:1.5px solid #2c4a6a;padding:4px 12px;border-radius:20px;font-weight:700;white-space:nowrap">배치완료</span>
+          <span style="color:var(--tx-2)">담당자에게 알림이 갔지만 아직 확인하지 않은 상태</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="background:#2a1a0a;color:#f6ad55;border:1.5px solid #4a2a0a;padding:4px 12px;border-radius:20px;font-weight:700;white-space:nowrap">처리중</span>
+          <span style="color:var(--tx-2)">담당자가 확인하고 처리 중인 상태</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="background:#0a2a1a;color:#68d391;border:1.5px solid #0a4a2a;padding:4px 12px;border-radius:20px;font-weight:700;white-space:nowrap">완료</span>
+          <span style="color:var(--tx-2)">처리내용을 입력하고 완료한 상태</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mn-card">
+      <h3>✅ 배치 / 🔄 재배치 버튼</h3>
+      <ul class="mn-steps">
+        <li>신고 내역의 각 신고 카드에 표시됩니다.</li>
+        <li><strong>배치</strong> — 담당자가 없는 신고를 내가 맡을 때</li>
+        <li><strong>재배치</strong> — 이미 담당자가 있는 신고를 내가 넘겨받을 때</li>
+        <li>누르면 바로 <strong>처리중</strong>으로 바뀌고 내가 처리담당자가 됩니다.</li>
+      </ul>
+      <div class="mn-alert mn-yellow" style="margin-top:10px;margin-bottom:0">⚠️ <strong>배치완료</strong> 상태의 신고는 <strong>배치 버튼을 먼저 눌러야</strong> 열립니다. 다른 사람이 처리중인 신고는 열 수 없습니다.</div>
+      <div class="mn-tip">📍 휴대폰에서는 신고 카드 오른쪽 위 <strong>티맵 아이콘</strong>을 누르면 그 현장으로 바로 길안내가 됩니다.</div>
+    </div>
+
+    <div class="mn-card">
+      <h3>📝 처리내용 입력 & 완료</h3>
+      <ul class="mn-steps">
+        <li>신고 내역에서 <strong>내가 처리중인</strong> 신고를 누릅니다.</li>
+        <li><strong>처리 정보</strong>에 입력합니다: <strong>도착시간 · 처리일시 · 처리/상세내역</strong></li>
+        <li>부품을 바꿨으면 <strong>"부품 교체 있음"</strong> 체크</li>
+        <li><strong>갇힘정지</strong> 신고면 <strong>🆘 구출 정보</strong>(구출자: 119 / 유지관리업체 / 관리주체 / 해당없음, 구출시간)도 입력</li>
+        <li><strong>저장</strong>을 누르면 <strong>자동으로 완료</strong> 처리됩니다. (처리 상태 칸은 직접 바꾸지 않습니다)</li>
+      </ul>
+      <div class="mn-tip">처리일시와 처리/상세내역 중 하나라도 비어 있으면 <strong>완료되지 않고 처리중으로 남습니다.</strong><br>도착시간·처리일시는 <strong>접수일시보다 빠르거나 지금보다 늦을 수 없고</strong>, 처리일시는 도착시간보다 빠를 수 없습니다.</div>
+      <div class="mn-alert mn-yellow" style="margin-top:10px;margin-bottom:0">
+        ⏰ 처리중 상태로 <strong>8시간</strong>이 지나도록 완료하지 않으면 <strong>피드백 미처리 알림</strong>이 30분마다 옵니다.
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. 관리현장 -->
+  <section class="mn-sec" id="mn-s-mgmt">
+    <h2 class="mn-h2">🏢 관리현장</h2>
+
+    <div class="mn-card">
+      <h3>🔍 현장 찾기</h3>
+      <ul class="mn-steps">
+        <li>검색창에 <strong>현장명 · 점검자 · 승강기번호 · 전화번호 · 주소</strong> 중 아무거나 입력</li>
+        <li><strong>띄어쓰기는 신경 쓰지 않아도 됩니다.</strong> (예: "삼송로138" → 삼송로 138-1)</li>
+        <li>전화번호·승강기번호는 <strong>"-" 없이</strong> 입력해도 찾아집니다.</li>
+        <li>위쪽 필터로 보기 범위를 바꿀 수 있습니다: <strong>✅ 보수현장(기본)</strong> / 전체 / ⚠️ 계약만료 / 🔍 검사만료 / 🏗️ 하자 / 🆓 무상 / ❌ 상실 / 🧾 계산서발행용, 그리고 <strong>팀별</strong> 보기</li>
+      </ul>
+      <div class="mn-tip">검사만료가 <strong>30일 이내</strong>인 현장은 주황색, <strong>이미 만료</strong>된 현장은 빨간색으로 표시됩니다.</div>
+    </div>
+
+    <div class="mn-card">
+      <h3>✏️ 현장 정보 수정</h3>
+      <ul class="mn-steps">
+        <li>현장 목록 오른쪽 초록색 <strong>"정보 수정"</strong> 버튼</li>
+        <li>고칠 수 있는 항목: <strong>주점검자 · 보조점검자1 · 보조점검자2 · 비상통화장치 번호 · 비고</strong></li>
+        <li>비상통화장치 번호는 <strong>회선 추가</strong>로 여러 개 넣을 수 있습니다. "2호기: 010-1234-5678"처럼 호기를 앞에 쓰면 전화 착신 알림에 호기까지 표시됩니다.</li>
+      </ul>
+    </div>
+
+    <div class="mn-card">
+      <h3>🟠 호기 정보 새로고침</h3>
+      <ul class="mn-steps">
+        <li>현장을 눌러 상세 화면을 엽니다.</li>
+        <li><strong>정보 새로고침</strong>을 누르면 승강기안전공단 자료로 모델명·검사만료일·검사결과·설치일·주소가 최신으로 바뀝니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 7. 기타 메뉴 -->
+  <section class="mn-sec" id="mn-s-etc">
+    <h2 class="mn-h2">🗂 기타 메뉴</h2>
+
+    <div class="mn-card">
+      <h3>📞 전화 기록</h3>
+      <ul class="mn-steps">
+        <li>회사로 걸려온 전화가 자동으로 기록됩니다. (최근 3개월)</li>
+        <li>🏢 파란색 = 현장, 👷 초록색 = 직원, ❓ 빨간색 = 미등록 번호</li>
+        <li>기록을 누르면 <strong>신고 접수</strong> 화면으로 이동하고, 건물명·전화번호와 <strong>접수 시간(전화 온 시간)</strong>이 자동으로 들어갑니다.</li>
+      </ul>
+    </div>
+
+    <div class="mn-card">
+      <h3>🗓️ 검사일정</h3>
+      <ul class="mn-steps">
+        <li>달력에서 날짜를 누르면 그날 검사 목록(검사종류·건물명·승강기번호·검사시간·검사자 등)이 나옵니다.</li>
+        <li>◀ ▶ 버튼으로 달을 넘깁니다.</li>
+        <li>검사일이 있는 날짜에 표시가 됩니다. 일정은 관리자가 엑셀로 올립니다.</li>
+      </ul>
+    </div>
+
+    <div class="mn-card">
+      <h3>📋 준공계</h3>
+      <ul class="mn-steps">
+        <li><strong>TKE 양식</strong> 또는 <strong>대솔이엘 양식</strong> 선택</li>
+        <li>현장명, 공사명, 내용, 준공일, 제출일 입력</li>
+        <li><strong>+ 사진철 추가</strong>로 사진 넣기 (선택)</li>
+        <li><strong>📥 PDF 다운로드</strong></li>
+      </ul>
+    </div>
+
+    <div class="mn-card">
+      <h3>📸 공사팀 사진철</h3>
+      <ul class="mn-steps">
+        <li>교체품목, 교체호기, 파일명(현장명·품목) 입력</li>
+        <li>사진 세트를 추가하고 사진을 넣습니다.</li>
+        <li><strong>📥 엑셀 다운로드</strong> → "준공사진_현장명_품목.xlsx" 파일로 저장</li>
+      </ul>
+    </div>
+
+    <div class="mn-card">
+      <h3>📦 자재관리</h3>
+      <ul class="mn-steps">
+        <li>홈 화면 오른쪽 위 <strong>📦 자재관리</strong> 버튼을 누르면 자재관리 시스템으로 <strong>다시 로그인하지 않고</strong> 바로 이동합니다.</li>
+      </ul>
+    </div>
+
+    <div class="mn-card">
+      <h3>🌙 화면 밝기 (다크 / 라이트)</h3>
+      <ul class="mn-steps">
+        <li>화면 위쪽 <strong>☀️ / 🌙</strong> 버튼으로 어두운 화면과 밝은 화면을 바꿀 수 있습니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 9. FAQ -->
+  <section class="mn-sec" id="mn-s-tips">
+    <h2 class="mn-h2">💡 자주 묻는 질문</h2>
+
+    <div class="mn-card">
+      <h3>❓ 알림이 오지 않아요</h3>
+      <ul class="mn-steps">
+        <li>브라우저 알림이 <strong>허용</strong>인지 확인</li>
+        <li>안드로이드: 크롬 배터리 <strong>"제한 없음"</strong> 확인 / 아이폰: <strong>홈 화면 아이콘</strong>으로 실행했는지 확인</li>
+        <li>로그아웃 후 다시 로그인하고 알림 허용</li>
+        <li><strong>🔔 알림 테스트</strong>로 정상인지 확인</li>
+      </ul>
+    </div>
+
+    <div class="mn-card">
+      <h3>❓ 알림은 오는데 소리가 안 들려요 / 진동이 안 와요</h3>
+      <ul class="mn-steps">
+        <li>휴대폰 <strong>알림 음량</strong>을 올려주세요. (미디어 음량과 따로입니다)</li>
+        <li>진동은 설정 → 소리 및 진동 → <strong>"소리 모드에서 진동"</strong>을 켜야 옵니다.</li>
+      </ul>
+    </div>
+
+    <div class="mn-card">
+      <h3>❓ 담당자 목록에 이름이 안 나와요</h3>
+      <ul class="mn-steps">
+        <li><strong>평일 주간</strong>: 인사 관리의 <strong>내 팀</strong>이 맞는지 확인하세요. (관리자에게 요청)</li>
+        <li><strong>숙직·주말·휴일</strong>: 고장 담당자 현황에서 <strong>지금 시간대 당직으로 등록</strong>했는지 확인하세요.</li>
+        <li>당직은 매일 <strong>오전 8:30에 초기화</strong>됩니다.</li>
+      </ul>
+    </div>
+
+    <div class="mn-card">
+      <h3>❓ 로그인이 안 돼요</h3>
+      <ul class="mn-steps">
+        <li>아이디·비밀번호 확인</li>
+        <li>관리자에게 비밀번호 초기화 요청</li>
+      </ul>
+    </div>
+
+    <div class="mn-card">
+      <h3>❓ 화면이 이상하거나 예전 화면이 보여요</h3>
+      <ul class="mn-steps">
+        <li>화면 아래 <strong>"지금 업데이트"</strong>가 보이면 눌러주세요.</li>
+        <li>안 보이면 앱을 완전히 종료한 뒤 다시 실행하거나, 화면을 아래로 당겨 새로고침하세요.</li>
+        <li>인터넷 연결 상태 확인</li>
+      </ul>
+    </div>
+
+    <div class="mn-alert mn-green">
+      📞 기타 문의사항은 양희준 차장에게 연락주세요.
+    </div>
+  </section>
+
+      </div>
+      <div id="mn-admin" style="display:none">
+<div class="mn-alert mn-blue">📘 설치·로그인·당직 등록·고장 처리 같은 기본 사용법은 <strong>📘 직원용</strong> 탭을 봐주세요. 여기는 <strong>관리자·마스터에게만 보이는 기능</strong>만 다룹니다.</div>
+<div class="mn-toc"><button onclick="mnGo('mn-a-noti')">🔔 관리자에게 오는 알림</button><button onclick="mnGo('mn-a-fault')">🔧 신고 접수 · 배정</button><button onclick="mnGo('mn-a-mgmt')">🏢 관리현장 관리</button><button onclick="mnGo('mn-a-insp')">🗓️ 검사일정 업로드</button><button onclick="mnGo('mn-a-people')">👤 인사 · 휴일 관리</button><button onclick="mnGo('mn-a-contracts')">📄 계약서 보관함</button><button onclick="mnGo('mn-a-stats')">📊 통계 · 직원 알림 점검</button></div>
+  <div class="mn-card">
+    <h3>👀 관리자 메뉴 한눈에 보기</h3>
+    <table class="mn-table">
+      <tr><td><strong>👤 인사 관리</strong></td><td>계정 추가 · 비밀번호 초기화 · 삭제</td></tr>
+      <tr><td><strong>📅 휴일 관리</strong></td><td>공휴일·단체연차 등록</td></tr>
+      <tr><td><strong>📄 계약서</strong></td><td>계약서 PDF 보관</td></tr>
+      <tr><td><strong>📊 통계</strong></td><td>접속 · 메뉴 이용 · 고장 통계</td></tr>
+      <tr><td><strong>📝 서비스다켓</strong> <span class="mn-tag mn-tag-admin">마스터</span></td><td>TKE·대솔이엘 작업보고서 작성 · 고객 서명 · PDF</td></tr>
+    </table>
+  </div>
+
+  <section class="mn-sec" id="mn-a-noti">
+    <h2 class="mn-h2">🔔 관리자에게 오는 알림</h2>
+    <div class="mn-card">
+      <div style="border:1px solid var(--br);border-radius:10px;overflow:hidden">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--br)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-size:15px">⚠️</span>
+            <strong style="font-size:14px">담당자 신고접수 미확인</strong>
+            
+          </div>
+          <div style="font-size:13px;color:var(--tx-2)">배정된 직원이 <strong>3분 넘게</strong> 확인하지 않으면 관리자에게 옵니다. 직원이 알림을 못 보고 있다는 뜻이니 <strong>전화로 신고 내용을 전달</strong>해주세요.</div>
+        </div>
+
+        <div style="padding:14px 16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-size:15px">📞</span>
+            <strong style="font-size:14px">전화 착신</strong>
+            <span class="mn-tag mn-tag-admin">PC만</span>
+          </div>
+          <div style="font-size:13px;color:var(--tx-2)">회사 전화로 전화가 오면 관리자 <strong>PC</strong>에 바로 표시됩니다.</div>
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;font-size:13px">
+            <div style="background:#f0fff4;border-radius:8px;padding:8px 12px;color:#22543d">① 등록된 현장 번호 → <strong>📞 전화 착신 · [현장명] [호기]</strong></div>
+            <div style="background:#ebf8ff;border-radius:8px;padding:8px 12px;color:#1a365d">② 등록된 직원 번호 → <strong>📞 전화 착신 · 직원 [직급] [이름]</strong></div>
+            <div style="background:#fff5f5;border-radius:8px;padding:8px 12px;color:#742a2a">③ 미등록 번호 → <strong>📞 전화 착신 · 미등록 번호 (010-XXXX-XXXX)</strong></div>
+          </div>
+          <div style="font-size:13px;color:var(--tx-2);margin-top:8px">알림을 누르면 <strong>신고 접수</strong> 화면으로 이동하고 건물명·전화번호가 자동으로 들어갑니다.</div>
+        </div>
+      </div>
+      <div class="mn-tip">전화 착신 알림은 <strong>PC에서만</strong> 받습니다. 폰으로 앱에 들어간 뒤 PC 알림이 안 오면, PC에서 앱을 한 번 새로고침해주세요.</div>
+    </div>
+  </section>
+
+  <section class="mn-sec" id="mn-a-fault">
+    <h2 class="mn-h2">🔧 신고 접수 · 배정</h2>
+    <div class="mn-card">
+      <h3>🔧 신고 접수 & 담당자 배정</h3>
+      <ul class="mn-steps">
+        <li>고장 관리 → <strong>신고 접수</strong>에서 담당팀·담당자를 골라 접수하면 담당자에게 바로 알림이 갑니다.</li>
+        <li>담당자가 3분 넘게 확인하지 않으면 <strong>미확인 알림</strong>이 옵니다 → 전화로 전달해주세요.</li>
+        <li>배치완료 상태로 담당자가 확인하지 않은 신고에는 주황색 <strong>📞 전화로 전달</strong> 버튼이 나옵니다. 전화로 내용을 전한 뒤 누르면 <strong>처리중</strong>으로 바뀌고 카드에 "전화로 전달함"이 표시됩니다.</li>
+        <li>처리중인 신고는 상세 화면에서 <strong>처리담당자를 변경</strong>할 수 있습니다.</li>
+        <li>신고 삭제: 신고 내역·고장처리내역 카드의 <strong>삭제</strong> 버튼 (마스터는 상세 화면에서도 삭제 가능)</li>
+        <li>신고 접수 내용(시간·유형·내용)은 상세 화면 <strong>"✏️ 접수 정보 수정"</strong>에서 고칩니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="mn-sec" id="mn-a-mgmt">
+    <h2 class="mn-h2">🏢 관리현장 관리</h2>
+    <div class="mn-card">
+      <h3>🏢 관리현장 관리</h3>
+      <ul class="mn-steps">
+        <li><strong>+ 현장 추가</strong>, 목록의 <strong>수정 / 삭제</strong>로 현장과 호기를 관리합니다.</li>
+        <li>여러 현장을 체크한 뒤 <strong>계약 연장 1년 / 2년 / 3년</strong>으로 한 번에 연장할 수 있습니다.</li>
+        <li><strong>📥 엑셀</strong>로 현재 검색·필터 결과를 내려받습니다.</li>
+        <li><strong>🔄 전체 정보 갱신</strong>(마스터)은 전체 현장의 검사 정보를 한 번에 새로 받습니다. 시간이 오래 걸립니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="mn-sec" id="mn-a-insp">
+    <h2 class="mn-h2">🗓️ 검사일정 업로드</h2>
+    <div class="mn-card">
+      <ul class="mn-steps">
+        <li>☰ 메뉴 → <strong>검사일정</strong> → <strong>📅 검사일정 업로드</strong></li>
+        <li>검사 일정 엑셀 파일(.xlsx)을 고르면 달력에 반영됩니다.</li>
+      </ul>
+      <div class="mn-tip">공개 API로는 검사 예정일을 자동으로 받을 수 없어서 <strong>엑셀 업로드</strong>로 관리합니다.</div>
+    </div>
+  </section>
+
+  <section class="mn-sec" id="mn-a-people">
+    <h2 class="mn-h2">👤 인사 · 휴일 관리</h2>
+    <div class="mn-card">
+      <h3>👤 인사 관리 (계정)</h3>
+      <ul class="mn-steps">
+        <li>☰ 메뉴 → <strong>인사 관리</strong> → <strong>+ 계정 추가</strong></li>
+        <li>아이디, 비밀번호, 계정 유형(직원 / 관리자 / 마스터), 팀·직급·전화번호 입력</li>
+        <li>목록의 <strong>수정</strong>에서 정보를 고치고, <strong>🔑 비밀번호 초기화</strong>를 누르면 비밀번호가 <strong>000000</strong>으로 바뀝니다.</li>
+        <li><strong>삭제</strong>하면 그 직원 기기의 로그인도 함께 풀립니다.</li>
+      </ul>
+      <div class="mn-tip"><strong>전화번호를 등록하면</strong> 해당 직원이 회사로 전화할 때 알림에 이름이 표시됩니다.</div>
+    </div>
+    <div class="mn-card">
+      <h3>📅 휴일 관리</h3>
+      <ul class="mn-steps">
+        <li>날짜와 휴일명(예: 개천절, 단체연차) 입력 → <strong>+ 추가</strong></li>
+      </ul>
+      <div class="mn-tip">등록한 휴일은 고장 담당자 현황에서 <strong>주말·휴일 당직</strong>으로 처리됩니다.</div>
+    </div>
+  </section>
+
+  <section class="mn-sec" id="mn-a-contracts">
+    <h2 class="mn-h2">📄 계약서 보관함</h2>
+    <div class="mn-card">
+      <h3>📄 계약서 보관함</h3>
+      <ul class="mn-steps">
+        <li><strong>+ TKE 업로드 / + 대솔이엘 업로드</strong>로 계약서 PDF를 올립니다. (여러 개 한 번에 가능)</li>
+        <li>파일명·메모로 검색하고, 여러 개를 골라 한 번에 삭제할 수 있습니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="mn-sec" id="mn-a-stats">
+    <h2 class="mn-h2">📊 통계 · 직원 알림 점검</h2>
+    <div class="mn-card">
+      <h3>📊 통계</h3>
+      <ul class="mn-steps">
+        <li><strong>📈 접속 통계</strong> — 오늘·이번주·이번달 접속자, 팀별 사용률, 직원별 접속 일수, 미접속 직원</li>
+        <li><strong>📋 메뉴 이용</strong> — 어떤 메뉴를 많이 쓰는지, 직원별 자주 쓰는 메뉴</li>
+        <li><strong>🔧 고장 통계</strong> — 월별 접수 추이, 유형별·현장별·담당자별 건수, 평균 처리시간, 엑셀</li>
+      </ul>
+    </div>
+    <div class="mn-card">
+      <h3>🔔 직원 알림 점검</h3>
+      <ul class="mn-steps">
+        <li>☰ 메뉴 → <strong>알림 테스트</strong> 아래 <strong>👥 직원별 현황</strong>에서 직원마다 알림이 잘 도착했는지 볼 수 있습니다.</li>
+        <li>테스트를 안 한 직원이 위쪽에 표시됩니다.</li>
+      </ul>
+    </div>
+  </section>
+
+      </div>
+      <div class="mn-foot">문의: 양희준 차장</div>
+    </div>
+  </div>
+
 </main>
 
 <!-- 신고 상세/처리 모달 -->
@@ -2580,8 +3224,11 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.10.22-1';
+  const APP_VERSION = '2026.10.22-2';
   const RELEASE_NOTES = [
+    { version: '2026.10.22-2', date: '10/22', items: [
+      { text: '📘 ☰ 메뉴에 <b>사용 설명서</b>가 생겼습니다. 앱 사용법이 궁금하면 여기서 확인하세요.' },
+    ]},
     { version: '2026.10.22-1', date: '10/22', items: [
       { text: '🔍 관리현장 검색할 때 <b>띄어쓰기를 안 해도</b> 찾아집니다. (예: "삼송로138" → 삼송로 138-1)' },
     ]},
@@ -2644,7 +3291,7 @@
   updateClock(); setInterval(updateClock, 1000);
 
   /* ── NAV MENU (사이드 드로어) ── */
-  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', gongsa:'📸 공사팀 사진철', holiday:'📅 휴일 관리', 'insp-calendar':'🗓️ 검사일정', docket:'📝 서비스다켓', 'call-logs':'📞 전화 기록', contracts:'📄 계약서', stats:'📊 통계', 'push-test':'🔔 알림 테스트' };
+  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', gongsa:'📸 공사팀 사진철', holiday:'📅 휴일 관리', 'insp-calendar':'🗓️ 검사일정', docket:'📝 서비스다켓', 'call-logs':'📞 전화 기록', contracts:'📄 계약서', stats:'📊 통계', 'push-test':'🔔 알림 테스트', manual:'📘 사용 설명서' };
   function toggleNavMenu() {
     if (!currentUser) return;
     document.getElementById('side-drawer').classList.toggle('open');
@@ -2806,6 +3453,7 @@
     if (tab === 'contracts') loadContracts();
     if (tab === 'stats') initStatsTab();
     if (tab === 'push-test') loadPushTest();
+    if (tab === 'manual') switchManualTab('staff');
     const lbl = document.getElementById('current-tab-label');
     if (lbl) lbl.textContent = TAB_LABELS[tab] || '';
   }
@@ -3660,6 +4308,8 @@
     document.getElementById('tab-contracts-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-stats-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-push-test-btn').style.display = 'flex';   // 알림 테스트는 전 직원
+    document.getElementById('tab-manual-btn').style.display = 'flex';      // 사용 설명서는 전 직원 (관리자용 탭은 관리자·마스터만)
+    document.getElementById('mn-tab-admin-btn').style.display = isAdmin ? '' : 'none';
     const cBtns = document.getElementById('contracts-upload-btns');
     if (cBtns) cBtns.style.display = isAdmin ? '' : 'none';
     document.getElementById('tab-insp-calendar-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
@@ -8019,6 +8669,21 @@
 
   function initStatsTab() {
     switchStatsTab('access');
+  }
+
+  // 사용 설명서: 직원용 / 관리자용(관리자·마스터만) 탭 전환
+  function switchManualTab(which) {
+    const isAdmin = currentRole === '관리자' || currentRole === '마스터';
+    if (which === 'admin' && !isAdmin) which = 'staff';
+    document.getElementById('mn-staff').style.display = which === 'staff' ? '' : 'none';
+    document.getElementById('mn-admin').style.display = which === 'admin' ? '' : 'none';
+    document.getElementById('mn-tab-staff-btn').classList.toggle('active', which === 'staff');
+    document.getElementById('mn-tab-admin-btn').classList.toggle('active', which === 'admin');
+    window.scrollTo(0, 0);
+  }
+  function mnGo(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function switchStatsTab(which) {
