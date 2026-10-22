@@ -2580,8 +2580,11 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.10.12-3';
+  const APP_VERSION = '2026.10.22-1';
   const RELEASE_NOTES = [
+    { version: '2026.10.22-1', date: '10/22', items: [
+      { text: '🔍 관리현장 검색할 때 <b>띄어쓰기를 안 해도</b> 찾아집니다. (예: "삼송로138" → 삼송로 138-1)' },
+    ]},
     { version: '2026.10.12-3', date: '10/12', items: [
       { text: '📞 전화기록에서 전화 온 기록을 누르면, <b>고장 접수 시간</b>이 <b>전화가 온 시간</b>으로 자동 입력됩니다.' },
       { text: '🔄 새 버전이 나오면 화면 아래에 <b>지금 업데이트</b> 버튼이 표시됩니다.' },
@@ -4940,15 +4943,7 @@
     let list = mgmtData.filter(m => {
       if (teamFilter && (m.inspector_team||'') !== teamFilter) return false;
       if (!q) return true;
-      const qClean = q.replace(/-/g, '');
-      return (m.site_name||'').toLowerCase().includes(q) ||
-             (m.main_inspector||'').toLowerCase().includes(q) ||
-             (m.sub_inspector||'').toLowerCase().includes(q) ||
-             (m.sub_inspector2||'').toLowerCase().includes(q) ||
-             (m.elev_numbers||[]).some(n => n.toLowerCase().replace(/-/g,'').includes(qClean)) ||
-             (m.site_phone||'').replace(/-/g,'').includes(qClean) ||
-             ['emergency_phone','emergency_phone2','emergency_phone3','emergency_phone4','emergency_phone5','emergency_phone6','emergency_phone7','emergency_phone8','emergency_phone9','emergency_phone10'].some(k=>(m[k]||'').replace(/-/g,'').includes(qClean)) ||
-             (m.elevator_address||'').toLowerCase().includes(q);
+      return mgmtSearchMatch(m, q);
     });
     if (mgmtFilter === 'expire') {
       list = list.filter(m => isAlreadyExpired(m.contract_end) || isExpireThisMonth(m.contract_end));
@@ -5085,21 +5080,28 @@
     return dateStr < todayStr;
   }
 
+  // 관리현장 검색 매칭 (목록·엑셀 공통). 띄어쓰기 무시, 번호류는 '-'도 무시
+  function mgmtSearchMatch(m, q) {
+    const noSp = s => (s||'').toLowerCase().replace(/\s+/g, '');
+    const qText = noSp(q);
+    const qClean = qText.replace(/-/g, '');
+    return noSp(m.site_name).includes(qText) ||
+           noSp(m.main_inspector).includes(qText) ||
+           noSp(m.sub_inspector).includes(qText) ||
+           noSp(m.sub_inspector2).includes(qText) ||
+           (m.elev_numbers||[]).some(n => noSp(n).replace(/-/g,'').includes(qClean)) ||
+           noSp(m.site_phone).replace(/-/g,'').includes(qClean) ||
+           ['emergency_phone','emergency_phone2','emergency_phone3','emergency_phone4','emergency_phone5','emergency_phone6','emergency_phone7','emergency_phone8','emergency_phone9','emergency_phone10'].some(k=>noSp(m[k]).replace(/-/g,'').includes(qClean)) ||
+           noSp(m.elevator_address).includes(qText);
+  }
+
   function renderMgmtList() {
     const q = (document.getElementById('mgmt-search')?.value || '').trim().toLowerCase();
     const teamFilter = (document.getElementById('mgmt-team-filter')?.value || '');
     let list = mgmtData.filter(m => {
       if (teamFilter && (m.inspector_team||'') !== teamFilter) return false;
       if (!q) return true;
-      const qClean = q.replace(/-/g, '');
-      return (m.site_name||'').toLowerCase().includes(q) ||
-             (m.main_inspector||'').toLowerCase().includes(q) ||
-             (m.sub_inspector||'').toLowerCase().includes(q) ||
-             (m.sub_inspector2||'').toLowerCase().includes(q) ||
-             (m.elev_numbers||[]).some(n => n.toLowerCase().replace(/-/g,'').includes(qClean)) ||
-             (m.site_phone||'').replace(/-/g,'').includes(qClean) ||
-             ['emergency_phone','emergency_phone2','emergency_phone3','emergency_phone4','emergency_phone5','emergency_phone6','emergency_phone7','emergency_phone8','emergency_phone9','emergency_phone10'].some(k=>(m[k]||'').replace(/-/g,'').includes(qClean)) ||
-             (m.elevator_address||'').toLowerCase().includes(q);
+      return mgmtSearchMatch(m, q);
     });
 
     // 이번 달 만료 건수 업데이트 (전체 기준)
