@@ -5614,7 +5614,9 @@
 
   async function loadInspTeams() {
     const { data, error } = await db.from('inspection_teams').select('*').order('name');
-    inspTeams = error ? [] : (data || []);
+    const TEAM_ORDER = ['1팀', '2팀', '3팀', '상주'];
+    const rank = t => { const i = TEAM_ORDER.indexOf(t.team); return i < 0 ? TEAM_ORDER.length : i; };
+    inspTeams = (error ? [] : (data || [])).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'ko'));
   }
   function inspTeamById(id) { return id ? inspTeams.find(t => t.id === id) || null : null; }
 
@@ -5679,14 +5681,19 @@
     if (!inspTeams.length) { el.innerHTML = '<div style="text-align:center;color:var(--tx-4);font-size:13px;padding:14px">등록된 점검조가 없습니다.</div>'; return; }
     const cnt = {};
     mgmtData.forEach(m => { if (m.team_id) cnt[m.team_id] = (cnt[m.team_id] || 0) + 1; });
-    el.innerHTML = inspTeams.map(t => `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--br);border-radius:10px;margin-bottom:6px;background:var(--bg-card)">
+    let lastTeam;
+    el.innerHTML = inspTeams.map(t => {
+      const head = (t.team || '') !== lastTeam ? `<div style="font-size:13px;font-weight:800;color:var(--tx-2);margin:${lastTeam === undefined ? '0' : '14px'} 0 6px">${escHtml(t.team || '팀 없음')}</div>` : '';
+      lastTeam = t.team || '';
+      return head + `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--br);border-radius:10px;margin-bottom:6px;background:var(--bg-card)">
       <div style="flex:1;min-width:0">
         <div style="font-size:14px;font-weight:800;color:var(--tx)">${escHtml(t.name)}${t.team ? ` <span style="font-size:11px;font-weight:700;color:#2b6cb0;background:#ebf8ff;border:1px solid #bee3f8;border-radius:10px;padding:1px 7px">${escHtml(t.team)}</span>` : ''} <span style="font-size:12px;font-weight:600;color:var(--tx-3)">현장 ${cnt[t.id] || 0}곳</span></div>
         <div style="font-size:12px;color:var(--tx-2);margin-top:2px;word-break:keep-all">${escHtml(inspectorText(t))}</div>
       </div>
       <button class="btn-sm" style="border-color:#bee3f8;color:#2b6cb0;flex-shrink:0" onclick="editInspTeam(${t.id})">수정</button>
       <button class="btn-sm del" style="flex-shrink:0" onclick="deleteInspTeam(${t.id})">삭제</button>
-    </div>`).join('');
+    </div>`;
+    }).join('');
   }
   function resetInspTeamForm() {
     editingInspTeamId = null;
