@@ -3523,8 +3523,18 @@
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-home').classList.add('active');
+    resetMgmtFilters();
     updateHomeProfile();
     loadDashboardStats();
+  }
+  // 홈으로 가면 관리현장 필터를 처음 상태로 (F5와 동일: 보수현장 · 팀 전체 · 조 전체 · 검색어 비움)
+  function resetMgmtFilters() {
+    mgmtFilter = 'active';
+    selectedMgmtIds.clear();
+    const bar = document.getElementById('mgmt-action-bar'); if (bar) bar.style.display = 'none';
+    const label = document.getElementById('mgmt-filter-label'); if (label) label.textContent = MGMT_FILTER_LABELS.active;
+    document.querySelectorAll('.mgmt-fopt').forEach(el => el.classList.toggle('active', el.dataset.val === 'active'));
+    ['mgmt-search', 'mgmt-team-filter', 'mgmt-jo-filter'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   }
   function updateHomeProfile() {
     if (!currentUser) return;
