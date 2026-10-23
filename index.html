@@ -1046,7 +1046,8 @@
   <div class="page" id="page-mgmt">
     <div class="card">
       <h2>🏢 관리현장
-        <button class="btn-add-site" id="btn-add-mgmt" onclick="showAddMgmtModal()" style="display:none">+ 현장 추가</button>
+        <button class="btn-add-site" id="btn-insp-team" onclick="showInspTeamModal()" style="display:none">👥 점검조</button>
+        <button class="btn-add-site" id="btn-add-mgmt" onclick="showAddMgmtModal()" style="display:none;margin-left:6px">+ 현장 추가</button>
       </h2>
       <div class="filters" style="margin-bottom:16px">
         <div id="mgmt-filter-dropdown" style="position:relative;display:inline-block">
@@ -2017,7 +2018,8 @@
       <h3>✏️ 현장 정보 수정</h3>
       <ul class="mn-steps">
         <li>현장 목록 오른쪽 초록색 <strong>"정보 수정"</strong> 버튼</li>
-        <li>고칠 수 있는 항목: <strong>주점검자 · 보조점검자1 · 보조점검자2 · 비상통화장치 번호 · 비고</strong></li>
+        <li>고칠 수 있는 항목: <strong>점검조 · 비상통화장치 번호 · 비고</strong></li>
+        <li><strong>점검조</strong>는 드롭다운에서 고르면 주점검자·보조점검자가 한 번에 들어갑니다. 목록에 원하는 조가 없으면 관리자에게 말씀해 주세요.</li>
         <li>비상통화장치 번호는 <strong>회선 추가</strong>로 여러 개 넣을 수 있습니다. "2호기: 010-1234-5678"처럼 호기를 앞에 쓰면 전화 착신 알림에 호기까지 표시됩니다.</li>
       </ul>
     </div>
@@ -2210,6 +2212,8 @@
         <li><strong>+ 현장 추가</strong>, 목록의 <strong>수정 / 삭제</strong>로 현장과 호기를 관리합니다.</li>
         <li>여러 현장을 체크한 뒤 <strong>계약 연장 1년 / 2년 / 3년</strong>으로 한 번에 연장할 수 있습니다.</li>
         <li><strong>📥 엑셀</strong>로 현재 검색·필터 결과를 내려받습니다.</li>
+        <li><strong>👥 점검조</strong>에서 조(주점검자 + 보조점검자)를 만들고 고칩니다. 현장 수정창에서는 조를 고르기만 하면 됩니다.</li>
+        <li>조원을 고치면 <strong>그 조를 쓰는 현장 전체</strong>의 점검자가 같이 바뀝니다. 팀 필터도 조에 정한 팀을 따라갑니다.</li>
         <li><strong>🔄 전체 정보 갱신</strong>(마스터)은 전체 현장의 검사 정보를 한 번에 새로 받습니다. 시간이 오래 걸립니다.</li>
       </ul>
     </div>
@@ -2672,17 +2676,10 @@
           </div>
         </div>
       </div>
-      <div>
-        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">주점검자</label>
-        <input type="text" class="modal-input normal" id="mgmt-main-inspector" placeholder="주점검자 이름" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
-      </div>
-      <div>
-        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">보조점검자1</label>
-        <input type="text" class="modal-input normal" id="mgmt-sub-inspector" placeholder="보조점검자1 이름" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
-      </div>
-      <div>
-        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">보조점검자2</label>
-        <input type="text" class="modal-input normal" id="mgmt-sub-inspector2" placeholder="보조점검자2 이름" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
+      <div style="grid-column:1/-1">
+        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">점검조</label>
+        <select class="modal-input normal" id="mgmt-insp-team" style="margin-bottom:0;letter-spacing:0" onchange="updateInspTeamPreview('mgmt')"></select>
+        <div id="mgmt-insp-team-preview" style="margin-top:5px;font-size:12px;color:#718096"></div>
       </div>
       <div>
         <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">현장 전화번호</label>
@@ -2762,16 +2759,9 @@
     </div>
     <div style="overflow-y:auto;overflow-x:hidden;padding:0 28px;flex:1;display:flex;flex-direction:column;gap:12px">
       <div>
-        <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:4px">주점검자</label>
-        <input type="text" class="modal-input normal" id="staff-main-inspector" placeholder="주점검자 이름" style="margin-bottom:0" />
-      </div>
-      <div>
-        <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:4px">보조점검자1</label>
-        <input type="text" class="modal-input normal" id="staff-sub-inspector" placeholder="보조점검자1 이름" style="margin-bottom:0" />
-      </div>
-      <div>
-        <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:4px">보조점검자2</label>
-        <input type="text" class="modal-input normal" id="staff-sub-inspector2" placeholder="보조점검자2 이름" style="margin-bottom:0" />
+        <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:4px">점검조</label>
+        <select class="modal-input normal" id="staff-insp-team" style="margin-bottom:0;letter-spacing:0" onchange="updateInspTeamPreview('staff')"></select>
+        <div id="staff-insp-team-preview" style="margin-top:5px;font-size:12px;color:var(--tx-3)"></div>
       </div>
       <div>
         <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:4px">비상통화장치번호</label>
@@ -2788,6 +2778,61 @@
       <div class="modal-btn-row" style="margin-top:16px">
         <button class="modal-btn cancel" onclick="closeModal('notes-modal')">취소</button>
         <button class="modal-btn confirm" onclick="saveNotes()">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 점검조 관리 모달 (관리자·마스터) -->
+<div class="modal-overlay" id="insp-team-modal" style="display:none">
+  <div class="modal-box" style="width:560px;max-width:calc(100vw - 32px);text-align:left;padding:0;display:flex;flex-direction:column;max-height:90vh">
+    <div style="padding:24px 24px 0;flex-shrink:0">
+      <h3 style="margin:0 0 4px;font-size:17px;font-weight:800;text-align:center">👥 점검조 관리</h3>
+      <p style="margin:0 0 14px;font-size:12px;color:var(--tx-3);text-align:center">조원을 고치면 그 조를 쓰는 현장 전체의 점검자가 같이 바뀝니다.</p>
+    </div>
+    <div style="overflow-y:auto;overflow-x:hidden;padding:0 24px;flex:1">
+      <div id="insp-team-list"></div>
+      <div style="margin-top:14px;padding:14px;border:1.5px solid var(--br-mid);border-radius:10px;background:var(--bg-high)">
+        <div id="insp-team-form-title" style="font-size:13px;font-weight:800;color:var(--tx);margin-bottom:10px">➕ 새 조 만들기</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:4px">조 이름</label>
+            <input type="text" class="modal-input normal" id="insp-team-name" placeholder="예: 강민구조" style="margin-bottom:0" />
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:4px">팀</label>
+            <select class="modal-input normal" id="insp-team-team" style="margin-bottom:0;letter-spacing:0">
+              <option value="">선택 안 함</option>
+              <option value="1팀">1팀</option>
+              <option value="2팀">2팀</option>
+              <option value="3팀">3팀</option>
+              <option value="상주">상주</option>
+            </select>
+          </div>
+          <div style="grid-column:1/-1">
+            <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:4px">주점검자</label>
+            <input type="text" class="modal-input normal" id="insp-team-main" list="insp-staff-names" placeholder="이름" style="margin-bottom:0" />
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:4px">보조점검자1</label>
+            <input type="text" class="modal-input normal" id="insp-team-sub1" list="insp-staff-names" placeholder="이름" style="margin-bottom:0" />
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:4px">보조점검자2</label>
+            <input type="text" class="modal-input normal" id="insp-team-sub2" list="insp-staff-names" placeholder="이름" style="margin-bottom:0" />
+          </div>
+        </div>
+        <datalist id="insp-staff-names"></datalist>
+        <div class="modal-error" id="insp-team-error" style="display:none;margin-top:10px"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+          <button type="button" class="btn-sm" id="insp-team-cancel-btn" onclick="resetInspTeamForm()" style="display:none">취소</button>
+          <button type="button" onclick="saveInspTeam()" style="padding:7px 18px;background:#2b6cb0;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">저장</button>
+        </div>
+      </div>
+    </div>
+    <div style="padding:16px 24px 22px;flex-shrink:0">
+      <div class="modal-btn-row" style="margin:0">
+        <button class="modal-btn cancel" onclick="closeModal('insp-team-modal')">닫기</button>
       </div>
     </div>
   </div>
@@ -3224,8 +3269,11 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.10.22-2';
+  const APP_VERSION = '2026.10.23-1';
   const RELEASE_NOTES = [
+    { version: '2026.10.23-1', date: '10/23', items: [
+      { text: '👥 관리현장 점검자를 이제 <b>점검조</b>로 고릅니다. 수정창에서 조를 선택하면 주점검자·보조점검자가 한 번에 들어갑니다.' },
+    ]},
     { version: '2026.10.22-2', date: '10/22', items: [
       { text: '📘 ☰ 메뉴에 <b>사용 설명서</b>가 생겼습니다. 앱 사용법이 궁금하면 여기서 확인하세요.' },
     ]},
@@ -5497,6 +5545,8 @@
     const { data: accData } = await db.from('accounts').select('username, team');
     const teamMap = {};
     (accData || []).forEach(a => { if (a.username && a.team) teamMap[a.username] = a.team; });
+    mgmtStaffNames = [...new Set((accData || []).map(a => a.username).filter(Boolean))].sort((a,b) => a.localeCompare(b,'ko'));
+    await loadInspTeams();
     // site_elevators 전체 페이지네이션 fetch
     let elevData = [], elevOffset = 0;
     while (true) {
@@ -5532,9 +5582,10 @@
         defectCounts[e.site_id] = (defectCounts[e.site_id] || 0) + 1;
       }
     });
-    mgmtData = data.map(m => ({ ...m, elev_count: elevCounts[m.id] || 0, insp_expired: inspExpired[m.id] || 0, insp_soon: inspSoon[m.id] || 0, elev_numbers: elevNumbers[m.id] || [], elev_info: elevInfo[m.id] || [], inspector_team: teamMap[m.main_inspector] || null, defect_count: defectCounts[m.id] || 0 }));
+    mgmtData = data.map(m => ({ ...m, elev_count: elevCounts[m.id] || 0, insp_expired: inspExpired[m.id] || 0, insp_soon: inspSoon[m.id] || 0, elev_numbers: elevNumbers[m.id] || [], elev_info: elevInfo[m.id] || [], inspector_team: (inspTeamById(m.team_id)?.team) || teamMap[m.main_inspector] || null, defect_count: defectCounts[m.id] || 0 }));
     const isAdmin = currentRole === '관리자' || currentRole === '마스터';
     document.getElementById('btn-add-mgmt').style.display = isAdmin ? 'inline-flex' : 'none';
+    document.getElementById('btn-insp-team').style.display = isAdmin ? 'inline-flex' : 'none';
     document.getElementById('btn-sync-all-inspection').style.display = currentRole === '마스터' ? 'inline-block' : 'none';
 
     // 마지막 갱신일 확인 (30일 초과 시 알림)
@@ -5546,6 +5597,126 @@
       }
     }
     renderMgmtList();
+  }
+
+  /* ── 점검조 (inspection_teams) ── */
+  let inspTeams = [];
+  let mgmtStaffNames = [];
+  let editingInspTeamId = null;
+
+  async function loadInspTeams() {
+    const { data, error } = await db.from('inspection_teams').select('*').order('name');
+    inspTeams = error ? [] : (data || []);
+  }
+  function inspTeamById(id) { return id ? inspTeams.find(t => t.id === id) || null : null; }
+
+  // "강민구(주), 이성호" 형태 (현장·조 공통)
+  function inspectorText(o) {
+    if (!o) return '';
+    return [o.main_inspector ? o.main_inspector + '(주)' : '', o.sub_inspector || '', o.sub_inspector2 || ''].filter(Boolean).join(', ');
+  }
+
+  // 수정창 점검조 드롭다운 채우기 (prefix: 'mgmt' | 'staff')
+  function fillInspTeamSelect(prefix, m) {
+    const sel = document.getElementById(prefix + '-insp-team');
+    const cur = m?.team_id || '';
+    let html = `<option value="">-- 점검조 선택 --</option>`;
+    html += inspTeams.map(t => `<option value="${t.id}">${escHtml(t.name)}${t.team ? ' [' + escHtml(t.team) + ']' : ''} · ${escHtml(inspectorText(t))}</option>`).join('');
+    sel.innerHTML = html;
+    sel.value = inspTeamById(cur) ? String(cur) : '';
+    sel.dataset.oldText = m && !m.team_id ? inspectorText(m) : '';
+    updateInspTeamPreview(prefix);
+  }
+  function updateInspTeamPreview(prefix) {
+    const sel = document.getElementById(prefix + '-insp-team');
+    const pv = document.getElementById(prefix + '-insp-team-preview');
+    const t = inspTeamById(parseInt(sel.value));
+    if (t) pv.innerHTML = '👷 ' + escHtml(inspectorText(t));
+    else if (sel.dataset.oldText) pv.innerHTML = '⚠️ 조 미지정 · 현재 점검자: ' + escHtml(sel.dataset.oldText) + ' (조를 고르지 않으면 그대로 유지)';
+    else pv.innerHTML = '';
+  }
+  // 저장용: 조를 골랐으면 team_id + 점검자 3칸, 안 골랐으면 빈 객체(기존 값 유지)
+  function inspTeamPayload(prefix) {
+    const t = inspTeamById(parseInt(document.getElementById(prefix + '-insp-team').value));
+    if (!t) return {};
+    return { team_id: t.id, main_inspector: t.main_inspector, sub_inspector: t.sub_inspector || null, sub_inspector2: t.sub_inspector2 || null };
+  }
+
+  async function showInspTeamModal() {
+    await loadInspTeams();
+    document.getElementById('insp-staff-names').innerHTML = mgmtStaffNames.map(n => `<option value="${escHtml(n)}"></option>`).join('');
+    resetInspTeamForm();
+    renderInspTeamList();
+    openModal('insp-team-modal');
+  }
+  function renderInspTeamList() {
+    const el = document.getElementById('insp-team-list');
+    if (!inspTeams.length) { el.innerHTML = '<div style="text-align:center;color:var(--tx-4);font-size:13px;padding:14px">등록된 점검조가 없습니다.</div>'; return; }
+    const cnt = {};
+    mgmtData.forEach(m => { if (m.team_id) cnt[m.team_id] = (cnt[m.team_id] || 0) + 1; });
+    el.innerHTML = inspTeams.map(t => `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--br);border-radius:10px;margin-bottom:6px;background:var(--bg-card)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:800;color:var(--tx)">${escHtml(t.name)}${t.team ? ` <span style="font-size:11px;font-weight:700;color:#2b6cb0;background:#ebf8ff;border:1px solid #bee3f8;border-radius:10px;padding:1px 7px">${escHtml(t.team)}</span>` : ''} <span style="font-size:12px;font-weight:600;color:var(--tx-3)">현장 ${cnt[t.id] || 0}곳</span></div>
+        <div style="font-size:12px;color:var(--tx-2);margin-top:2px;word-break:keep-all">${escHtml(inspectorText(t))}</div>
+      </div>
+      <button class="btn-sm" style="border-color:#bee3f8;color:#2b6cb0;flex-shrink:0" onclick="editInspTeam(${t.id})">수정</button>
+      <button class="btn-sm del" style="flex-shrink:0" onclick="deleteInspTeam(${t.id})">삭제</button>
+    </div>`).join('');
+  }
+  function resetInspTeamForm() {
+    editingInspTeamId = null;
+    ['insp-team-name','insp-team-team','insp-team-main','insp-team-sub1','insp-team-sub2'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('insp-team-form-title').textContent = '➕ 새 조 만들기';
+    document.getElementById('insp-team-cancel-btn').style.display = 'none';
+    document.getElementById('insp-team-error').style.display = 'none';
+  }
+  function editInspTeam(id) {
+    const t = inspTeamById(id);
+    if (!t) return;
+    editingInspTeamId = id;
+    document.getElementById('insp-team-name').value = t.name || '';
+    document.getElementById('insp-team-team').value = t.team || '';
+    document.getElementById('insp-team-main').value = t.main_inspector || '';
+    document.getElementById('insp-team-sub1').value = t.sub_inspector || '';
+    document.getElementById('insp-team-sub2').value = t.sub_inspector2 || '';
+    document.getElementById('insp-team-form-title').textContent = '✏️ ' + t.name + ' 수정';
+    document.getElementById('insp-team-cancel-btn').style.display = 'inline-block';
+    document.getElementById('insp-team-error').style.display = 'none';
+    document.getElementById('insp-team-name').focus();
+  }
+  async function saveInspTeam() {
+    const errEl = document.getElementById('insp-team-error');
+    errEl.style.display = 'none';
+    const v = id => document.getElementById(id).value.trim();
+    const payload = { name: v('insp-team-name'), team: v('insp-team-team') || null, main_inspector: v('insp-team-main'), sub_inspector: v('insp-team-sub1') || null, sub_inspector2: v('insp-team-sub2') || null };
+    if (!payload.name || !payload.main_inspector) { errEl.textContent = '조 이름과 주점검자는 꼭 입력해 주세요.'; errEl.style.display = 'block'; return; }
+    const unknown = [payload.main_inspector, payload.sub_inspector, payload.sub_inspector2].filter(n => n && !mgmtStaffNames.includes(n));
+    if (unknown.length && !confirm(`직원 목록에 없는 이름이 있습니다: ${unknown.join(', ')}\n그래도 저장할까요?`)) return;
+    let error;
+    if (editingInspTeamId) {
+      const cnt = mgmtData.filter(m => m.team_id === editingInspTeamId).length;
+      if (cnt && !confirm(`이 조를 쓰는 현장 ${cnt}곳의 점검자가 같이 바뀝니다. 저장할까요?`)) return;
+      ({ error } = await db.from('inspection_teams').update(payload).eq('id', editingInspTeamId));
+    } else {
+      ({ error } = await db.from('inspection_teams').insert(payload));
+    }
+    if (error) { errEl.textContent = '저장 실패: ' + (error.code === '23505' ? '같은 이름의 조가 이미 있습니다.' : error.message); errEl.style.display = 'block'; return; }
+    showToast('✅ 점검조가 저장되었습니다.');
+    await loadMgmt();
+    resetInspTeamForm();
+    renderInspTeamList();
+  }
+  async function deleteInspTeam(id) {
+    const t = inspTeamById(id);
+    if (!t) return;
+    const cnt = mgmtData.filter(m => m.team_id === id).length;
+    if (!confirm(`"${t.name}"을(를) 삭제할까요?` + (cnt ? `\n이 조를 쓰는 현장 ${cnt}곳은 '조 미지정'이 되고, 점검자 이름은 그대로 남습니다.` : ''))) return;
+    const { error } = await db.from('inspection_teams').delete().eq('id', id);
+    if (error) { showToast('❌ 삭제 실패: ' + error.message); return; }
+    showToast('🗑 점검조가 삭제되었습니다.');
+    await loadMgmt();
+    if (editingInspTeamId === id) resetInspTeamForm();
+    renderInspTeamList();
   }
 
   let mgmtFilter = 'active';
@@ -5611,9 +5782,8 @@
         '계약일자': m.contract_date || '',
         '계약시작': m.contract_start || '',
         '계약만료': m.contract_end || '',
-        '주점검자': m.main_inspector || '',
-        '보조점검자1': m.sub_inspector || '',
-        '보조점검자2': m.sub_inspector2 || '',
+        '점검조': inspTeamById(m.team_id)?.name || '',
+        '점검자': inspectorText(m),
         '현장전화': m.site_phone || '',
         '현장연락처2': m.site_phone2 || '',
         '팩스': m.fax || '',
@@ -5635,7 +5805,7 @@
     // 컬럼 너비 설정
     ws['!cols'] = [
       {wch:30},{wch:12},{wch:12},{wch:18},{wch:12},{wch:12},{wch:12},
-      {wch:10},{wch:10},{wch:14},{wch:14},{wch:14},{wch:14},{wch:22},{wch:30},{wch:20}
+      {wch:12},{wch:26},{wch:14},{wch:14},{wch:14},{wch:14},{wch:22},{wch:30},{wch:20}
     ];
 
     const wb = XLSX.utils.book_new();
@@ -5739,6 +5909,7 @@
            noSp(m.main_inspector).includes(qText) ||
            noSp(m.sub_inspector).includes(qText) ||
            noSp(m.sub_inspector2).includes(qText) ||
+           noSp(inspTeamById(m.team_id)?.name).includes(qText) ||
            (m.elev_numbers||[]).some(n => noSp(n).replace(/-/g,'').includes(qClean)) ||
            noSp(m.site_phone).replace(/-/g,'').includes(qClean) ||
            ['emergency_phone','emergency_phone2','emergency_phone3','emergency_phone4','emergency_phone5','emergency_phone6','emergency_phone7','emergency_phone8','emergency_phone9','emergency_phone10'].some(k=>noSp(m[k]).replace(/-/g,'').includes(qClean)) ||
@@ -5830,7 +6001,7 @@
         <th>현장명</th>
         <th style="width:60px;text-align:center">대수</th>
         <th style="width:140px">계약구분</th>
-        <th style="width:90px">주점검자</th>
+        <th style="width:150px">점검자</th>
         <th style="width:120px">현장전화</th>
         ${(isAdmin || currentRole === '직원') ? '<th style="width:100px">비고</th>' : ''}
       </tr></thead>
@@ -5843,7 +6014,7 @@
         <td><strong style="${m.site_type==='상실'?'color:#e53e3e':''}">${escHtml(m.site_name||'')}</strong>${m.site_type==='상실'?` <span style="background:#fed7d7;color:#c53030;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">상실</span>`:''}${m.site_type==='무상'?` <span style="background:#c6f6d5;color:#276749;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">무상</span>`:''}${m.defect_count > 0 ? ` <span style="background:#fefcbf;color:#744210;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">하자 ${m.defect_count}대</span>` : ''}</td>
         <td style="text-align:center">${m.elev_count > 0 ? `<span style="background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:700">${m.elev_count}대</span>` : '<span style="color:#a0aec0;font-size:12px">-</span>'}</td>
         <td><span style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;border-radius:12px;padding:2px 8px;font-size:11px;white-space:nowrap">${escHtml(m.contract_type||'-')}</span></td>
-        <td>${escHtml(m.main_inspector||'-')}</td>
+        <td style="font-size:13px;word-break:keep-all">${escHtml(inspectorText(m)||'-')}</td>
         <td>${escHtml(m.site_phone||'-')}</td>
         ${isAdmin ? `<td onclick="event.stopPropagation()" style="white-space:nowrap">
           <button class="btn-sm" style="border-color:#bee3f8;color:#2b6cb0" onclick="showEditMgmtModal(${m.id})">수정</button>
@@ -5870,7 +6041,7 @@
     const epEntries = epKeys.map(k => m[k] || '').filter(Boolean);
     const fields = [
       ...(m.site_type ? [['현장유형', m.site_type]] : []),
-      ['계약구분', m.contract_type], ['주점검자', m.main_inspector], ['보조점검자1', m.sub_inspector], ['보조점검자2', m.sub_inspector2],
+      ['계약구분', m.contract_type], ['점검조', inspTeamById(m.team_id)?.name || (m.main_inspector ? '미지정' : '')], ['점검자', inspectorText(m)],
       ['계약일자', m.contract_date], ['계약시작', m.contract_start], ['계약만료', m.contract_end],
       ['현장전화', m.site_phone], ['현장연락처2', m.site_phone2],
       ['담당자 메일', m.manager_email],
@@ -5886,7 +6057,7 @@
       <div style="display:none;padding:8px 12px;border-top:1px solid #e2e8f0">${epEntries.map(v => `<div style="font-size:13px;color:#1a202c;font-weight:500;padding:3px 0">${escHtml(v)}</div>`).join('')}</div>
     </div>` : '';
     document.getElementById('elevator-modal-site-info').innerHTML = `<div class="site-info-grid">${fields.map(([k,v]) => {
-        const extra = k === '비고' ? 'grid-column:1/-1' : k === '승강기 소재지' ? 'grid-column:span 2' : '';
+        const extra = k === '비고' ? 'grid-column:1/-1' : (k === '승강기 소재지' || k === '점검자') ? 'grid-column:span 2' : '';
         let val;
         if (v && k === '승강기 소재지' && _isMobile) {
           val = `<span style="color:#2b6cb0;font-weight:600;cursor:pointer;text-decoration:underline" onclick="openTmap('${v.replace(/'/g, "\\'").replace(/\n/g, ' ')}','${(m.site_name||'').replace(/'/g, "\\'")}')">📍 ${escHtml(String(v))}</span>`;
@@ -6427,7 +6598,7 @@
 
   const MGMT_FIELD_ORDER = [
     'mgmt-name','mgmt-elevator-address','mgmt-site-type','mgmt-contract-type','mgmt-contract-date','mgmt-contract-start','mgmt-contract-end',
-    'mgmt-main-inspector','mgmt-sub-inspector','mgmt-sub-inspector2','mgmt-site-phone','mgmt-site-phone2',
+    'mgmt-insp-team','mgmt-site-phone','mgmt-site-phone2',
     'mgmt-fax','mgmt-manager-email','mgmt-notes'
   ];
   function parseEmergencyValue(val) {
@@ -6523,10 +6694,11 @@
     editingMgmtId = null;
     document.getElementById('mgmt-modal-title').textContent = '현장 추가';
     ['mgmt-name','mgmt-site-type','mgmt-contract-type','mgmt-contract-date','mgmt-contract-start','mgmt-contract-end',
-     'mgmt-main-inspector','mgmt-sub-inspector','mgmt-sub-inspector2','mgmt-site-phone','mgmt-site-phone2','mgmt-fax',
+     'mgmt-site-phone','mgmt-site-phone2','mgmt-fax',
      'mgmt-manager-email','mgmt-elevator-address','mgmt-notes'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';
     });
+    fillInspTeamSelect('mgmt', null);
     resetEmergencyPhones();
     pendingElevators = [];
     renderElevatorRows();
@@ -6549,9 +6721,7 @@
     document.getElementById('mgmt-contract-start-picker').value = m.contract_start || '';
     document.getElementById('mgmt-contract-end').value = m.contract_end || '';
     document.getElementById('mgmt-contract-end-picker').value = m.contract_end || '';
-    document.getElementById('mgmt-main-inspector').value = m.main_inspector || '';
-    document.getElementById('mgmt-sub-inspector').value = m.sub_inspector || '';
-    document.getElementById('mgmt-sub-inspector2').value = m.sub_inspector2 || '';
+    fillInspTeamSelect('mgmt', m);
     document.getElementById('mgmt-site-phone').value = m.site_phone || '';
     document.getElementById('mgmt-site-phone2').value = m.site_phone2 || '';
     document.getElementById('mgmt-fax').value = m.fax || '';
@@ -6584,10 +6754,8 @@
       contract_date:     document.getElementById('mgmt-contract-date').value || null,
       contract_start:    document.getElementById('mgmt-contract-start').value.trim() || null,
       contract_end:      document.getElementById('mgmt-contract-end').value.trim() || null,
-      main_inspector:    document.getElementById('mgmt-main-inspector').value.trim() || null,
-      sub_inspector:     document.getElementById('mgmt-sub-inspector').value.trim() || null,
-      sub_inspector2:    document.getElementById('mgmt-sub-inspector2').value.trim() || null,
-      site_phone:        document.getElementById('mgmt-site-phone').value.trim() || null,
+      ...inspTeamPayload('mgmt'),
+      site_phone:       document.getElementById('mgmt-site-phone').value.trim() || null,
       site_phone2:       document.getElementById('mgmt-site-phone2').value.trim() || null,
       fax:               document.getElementById('mgmt-fax').value.trim() || null,
       ...(() => { const v = getEmergencyPhoneValues(); return { emergency_phone: v[0]||null, emergency_phone2: v[1]||null, emergency_phone3: v[2]||null, emergency_phone4: v[3]||null, emergency_phone5: v[4]||null, emergency_phone6: v[5]||null, emergency_phone7: v[6]||null, emergency_phone8: v[7]||null, emergency_phone9: v[8]||null, emergency_phone10: v[9]||null }; })(),
@@ -6649,9 +6817,7 @@
     if (!m) return;
     editingNotesId = id;
     document.getElementById('notes-modal-site').textContent = m.site_name || '';
-    document.getElementById('staff-main-inspector').value = m.main_inspector || '';
-    document.getElementById('staff-sub-inspector').value = m.sub_inspector || '';
-    document.getElementById('staff-sub-inspector2').value = m.sub_inspector2 || '';
+    fillInspTeamSelect('staff', m);
     setEmergencyPhones(m, 'staff');
     document.getElementById('notes-modal-input').value = m.notes || '';
     document.getElementById('notes-modal-error').style.display = 'none';
@@ -6663,9 +6829,7 @@
     const errEl = document.getElementById('notes-modal-error');
     const ep = getEmergencyPhoneValues('staff');
     const payload = {
-      main_inspector: document.getElementById('staff-main-inspector').value.trim() || null,
-      sub_inspector: document.getElementById('staff-sub-inspector').value.trim() || null,
-      sub_inspector2: document.getElementById('staff-sub-inspector2').value.trim() || null,
+      ...inspTeamPayload('staff'),
       emergency_phone: ep[0]||null, emergency_phone2: ep[1]||null, emergency_phone3: ep[2]||null,
       emergency_phone4: ep[3]||null, emergency_phone5: ep[4]||null, emergency_phone6: ep[5]||null,
       emergency_phone7: ep[6]||null, emergency_phone8: ep[7]||null, emergency_phone9: ep[8]||null,
@@ -7007,11 +7171,8 @@
     // 점검자 정보 표시
     const infoEl = document.getElementById('site-inspector-info');
     if (infoEl) {
-      const parts = [];
-      if (siteData?.main_inspector) parts.push('주점검자: ' + siteData.main_inspector);
-      if (siteData?.sub_inspector)  parts.push('보조1: ' + siteData.sub_inspector);
-      if (siteData?.sub_inspector2) parts.push('보조2: ' + siteData.sub_inspector2);
-      if (parts.length) { infoEl.innerHTML = '👷 ' + parts.join(' · '); infoEl.style.display = ''; }
+      const txt = inspectorText(siteData);
+      if (txt) { infoEl.innerHTML = '👷 점검자: ' + escHtml(txt); infoEl.style.display = ''; }
       else { infoEl.style.display = 'none'; infoEl.innerHTML = ''; }
     }
     if (!siteData) { resetElevatorInput(); return; }
