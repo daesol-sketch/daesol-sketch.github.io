@@ -360,7 +360,7 @@
     /* 필터/검색 줄바꿈 */
     .filters { flex-wrap: wrap; gap: 8px; }
     #mgmt-search { width: 100% !important; }
-    #mgmt-team-filter { width: 100%; }
+    #mgmt-team-filter, #mgmt-jo-filter { width: 100%; }
 
     /* 통계 */
     #mgmt-total-stats { font-size: 12px; }
@@ -1068,12 +1068,15 @@
         </div>
         <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span id="mgmt-total-stats" style="font-size:15px;color:#e2e8f0;white-space:nowrap"></span>
-          <select id="mgmt-team-filter" onchange="renderMgmtList()" style="padding:7px 12px;border:1.5px solid #333;border-radius:20px;font-size:13px;font-family:inherit;color:#e2e8f0;background:#1a1a1a;cursor:pointer">
+          <select id="mgmt-team-filter" onchange="fillJoFilter();renderMgmtList()" style="padding:7px 12px;border:1.5px solid #333;border-radius:20px;font-size:13px;font-family:inherit;color:#e2e8f0;background:#1a1a1a;cursor:pointer">
             <option value="">팀 전체</option>
             <option value="1팀">1팀</option>
             <option value="2팀">2팀</option>
             <option value="3팀">3팀</option>
             <option value="상주">상주</option>
+          </select>
+          <select id="mgmt-jo-filter" onchange="renderMgmtList()" style="padding:7px 12px;border:1.5px solid #333;border-radius:20px;font-size:13px;font-family:inherit;color:#e2e8f0;background:#1a1a1a;cursor:pointer">
+            <option value="">조 전체</option>
           </select>
           <button id="btn-sync-all-inspection" onclick="syncAllInspectionDates()" style="display:none;padding:7px 14px;background:#38a169;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">🔄 전체 정보 갱신</button>
           <button onclick="exportMgmtExcel()" style="padding:7px 14px;background:#1d6f42;color:white;border:none;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap">📥 엑셀</button>
@@ -2009,7 +2012,7 @@
         <li>검색창에 <strong>현장명 · 점검자 · 승강기번호 · 전화번호 · 주소</strong> 중 아무거나 입력</li>
         <li><strong>띄어쓰기는 신경 쓰지 않아도 됩니다.</strong> (예: "삼송로138" → 삼송로 138-1)</li>
         <li>전화번호·승강기번호는 <strong>"-" 없이</strong> 입력해도 찾아집니다.</li>
-        <li>위쪽 필터로 보기 범위를 바꿀 수 있습니다: <strong>✅ 보수현장(기본)</strong> / 전체 / ⚠️ 계약만료 / 🔍 검사만료 / 🏗️ 하자 / 🆓 무상 / ❌ 상실 / 🧾 계산서발행용, 그리고 <strong>팀별</strong> 보기</li>
+        <li>위쪽 필터로 보기 범위를 바꿀 수 있습니다: <strong>✅ 보수현장(기본)</strong> / 전체 / ⚠️ 계약만료 / 🔍 검사만료 / 🏗️ 하자 / 🆓 무상 / ❌ 상실 / 🧾 계산서발행용, 그리고 <strong>팀별 · 조별</strong> 보기</li>
       </ul>
       <div class="mn-tip">검사만료가 <strong>30일 이내</strong>인 현장은 주황색, <strong>이미 만료</strong>된 현장은 빨간색으로 표시됩니다.</div>
     </div>
@@ -3269,8 +3272,12 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.10.23-1';
+  const APP_VERSION = '2026.10.23-2';
   const RELEASE_NOTES = [
+    { version: '2026.10.23-2', date: '10/23', items: [
+      { text: '👥 관리현장 점검자를 이제 <b>점검조</b>로 고릅니다. 수정창에서 조를 선택하면 주점검자·보조점검자가 한 번에 들어갑니다.' },
+      { text: '🔎 관리현장 필터에 <b>조</b>가 추가되었습니다. 팀을 고르면 그 팀의 조만 보이고, \'조 미지정\'으로 아직 조가 없는 현장만 모아 볼 수 있습니다.' },
+    ]},
     { version: '2026.10.23-1', date: '10/23', items: [
       { text: '👥 관리현장 점검자를 이제 <b>점검조</b>로 고릅니다. 수정창에서 조를 선택하면 주점검자·보조점검자가 한 번에 들어갑니다.' },
     ]},
@@ -5586,6 +5593,7 @@
     const isAdmin = currentRole === '관리자' || currentRole === '마스터';
     document.getElementById('btn-add-mgmt').style.display = isAdmin ? 'inline-flex' : 'none';
     document.getElementById('btn-insp-team').style.display = isAdmin ? 'inline-flex' : 'none';
+    fillJoFilter();
     document.getElementById('btn-sync-all-inspection').style.display = currentRole === '마스터' ? 'inline-block' : 'none';
 
     // 마지막 갱신일 확인 (30일 초과 시 알림)
@@ -5609,6 +5617,23 @@
     inspTeams = error ? [] : (data || []);
   }
   function inspTeamById(id) { return id ? inspTeams.find(t => t.id === id) || null : null; }
+
+  // 관리현장 조 필터: 팀을 고르면 그 팀 조만 표시, 선택값은 가능하면 유지
+  function fillJoFilter() {
+    const sel = document.getElementById('mgmt-jo-filter');
+    if (!sel) return;
+    const team = document.getElementById('mgmt-team-filter')?.value || '';
+    const prev = sel.value;
+    const list = inspTeams.filter(t => !team || t.team === team);
+    sel.innerHTML = `<option value="">조 전체</option>` + list.map(t => `<option value="${t.id}">${escHtml(t.name)}</option>`).join('') + `<option value="none">조 미지정</option>`;
+    sel.value = [...sel.options].some(o => o.value === prev) ? prev : '';
+  }
+  function mgmtJoMatch(m) {
+    const jo = document.getElementById('mgmt-jo-filter')?.value || '';
+    if (!jo) return true;
+    if (jo === 'none') return !inspTeamById(m.team_id);
+    return m.team_id === parseInt(jo);
+  }
 
   // "강민구(주), 이성호" 형태 (현장·조 공통)
   function inspectorText(o) {
@@ -5763,6 +5788,7 @@
     const teamFilter = (document.getElementById('mgmt-team-filter')?.value || '');
     let list = mgmtData.filter(m => {
       if (teamFilter && (m.inspector_team||'') !== teamFilter) return false;
+      if (!mgmtJoMatch(m)) return false;
       if (!q) return true;
       return mgmtSearchMatch(m, q);
     });
@@ -5921,6 +5947,7 @@
     const teamFilter = (document.getElementById('mgmt-team-filter')?.value || '');
     let list = mgmtData.filter(m => {
       if (teamFilter && (m.inspector_team||'') !== teamFilter) return false;
+      if (!mgmtJoMatch(m)) return false;
       if (!q) return true;
       return mgmtSearchMatch(m, q);
     });
@@ -5981,7 +6008,7 @@
     if (statsEl) {
       const totalSites = list.length;
       const totalElev = list.reduce((s, m) => s + (m.elev_count || 0), 0);
-      const isFiltered = q || teamFilter || mgmtFilter !== 'all';
+      const isFiltered = q || teamFilter || document.getElementById('mgmt-jo-filter')?.value || mgmtFilter !== 'all';
       statsEl.innerHTML = isFiltered
         ? `검색결과 <strong>${totalSites}</strong>개 현장 · <strong>${totalElev}</strong>대 / 전체 <strong>${mgmtData.length}</strong>개 현장`
         : `총 <strong>${totalSites}</strong>개 현장 · <strong>${totalElev}</strong>대 관리 중`;
