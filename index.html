@@ -2025,8 +2025,9 @@
       <h3 style="margin-top:14px">📥 공유받았을 때</h3>
       <ul class="mn-steps">
         <li>홈 화면의 <strong>"📥 공유받은 고장 (미확인)"</strong> 칸에 숫자가 빨갛게 표시됩니다. 누르거나 알림을 누르면 <strong>고장 공유함</strong>이 열립니다.</li>
-        <li>공유 내용과 처리 내용을 보고 <strong>✅ 확인</strong>을 누릅니다. <strong>🔍 고장 보기</strong>로 고장 상세도 볼 수 있습니다.</li>
-        <li><strong>보낸 공유</strong> 탭에서는 내가 보낸 공유를 상대가 확인했는지(✅ 확인 / ⏳ 미확인) 볼 수 있습니다.</li>
+        <li><strong>받은 공유</strong> 탭에는 아직 <strong>확인하지 않은 공유</strong>만 보입니다. 내용을 보고 <strong>✅ 확인</strong>을 누르면 <strong>📦 보관함</strong>으로 옮겨집니다. <strong>🔍 고장 보기</strong>로 고장 상세도 볼 수 있습니다.</li>
+        <li><strong>📦 보관함</strong>에는 확인한 공유가 <strong>한 달 동안</strong> 보입니다.</li>
+        <li><strong>보낸 공유</strong> 탭에서는 최근 한 달 동안 내가 보낸 공유를 상대가 확인했는지(✅ 확인 / ⏳ 미확인) 볼 수 있습니다.</li>
       </ul>
       <div class="mn-tip">공유 내용은 <strong>보낸 사람 · 받는 사람 · 관리자</strong>만 볼 수 있습니다.</div>
     </div>
@@ -2895,8 +2896,9 @@
   <div class="modal-box" style="width:600px;max-width:calc(100vw - 32px);text-align:left;padding:0;display:flex;flex-direction:column;max-height:90vh">
     <div style="padding:24px 24px 12px;flex-shrink:0">
       <h3 style="margin:0 0 12px;font-size:17px;font-weight:800;text-align:center">📥 고장 공유함</h3>
-      <div style="display:flex;gap:6px;justify-content:center">
+      <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
         <button type="button" class="btn-sm share-tab" data-tab="recv" onclick="showShareInbox('recv')">받은 공유</button>
+        <button type="button" class="btn-sm share-tab" data-tab="archive" onclick="showShareInbox('archive')">📦 보관함</button>
         <button type="button" class="btn-sm share-tab" data-tab="sent" onclick="showShareInbox('sent')">보낸 공유</button>
         <button type="button" class="btn-sm share-tab" data-tab="all" id="share-tab-all" onclick="showShareInbox('all')">전체</button>
       </div>
@@ -3347,8 +3349,14 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.10.26-3';
+  const APP_VERSION = '2026.10.26-4';
   const RELEASE_NOTES = [
+    { version: '2026.10.26-4', date: '10/26', items: [
+      { text: '📤 <b>고장 공유</b> 기능이 생겼습니다. 고장을 처리하다가 현장 담당자에게 알려야 할 내용이 있으면, 고장 상세 맨 아래 <b>"📤 담당자에게 공유"</b>를 눌러 보내세요.' },
+      { text: '👔 공유하면 그 현장 팀의 <b>팀장님에게도 자동으로</b> 같이 갑니다.' },
+      { text: '📥 받은 공유는 홈의 <b>"공유받은 고장"</b> 칸에서 보고 <b>✅ 확인</b>을 눌러 주세요.' },
+      { text: '📦 확인한 공유는 <b>보관함</b>으로 옮겨지고 <b>한 달 동안</b> 볼 수 있습니다.' },
+    ]},
     { version: '2026.10.26-3', date: '10/26', items: [
       { text: '📤 <b>고장 공유</b> 기능이 생겼습니다. 고장을 처리하다가 현장 담당자에게 알려야 할 내용이 있으면, 고장 상세 맨 아래 <b>"📤 담당자에게 공유"</b>를 눌러 보내세요.' },
       { text: '👔 공유하면 그 현장 팀의 <b>팀장님에게도 자동으로</b> 같이 갑니다.' },
@@ -4208,8 +4216,11 @@
     el.innerHTML = '<div style="text-align:center;color:var(--tx-4);font-size:13px;padding:20px">불러오는 중...</div>';
     const me = currentUser.username;
     let q = db.from('report_shares').select('*').order('created_at', { ascending: false }).limit(200);
-    if (shareInboxTab === 'recv') q = q.eq('recipient', me);
-    else if (shareInboxTab === 'sent') q = q.eq('sender', me);
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    if (shareInboxTab === 'recv') q = q.eq('recipient', me).is('read_at', null);
+    else if (shareInboxTab === 'archive') q = q.eq('recipient', me).not('read_at', 'is', null).gte('read_at', monthAgo);
+    else if (shareInboxTab === 'sent') q = q.eq('sender', me).gte('created_at', monthAgo);
+    else q = q.gte('created_at', monthAgo);
     const { data, error } = await q;
     if (error) { el.innerHTML = '<div style="text-align:center;color:#fc8181;font-size:13px;padding:20px">불러오기 실패: ' + escHtml(error.message) + '</div>'; return; }
     const ids = [...new Set((data || []).map(s => s.report_id))];
@@ -4225,9 +4236,9 @@
       if (!byKey[k]) { byKey[k] = { ...s, list: [] }; groups.push(byKey[k]); }
       byKey[k].list.push(s);
     });
-    if (shareInboxTab === 'recv') groups.sort((a, b) => (a.read_at ? 1 : 0) - (b.read_at ? 1 : 0));
+    if (shareInboxTab === 'archive') groups.sort((a, b) => (b.read_at || '').localeCompare(a.read_at || ''));
     if (!groups.length) {
-      el.innerHTML = '<div style="text-align:center;color:var(--tx-4);font-size:13px;padding:20px">' + (shareInboxTab === 'recv' ? '공유받은 고장이 없습니다.' : shareInboxTab === 'sent' ? '보낸 공유가 없습니다.' : '공유 내역이 없습니다.') + '</div>';
+      el.innerHTML = '<div style="text-align:center;color:var(--tx-4);font-size:13px;padding:20px">' + ({ recv: '확인할 공유가 없습니다.', archive: '최근 한 달 동안 확인한 공유가 없습니다.', sent: '최근 한 달 동안 보낸 공유가 없습니다.' }[shareInboxTab] || '최근 한 달 동안 공유 내역이 없습니다.') + '</div>';
       return;
     }
     el.innerHTML = groups.map((g, gi) => {
@@ -4246,14 +4257,15 @@
         (r.id ? '<button type="button" class="btn-sm" onclick="openShareReport(' + gi + ')" style="color:var(--tx-2);border-color:var(--br-mid);background:transparent">🔍 고장 보기</button>' : '') +
         (unread ? '<button type="button" class="btn-sm" onclick="markShareRead(' + g.id + ')" style="background:#38a169;color:white;border-color:#38a169">✅ 확인</button>' : '') +
         '</div></div>';
-    }).join('');
+    }).join('') +
+      (shareInboxTab === 'recv' ? '' : '<div style="text-align:center;color:var(--tx-4);font-size:12px;padding:4px 0 10px">최근 한 달 내역만 보입니다.</div>');
     shareInboxReportIds = groups.map(g => g.report_id);
   }
   let shareInboxReportIds = [];
   async function markShareRead(id) {
     const { error } = await db.from('report_shares').update({ read_at: new Date().toISOString() }).eq('id', id).is('read_at', null);
     if (error) { showToast('❌ 확인 실패: ' + error.message); return; }
-    showToast('✅ 확인했습니다.');
+    showToast('✅ 확인했습니다. 📦 보관함으로 옮겼습니다.');
     updateShareBadge();
     showShareInbox(shareInboxTab);
   }
