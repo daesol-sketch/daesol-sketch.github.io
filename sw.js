@@ -98,6 +98,7 @@ self.addEventListener('notificationclick', event => {
   const phone = event.notification.data?.phone;
   const isCall = type === 'call';
   const isPushTest = type === 'push-test';
+  const isShare = type === 'share';
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
@@ -111,6 +112,11 @@ self.addEventListener('notificationclick', event => {
         const msg = { action: 'showPushTest' };
         if (list.length) { list[0].postMessage(msg); return list[0].focus(); }
         return clients.openWindow('./?tab=push-test');
+      } else if (isShare) {
+        // 고장 공유: 공유함(받은 공유) 열기
+        const msg = { action: 'openShareInbox' };
+        if (list.length) { list[0].postMessage(msg); return list[0].focus(); }
+        return clients.openWindow('./?shareInbox=1');
       } else if (isFeedback && reportId) {
         // 피드백 미처리: 해당 건 상세 모달로 이동
         const msg = { action: 'openReport', reportId };
