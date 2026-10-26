@@ -1693,7 +1693,6 @@
       <tr><td><strong>🕐 고장 담당자 현황</strong></td><td>오늘 당직 등록·해제 · 내일 사전등록 · 당직 현황</td></tr>
       <tr><td><strong>🏢 관리현장</strong></td><td>현장 검색 · 점검자/비상통화장치 정보 수정</td></tr>
       <tr><td><strong>🗓️ 검사일정</strong></td><td>날짜별 검사 일정 확인</td></tr>
-      <tr><td><strong>📄 계약서</strong></td><td>계약서 PDF 열람 · 검색</td></tr>
       <tr><td><strong>📋 준공계</strong></td><td>준공계 PDF 작성</td></tr>
       <tr><td><strong>📸 공사팀 사진철</strong></td><td>준공 사진 엑셀 작성</td></tr>
       <tr><td><strong>📞 전화 기록</strong></td><td>회사로 온 전화 기록 · 바로 신고 접수</td></tr>
@@ -2060,15 +2059,6 @@
     </div>
 
     <div class="mn-card">
-      <h3>📄 계약서</h3>
-      <ul class="mn-steps">
-        <li>보관된 계약서 PDF를 <strong>열람</strong>할 수 있습니다. 계약서를 누르면 PDF가 열립니다.</li>
-        <li>파일명·메모로 검색하고, <strong>TKE / 대솔이엘</strong>로 나눠 볼 수 있습니다.</li>
-        <li>계약서 올리기·삭제·메모 수정은 관리자만 할 수 있습니다.</li>
-      </ul>
-    </div>
-
-    <div class="mn-card">
       <h3>📋 준공계</h3>
       <ul class="mn-steps">
         <li><strong>TKE 양식</strong> 또는 <strong>대솔이엘 양식</strong> 선택</li>
@@ -2164,7 +2154,7 @@
     <table class="mn-table">
       <tr><td><strong>👤 인사 관리</strong></td><td>계정 추가 · 비밀번호 초기화 · 삭제</td></tr>
       <tr><td><strong>📅 휴일 관리</strong></td><td>공휴일·단체연차 등록</td></tr>
-      <tr><td><strong>📄 계약서</strong></td><td>계약서 PDF 보관 (직원은 열람만)</td></tr>
+      <tr><td><strong>📄 계약서</strong></td><td>계약서 PDF 보관</td></tr>
       <tr><td><strong>📊 통계</strong></td><td>접속 · 메뉴 이용 · 고장 통계</td></tr>
       <tr><td><strong>📝 서비스다켓</strong> <span class="mn-tag mn-tag-admin">마스터</span></td><td>TKE·대솔이엘 작업보고서 작성 · 고객 서명 · PDF</td></tr>
     </table>
@@ -2271,7 +2261,6 @@
       <ul class="mn-steps">
         <li><strong>+ TKE 업로드 / + 대솔이엘 업로드</strong>로 계약서 PDF를 올립니다. (여러 개 한 번에 가능)</li>
         <li>파일명·메모로 검색하고, 여러 개를 골라 한 번에 삭제할 수 있습니다.</li>
-        <li>직원도 계약서를 <strong>열람·검색</strong>할 수 있습니다. 올리기·삭제·메모 수정은 관리자·마스터만 됩니다.</li>
       </ul>
     </div>
   </section>
@@ -3283,11 +3272,8 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.10.26-1';
+  const APP_VERSION = '2026.10.26-2';
   const RELEASE_NOTES = [
-    { version: '2026.10.26-1', date: '10/26', items: [
-      { text: '📄 이제 직원도 ☰ 메뉴의 <b>계약서</b>에서 계약서 PDF를 열람·검색할 수 있습니다. (올리기·삭제는 관리자만)' },
-    ]},
     { version: '2026.10.23-2', date: '10/23', items: [
       { text: '👥 관리현장 점검자를 이제 <b>점검조</b>로 고릅니다. 수정창에서 조를 선택하면 주점검자·보조점검자가 한 번에 들어갑니다.' },
       { text: '🔎 관리현장 필터에 <b>조</b>가 추가되었습니다. 팀을 고르면 그 팀의 조만 보이고, \'조 미지정\'으로 아직 조가 없는 현장만 모아 볼 수 있습니다.' },
@@ -3497,7 +3483,7 @@
     }
     if (tab === 'sites' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'holiday' && currentRole !== '관리자' && currentRole !== '마스터') return;
-    if (tab === 'contracts' && currentRole !== '관리자' && currentRole !== '마스터' && currentRole !== '직원') return;
+    if (tab === 'contracts' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'stats' && currentRole !== '관리자' && currentRole !== '마스터') return;
     if (tab === 'mgmt' && !currentRole) return;
     if (tab === 'jungong' && !currentRole) return;
@@ -4384,7 +4370,7 @@
     document.getElementById('tab-sites-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-holiday-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-call-logs-btn').style.display = 'flex';
-    document.getElementById('tab-contracts-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';   // 직원은 열람만
+    document.getElementById('tab-contracts-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-stats-btn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('tab-push-test-btn').style.display = 'flex';   // 알림 테스트는 전 직원
     document.getElementById('tab-manual-btn').style.display = 'flex';      // 사용 설명서는 전 직원 (관리자용 탭은 관리자·마스터만)
@@ -4411,7 +4397,7 @@
     const giCallLogs = document.getElementById('home-gi-call-logs');
     if (giCallLogs) giCallLogs.style.display = 'flex';
     const giContracts = document.getElementById('home-gi-contracts');
-    if (giContracts) giContracts.style.display = (isAdmin || isStaff) ? 'flex' : 'none';
+    if (giContracts) giContracts.style.display = isAdmin ? 'flex' : 'none';
     const giStats = document.getElementById('home-gi-stats');
     if (giStats) giStats.style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('sub-tab-done-btn').style.display = 'inline-block';
@@ -4925,11 +4911,7 @@
     }
   }
 
-  // 계약서 추가·수정·삭제는 관리자·마스터만 (직원은 열람만, DB 권한도 동일)
-  function canEditContracts() { return currentRole === '관리자' || currentRole === '마스터'; }
-
   async function deleteSelectedContracts() {
-    if (!canEditContracts()) return;
     if (!contractsSelected.size) return;
     if (!confirm(contractsSelected.size + '건의 계약서를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.')) return;
     const ids = Array.from(contractsSelected);
@@ -4989,8 +4971,7 @@
     );
     const countEl = document.getElementById('contracts-count');
     if (countEl) countEl.textContent = '총 ' + list.length + '건';
-    const canEdit = canEditContracts();
-    if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="icon">📄</div>' + (q ? '검색 결과 없음' : (canEdit ? '등록된 계약서 없음. 우측 상단 [+ 계약서 업로드] 버튼으로 추가하세요.' : '등록된 계약서 없음')) + '</div>'; updateContractsActionBar(); return; }
+    if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="icon">📄</div>' + (q ? '검색 결과 없음' : '등록된 계약서 없음. 우측 상단 [+ 계약서 업로드] 버튼으로 추가하세요.') + '</div>'; updateContractsActionBar(); return; }
     el.innerHTML = list.map(c => {
       const sizeKB = c.file_size ? (c.file_size/1024).toFixed(0) + ' KB' : '';
       const sizeMB = c.file_size && c.file_size > 1024*512 ? (c.file_size/1024/1024).toFixed(2) + ' MB' : sizeKB;
@@ -5002,8 +4983,8 @@
           ? '<span style="background:#2a1a0a;color:#f6ad55;border:1.5px solid #4a2a0a;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;margin-right:6px">🅓 대솔이엘</span>'
           : '';
       const checked = contractsSelected.has(c.id);
-      return '<div onclick="previewContract(' + c.id + ')" style="display:grid;grid-template-columns:' + (canEdit ? 'auto 1fr auto' : '1fr') + ';gap:10px;padding:14px 16px;background:' + (checked ? '#1a2a3a' : 'var(--bg-card)') + ';border:1.5px solid ' + (checked ? '#2c4a6a' : 'var(--br-mid)') + ';border-radius:10px;margin-bottom:8px;cursor:pointer">' +
-        (canEdit ? '<input type="checkbox" ' + (checked ? 'checked' : '') + ' onclick="event.stopPropagation()" onchange="toggleContractSelect(' + c.id + ',this.checked);renderContracts()" style="width:18px;height:18px;cursor:pointer;margin-top:2px;align-self:start" />' : '') +
+      return '<div onclick="previewContract(' + c.id + ')" style="display:grid;grid-template-columns:auto 1fr auto;gap:10px;padding:14px 16px;background:' + (checked ? '#1a2a3a' : 'var(--bg-card)') + ';border:1.5px solid ' + (checked ? '#2c4a6a' : 'var(--br-mid)') + ';border-radius:10px;margin-bottom:8px;cursor:pointer">' +
+        '<input type="checkbox" ' + (checked ? 'checked' : '') + ' onclick="event.stopPropagation()" onchange="toggleContractSelect(' + c.id + ',this.checked);renderContracts()" style="width:18px;height:18px;cursor:pointer;margin-top:2px;align-self:start" />' +
         '<div>' +
         '<div style="font-size:14px;font-weight:600;color:var(--tx);margin-bottom:4px">' + typeBadge + '📄 ' + escHtml(c.file_name||'') + '</div>' +
         '<div style="font-size:12px;color:var(--tx-3)">' +
@@ -5011,25 +4992,20 @@
           '📤 ' + (c.uploaded_by ? escHtml(c.uploaded_by) + '  ·  ' : '') + uDate +
           (sizeMB ? '  ·  ' + sizeMB : '') +
         '</div>' +
-        (!canEdit
-          ? (c.notes ? '<div style="font-size:12px;color:var(--tx-2);margin-top:4px;background:var(--bg-high);padding:6px 10px;border-radius:6px">📝 ' + escHtml(c.notes) + '</div>' : '')
-          : c.notes
+        (c.notes
           ? '<div onclick="event.stopPropagation();editContractNotes(' + c.id + ')" style="font-size:12px;color:var(--tx-2);margin-top:4px;background:var(--bg-high);padding:6px 10px;border-radius:6px;cursor:pointer" title="클릭하여 메모 편집">📝 ' + escHtml(c.notes) + '</div>'
           : '<button onclick="event.stopPropagation();editContractNotes(' + c.id + ')" style="font-size:11px;color:var(--tx-4);margin-top:4px;background:none;border:1px dashed var(--br-mid);padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit">+ 메모 추가</button>'
         ) +
         '</div>' +
-        (canEdit
-          ? '<div style="display:flex;gap:6px;align-items:center">' +
-            '<button onclick="event.stopPropagation();deleteContract(' + c.id + ')" class="btn-delete" style="padding:7px 12px">🗑️ 삭제</button>' +
-            '</div>'
-          : '') +
+        '<div style="display:flex;gap:6px;align-items:center">' +
+        '<button onclick="event.stopPropagation();deleteContract(' + c.id + ')" class="btn-delete" style="padding:7px 12px">🗑️ 삭제</button>' +
+        '</div>' +
         '</div>';
     }).join('');
     updateContractsActionBar();
   }
 
   async function uploadContract(input, contractType) {
-    if (!canEditContracts()) { input.value = ''; return; }
     // 즉시 시각적 피드백 - 검증 전에 버튼 disable
     const btnsWrap = document.getElementById('contracts-upload-btns');
     if (btnsWrap) {
@@ -5144,7 +5120,6 @@
   }
 
   async function deleteContract(id) {
-    if (!canEditContracts()) return;
     const c = contractsList.find(x => x.id === id);
     if (!c) return;
     if (!confirm('"' + c.file_name + '" 계약서를 삭제하시겠습니까?')) return;
@@ -5157,7 +5132,6 @@
   }
 
   async function editContractNotes(id) {
-    if (!canEditContracts()) return;
     const c = contractsList.find(x => x.id === id);
     if (!c) return;
     const newNotes = prompt('메모를 입력하세요 (검색에 사용됨, 빈 값으로 두면 삭제):', c.notes || '');
