@@ -901,6 +901,7 @@
           <option value="3팀">3팀</option>
           <option value="상주">상주</option>
           <option value="관리팀">관리팀</option>
+          <option value="공사팀">공사팀</option>
         </select>
         <select id="acc-filter-position" onchange="renderAccountList()" style="padding:7px 12px;border:1.5px solid #333;border-radius:20px;font-size:13px;font-family:inherit;color:#e2e8f0;background:#1a1a1a;cursor:pointer">
           <option value="">직급 전체</option>
@@ -2496,6 +2497,7 @@
           <option value="3팀">3팀 (파주)</option>
           <option value="상주">상주</option>
           <option value="관리팀">관리팀</option>
+          <option value="공사팀">공사팀</option>
         </select>
       </div>
     </div>
@@ -2543,6 +2545,7 @@
           <option value="3팀">3팀 (파주)</option>
           <option value="상주">상주</option>
           <option value="관리팀">관리팀</option>
+          <option value="공사팀">공사팀</option>
         </select>
       </div>
     </div>
@@ -3350,7 +3353,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.10.30-2';
+  const APP_VERSION = '2026.10.30-3';
   const RELEASE_NOTES = [
     { version: '2026.10.26-4', date: '10/26', items: [
       { text: '📤 <b>고장 공유</b> 기능이 생겼습니다. 고장을 처리하다가 현장 담당자에게 알려야 할 내용이 있으면, 고장 상세 맨 아래 <b>"📤 담당자에게 공유"</b>를 눌러 보내세요.' },
@@ -5460,9 +5463,21 @@
       return true;
     });
     if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="icon">👤</div>해당 조건의 계정이 없습니다.</div>'; return; }
+    const TEAM_ORDER = ['관리팀', '1팀', '2팀', '3팀', '상주', '공사팀'];
+    const teamRank = t => { const i = TEAM_ORDER.indexOf(t || ''); return i < 0 ? TEAM_ORDER.length + (t ? 0 : 1) : i; };
+    list = list.map((a, i) => ({ a, i })).sort((x, y) => teamRank(x.a.team) - teamRank(y.a.team) || (x.a.team || '').localeCompare(y.a.team || '', 'ko') || x.i - y.i).map(x => x.a);
+    const teamCount = {};
+    list.forEach(a => { const t = a.team || '팀 없음'; teamCount[t] = (teamCount[t] || 0) + 1; });
+    let lastTeam = null;
+    const teamHead = a => {
+      const t = a.team || '팀 없음';
+      if (t === lastTeam) return '';
+      lastTeam = t;
+      return `<tr><td colspan="7" style="background:var(--bg-high);font-weight:800;color:var(--tx-2);font-size:13px;padding:8px 12px">── ${escHtml(t)} <span style="font-weight:600;color:var(--tx-3)">(${teamCount[t]}명)</span></td></tr>`;
+    };
     el.innerHTML = `<table class="site-table">
       <thead><tr><th>#</th><th>아이디</th><th>직급/직책</th><th>핸드폰</th><th>유형</th><th>팀</th><th></th></tr></thead>
-      <tbody>${list.map((a,i) => `<tr>
+      <tbody>${list.map((a,i) => teamHead(a) + `<tr>
         <td>${i+1}</td>
         <td><strong>${escHtml(a.username)}</strong></td>
         <td>${escHtml(a.position||'-')}</td>
