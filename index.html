@@ -3349,7 +3349,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.10.26-4';
+  const APP_VERSION = '2026.10.30-1';
   const RELEASE_NOTES = [
     { version: '2026.10.26-4', date: '10/26', items: [
       { text: '📤 <b>고장 공유</b> 기능이 생겼습니다. 고장을 처리하다가 현장 담당자에게 알려야 할 내용이 있으면, 고장 상세 맨 아래 <b>"📤 담당자에게 공유"</b>를 눌러 보내세요.' },
@@ -5912,7 +5912,7 @@
     const { data, error } = await db.from('inspection_teams').select('*').order('name');
     const TEAM_ORDER = ['1팀', '2팀', '3팀', '상주'];
     const rank = t => { const i = TEAM_ORDER.indexOf(t.team); return i < 0 ? TEAM_ORDER.length : i; };
-    inspTeams = (error ? [] : (data || [])).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'ko'));
+    inspTeams = (error ? [] : (data || [])).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'ko', { numeric: true }));
   }
   function inspTeamById(id) { return id ? inspTeams.find(t => t.id === id) || null : null; }
 
@@ -5923,7 +5923,17 @@
     const team = document.getElementById('mgmt-team-filter')?.value || '';
     const prev = sel.value;
     const list = inspTeams.filter(t => !team || t.team === team);
-    sel.innerHTML = `<option value="">조 전체</option>` + list.map(t => `<option value="${t.id}">${escHtml(t.name)}</option>`).join('') + `<option value="none">조 미지정</option>`;
+    const groups = [];
+    list.forEach(t => {
+      const g = t.team || '팀 없음';
+      if (!groups.length || groups[groups.length - 1].team !== g) groups.push({ team: g, items: [] });
+      groups[groups.length - 1].items.push(t);
+    });
+    sel.innerHTML = `<option value="">조 전체</option>` +
+      groups.map(g => `<optgroup label="── ${escHtml(g.team)} ──">` +
+        g.items.map(t => `<option value="${t.id}">${escHtml(t.name)}${t.main_inspector ? ' (' + escHtml(t.main_inspector) + ')' : ''}</option>`).join('') +
+        `</optgroup>`).join('') +
+      `<option value="none">조 미지정</option>`;
     sel.value = [...sel.options].some(o => o.value === prev) ? prev : '';
   }
   function mgmtJoMatch(m) {
@@ -5991,9 +6001,15 @@
     </div>`;
     }).join('');
   }
+  // 새 조 이름 자동: 지금 있는 "N조" 중 가장 큰 번호 + 1
+  function nextInspTeamName() {
+    const nums = inspTeams.map(t => (/^(\d+)조$/.exec((t.name || '').trim()) || [])[1]).filter(Boolean).map(Number);
+    return (nums.length ? Math.max(...nums) + 1 : 1) + '조';
+  }
   function resetInspTeamForm() {
     editingInspTeamId = null;
     ['insp-team-name','insp-team-team','insp-team-main','insp-team-sub1','insp-team-sub2'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('insp-team-name').value = nextInspTeamName();
     document.getElementById('insp-team-form-title').textContent = '➕ 새 조 만들기';
     document.getElementById('insp-team-cancel-btn').style.display = 'none';
     document.getElementById('insp-team-error').style.display = 'none';
@@ -6043,7 +6059,7 @@
     if (error) { showToast('❌ 삭제 실패: ' + error.message); return; }
     showToast('🗑 점검조가 삭제되었습니다.');
     await loadMgmt();
-    if (editingInspTeamId === id) resetInspTeamForm();
+    if (editingInspTeamId === id || !editingInspTeamId) resetInspTeamForm();
     renderInspTeamList();
   }
 
