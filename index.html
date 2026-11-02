@@ -7,7 +7,7 @@
     (function () {
       try {
         var ua = navigator.userAgent, q = new URLSearchParams(location.search);
-        if (!/Android/i.test(ua) || !q.get('openReport') || q.get('noapp')) return;
+        if (!/Android/i.test(ua) || !(q.get('openReport') || q.get('navReport')) || q.get('noapp')) return;
         if (window.matchMedia && matchMedia('(display-mode: standalone)').matches) return;
         var isChrome = /Chrome\//.test(ua) && !/SamsungBrowser|EdgA|OPR|Whale|NAVER|KAKAOTALK|; wv\)/.test(ua);
         if (isChrome) return;
@@ -3404,7 +3404,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.02-8';
+  const APP_VERSION = '2026.11.02-9';
   const RELEASE_NOTES = [
     { version: '2026.11.02-8', date: '11/2', items: [
       { text: '💬 고장이 <b>배정</b>되거나 <b>담당자가 바뀌면</b> 담당자에게 <b>카카오톡 알림</b>이 갑니다. ("주식회사 대솔이엘" 채널)' },
@@ -5918,6 +5918,22 @@
     _openTmapDeeplink(`tmap://search?name=${encodeURIComponent(address)}`);
   }
 
+  async function showNavPrompt(reportId) {
+    const { data: r } = await db.from('reports').select('building').eq('id', reportId).maybeSingle();
+    if (!r?.building) return;
+    if (!/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) { showToast('T맵 길안내는 휴대폰에서만 사용할 수 있습니다.'); return; }
+    document.getElementById('nav-prompt')?.remove();
+    const box = document.createElement('div');
+    box.id = 'nav-prompt';
+    box.style.cssText = 'position:fixed;left:16px;right:16px;bottom:24px;z-index:3000;background:var(--bg-card);border:1.5px solid var(--br-mid);border-radius:14px;padding:14px;box-shadow:0 8px 28px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:10px';
+    box.innerHTML = '<div style="font-size:14px;font-weight:700;color:var(--tx)">🗺️ ' + escHtml(r.building) + '</div>' +
+      '<div style="display:flex;gap:8px">' +
+      '<button type="button" id="nav-prompt-go" style="flex:1;padding:12px;background:#2b6cb0;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">T맵으로 길안내 시작</button>' +
+      '<button type="button" onclick="document.getElementById(\'nav-prompt\').remove()" style="padding:12px 16px;background:none;border:1.5px solid var(--br-mid);color:var(--tx-2);border-radius:10px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">닫기</button></div>';
+    document.body.appendChild(box);
+    document.getElementById('nav-prompt-go').onclick = () => { box.remove(); openNavForReport(r.building); };
+  }
+
   async function openNavForReport(building) {
     if (!/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) { showToast('모바일에서만 사용 가능합니다.'); return; }
     let { data: rows } = await db.from('managed_sites').select('elevator_address, site_name').eq('site_name', building).limit(1);
@@ -8092,7 +8108,8 @@
   }
   const _urlParams = new URLSearchParams(location.search);
   const _tabParam = _urlParams.get('tab');
-  const _openReportParam = _urlParams.get('openReport');
+  const _navReportParam = _urlParams.get('navReport');
+  const _openReportParam = _urlParams.get('openReport') || _navReportParam;
   if (_tabParam) { setTimeout(() => switchTab(_tabParam, null), 800); history.replaceState(null, '', location.pathname); }
   if (_openReportParam) {
     history.replaceState(null, '', location.pathname);
@@ -8113,6 +8130,7 @@
       }
       switchTab('list', null);
       setTimeout(() => showReportDetail(_openReportParam), 400);
+      if (_navReportParam) setTimeout(() => showNavPrompt(_navReportParam), 900);
     })();
   }
   if (_urlParams.get('shareInbox')) {
