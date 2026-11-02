@@ -1,7 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // 고장 첫 배정 → 담당자에게 카카오 알림톡 (DB 트리거가 호출)
-// 신고마다 1번만: kakao_sent_at 이 비어 있고, 방금(10분 이내) 배정된 건만 보냄
+// 담당자가 처음 정해질 때 + 관리자가 담당자를 바꿀 때(아직 배치완료·미확인) 새 담당자에게 1번씩
+// kakao_sent_to(마지막으로 보낸 담당자)와 다를 때만 보냄 → 같은 담당자에게 중복 발송 없음
 const json = (obj: unknown, status = 200) => new Response(JSON.stringify(obj), {
   status,
   headers: { 'Content-Type': 'application/json' }
@@ -44,26 +45,33 @@ Deno.serve(async (req) => {
     const SENDER = Deno.env.get('SOLAPI_SENDER');
     const TPL = Deno.env.get('SOLAPI_TPL_ASSIGN');
 
-    const { report_id } = await req.json().catch(() => ({}));
+    const { report_id, handler } = await req.json().catch(() => ({}));
     if (!report_id) return json({ error: 'report_id 없음' }, 400);
     // 솔라피 설정 전에는 아무것도 하지 않음
     if (!API_KEY || !API_SECRET || !PFID || !TPL) return json({ skipped: 'no_key' });
 
-    // 먼저 "보냄" 표시를 걸어서 중복 발송 막기 (조건 맞는 건만 1번 성공)
+    const { data: cur } = await db.from('reports').select('completion_handler, kakao_sent_to').eq('id', report_id).maybeSingle();
+    const target = (handler || cur?.completion_handler || '').trim();
+    if (!cur || !target || cur.completion_handler !== target || cur.kakao_sent_to === target) return json({ skipped: 'not_target' });
+
+    // 먼저 "보냄" 표시를 걸어서 중복 발송 막기 (조건 맞는 건만 1번 성공). 최근 신고만(10분 내 배정 또는 3일 내 접수)
     const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-    const { data: rows, error } = await db.from('reports')
-      .update({ kakao_sent_at: new Date().toISOString() })
-      .eq('id', report_id).is('kakao_sent_at', null).eq('status', '배치완료')
-      .not('completion_handler', 'is', null).gte('assigned_at', since)
-      .select('id, building, elevator, type, name, phone, description, created_at, completion_handler');
+    const days3 = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    let q = db.from('reports')
+      .update({ kakao_sent_at: new Date().toISOString(), kakao_sent_to: target })
+      .eq('id', report_id).eq('status', '배치완료').is('confirmed_at', null).eq('completion_handler', target)
+      .or(`assigned_at.gte."${since}",created_at.gte."${days3}"`);
+    q = cur.kakao_sent_to ? q.eq('kakao_sent_to', cur.kakao_sent_to) : q.is('kakao_sent_to', null);
+    const { data: rows, error } = await q.select('id, building, elevator, type, name, phone, description, created_at, completion_handler');
     if (error) return json({ error: error.message }, 500);
     const r = rows?.[0];
     if (!r) return json({ skipped: 'not_target' });
+    const kind = cur.kakao_sent_to ? 'reassign' : 'assign';
 
     const { data: acc } = await db.from('accounts').select('username, phone').eq('username', r.completion_handler).eq('status', '재직').maybeSingle();
     const to = digits(acc?.phone || '');
     const log = (status: string, detail: string | null) => db.from('kakao_logs').insert({
-      report_id: r.id, kind: 'assign', sender: null, recipient: r.completion_handler, phone: to || null, status, detail
+      report_id: r.id, kind, sender: null, recipient: r.completion_handler, phone: to || null, status, detail
     });
     if (!/^01\d{8,9}$/.test(to)) { await log('no_phone', null); return json({ skipped: 'no_phone' }); }
 
