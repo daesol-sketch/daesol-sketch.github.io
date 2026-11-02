@@ -1856,6 +1856,14 @@
           <div style="font-size:13px;color:var(--tx-2)">다른 직원이 고장 처리 내용을 나에게 공유하면 <strong>한 번</strong> 옵니다. 알림을 누르면 <strong>고장 공유함</strong>이 열립니다.</div>
         </div>
 
+        <div style="padding:14px 16px;border-top:1px solid var(--br)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-size:15px">💬</span>
+            <strong style="font-size:14px">카카오톡 알림</strong>
+          </div>
+          <div style="font-size:13px;color:var(--tx-2)">고장이 나에게 <strong>처음 배정되면</strong> 앱 알림과 함께 <strong>"주식회사 대솔이엘" 카카오톡</strong>이 한 번 옵니다. (담당자가 바뀔 때는 카톡이 가지 않습니다) 다른 직원이 <strong>💬 카톡 보내기</strong>로 신고를 전달할 때도 옵니다. 카톡의 <strong>[신고 확인하기]</strong>를 누르면 앱에서 그 신고가 열립니다.</div>
+        </div>
+
       </div>
     </div>
   </section>
@@ -2032,6 +2040,17 @@
         <li><strong>보낸 공유</strong> 탭에서는 최근 한 달 동안 내가 보낸 공유를 상대가 확인했는지(✅ 확인 / ⏳ 미확인) 볼 수 있습니다.</li>
       </ul>
       <div class="mn-tip">공유 내용은 <strong>보낸 사람 · 받는 사람 · 관리자</strong>만 볼 수 있습니다.</div>
+    </div>
+
+    <div class="mn-card">
+      <h3>💬 카카오톡으로 보내기</h3>
+      <p>고장이 <strong>처음 배정되면</strong> 담당자에게 카카오톡이 <strong>자동으로</strong> 갑니다. 그 밖에 다른 직원에게 신고 내용을 급히 알려야 할 때(담당자 연락이 안 될 때, 팀장에게 알릴 때 등) 직접 보낼 수 있습니다.</p>
+      <ul class="mn-steps">
+        <li>고장 상세 화면 아래 <strong>💬 카톡 알림</strong> 칸에서 <strong>"💬 카톡 보내기"</strong>를 누릅니다.</li>
+        <li><strong>"+ 직원 추가"</strong>에서 받을 사람을 고릅니다. 여러 명 고를 수 있고, ✕로 뺄 수 있습니다.</li>
+        <li><strong>💬 보내기</strong>를 누르면 현장·호기·유형·접수시간·접수번호·신고자·연락처·신고내용이 카카오톡으로 갑니다.</li>
+      </ul>
+      <div class="mn-tip">💬 카톡 알림 칸에서 이 신고로 <strong>누구에게 언제</strong> 카톡이 갔는지 볼 수 있습니다. (자동 배정은 <strong>"자동(배정)"</strong>으로 표시) 인사관리에 <strong>휴대폰 번호가 없는 직원</strong>에게는 보내지 못합니다.</div>
     </div>
   </section>
 
@@ -2448,6 +2467,7 @@
         </div>
       </div>
       <div id=rdm-share-section></div>
+      <div id=rdm-kakao-section></div>
     </div>
     <div style=padding:14px 24px;border-top:1.5px solid #e2e8f0;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;background:white>
       <button onclick=deleteFromDetail() id=rdm-delete-btn style=display:none;padding:9px 18px;background:none;border:1.5px solid #fed7d7;color:#c53030;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;margin-right:auto>삭제</button>
@@ -2891,6 +2911,23 @@
     <div class="modal-btn-row" style="margin-top:16px">
       <button class="modal-btn cancel" onclick="closeShareModal()">취소</button>
       <button class="modal-btn" id="share-send-btn" onclick="sendShare()" style="background:#2b6cb0;color:white">📤 보내기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 카톡 보내기 모달 -->
+<div class="modal-overlay" id="kakao-modal" style="display:none" onclick="if(event.target===this)closeModal('kakao-modal')">
+  <div class="modal-box" style="width:480px;max-width:calc(100vw - 32px);text-align:left">
+    <h3 style="margin:0 0 4px;font-size:17px;font-weight:800;text-align:center">💬 카톡 보내기</h3>
+    <p id="kakao-target" style="margin:0 0 6px;font-size:13px;color:var(--tx-3);text-align:center"></p>
+    <p style="margin:0 0 16px;font-size:12px;color:var(--tx-3);text-align:center">현장·호기·유형·접수번호·신고자·연락처·신고내용이 카카오톡으로 전달됩니다.</p>
+    <label style="font-size:12px;font-weight:700;color:var(--tx-2);display:block;margin-bottom:6px">받는 사람</label>
+    <div id="kakao-recips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+    <select id="kakao-add" class="modal-input normal" onchange="addKakaoRecipient(this.value)" style="margin-bottom:0"></select>
+    <div class="modal-error" id="kakao-error" style="display:none;margin-top:10px"></div>
+    <div class="modal-btn-row" style="margin-top:16px">
+      <button class="modal-btn cancel" onclick="closeModal('kakao-modal')">취소</button>
+      <button class="modal-btn" id="kakao-send-btn" onclick="sendKakao()" style="background:#d69e2e;color:white">💬 보내기</button>
     </div>
   </div>
 </div>
@@ -3353,7 +3390,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.10.30-3';
+  const APP_VERSION = '2026.11.02-1';
   const RELEASE_NOTES = [
     { version: '2026.10.26-4', date: '10/26', items: [
       { text: '📤 <b>고장 공유</b> 기능이 생겼습니다. 고장을 처리하다가 현장 담당자에게 알려야 할 내용이 있으면, 고장 상세 맨 아래 <b>"📤 담당자에게 공유"</b>를 눌러 보내세요.' },
@@ -3522,7 +3559,7 @@
     if (history.state?.modal) history.replaceState({ tab: _currentHistoryTab }, '', location.pathname);
   }
 
-  const _ALL_MODAL_IDS = ['share-modal','share-inbox-modal','report-detail-modal','add-account-modal','edit-account-modal','change-pw-modal','elevator-modal','elvtr-info-modal','elev-modal','mgmt-modal','notes-modal','admin-unack-modal','pending-alert-modal','mypage-modal'];
+  const _ALL_MODAL_IDS = ['kakao-modal','share-modal','share-inbox-modal','report-detail-modal','add-account-modal','edit-account-modal','change-pw-modal','elevator-modal','elvtr-info-modal','elev-modal','mgmt-modal','notes-modal','admin-unack-modal','pending-alert-modal','mypage-modal'];
 
   window.addEventListener('popstate', e => {
     const visibleModal = _ALL_MODAL_IDS.map(id => document.getElementById(id)).find(m => m && (m.style.display === 'flex' || m.classList.contains('open')));
@@ -3900,6 +3937,7 @@
 
     shareReport = r;
     renderReportShares(r);
+    renderReportKakao(r);
     openModal('report-detail-modal');
   }
 
@@ -4192,6 +4230,83 @@
     closeShareModal();
     showToast('📤 ' + to.join(', ') + '님에게 공유했습니다.');
     renderReportShares(r);
+  }
+
+  // ── 카카오 알림톡: 배정 시 자동(서버 트리거) + 상세에서 골라 보내기 ──
+  const KAKAO_READY = true;  // false로 바꾸면 고장 상세의 카톡 칸 숨김
+  let kakaoRecips = [], kakaoStaffNames = [];
+  const kakaoStatus = { sent: '<span style="color:#38a169;font-weight:700">✅ 발송</span>', failed: '<span style="color:#e53e3e;font-weight:700">❌ 실패</span>', no_phone: '<span style="color:#dd6b20;font-weight:700">⚠️ 번호 없음</span>' };
+  async function renderReportKakao(r) {
+    const el = document.getElementById('rdm-kakao-section');
+    el.innerHTML = '';
+    if (!KAKAO_READY) return;
+    const { data } = await db.from('kakao_logs').select('*').eq('report_id', r.id).order('created_at');
+    if (shareReport?.id !== r.id) return;
+    const list = (data || []).map(k =>
+      '<div style="padding:6px 0;border-top:1px solid #fbd38d;font-size:12px;color:#4a5568">' +
+      (k.kind === 'assign' ? '<strong>자동(배정)</strong>' : '<strong>' + escHtml(k.sender || '') + '</strong>') +
+      ' → <strong>' + escHtml(k.recipient || '') + '</strong> · ' + fmtShareTime(k.created_at) + ' · ' + (kakaoStatus[k.status] || escHtml(k.status)) + '</div>').join('');
+    el.innerHTML =
+      '<div style="margin-top:12px;background:#fffbeb;border:1.5px solid #fbd38d;border-radius:10px;padding:14px 16px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">' +
+      '<span style="font-size:14px;font-weight:700;color:#975a16">💬 카톡 알림</span>' +
+      '<button type="button" onclick="openKakaoModal()" style="padding:7px 14px;background:#d69e2e;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">💬 카톡 보내기</button></div>' +
+      (list || '<div style="font-size:12px;color:#718096">이 신고를 카카오톡으로 직원에게 보낼 수 있습니다.</div>') +
+      '</div>';
+  }
+  async function openKakaoModal() {
+    const r = shareReport;
+    if (!r) return;
+    document.getElementById('kakao-target').textContent = r.building + ' · ' + r.elevator;
+    document.getElementById('kakao-error').style.display = 'none';
+    const { data: accs } = await db.from('accounts').select('username').eq('status', '재직').order('username');
+    kakaoStaffNames = (accs || []).map(a => a.username).filter(Boolean);
+    kakaoRecips = [];
+    renderKakaoRecipients();
+    openModal('kakao-modal');
+  }
+  function renderKakaoRecipients() {
+    document.getElementById('kakao-recips').innerHTML = kakaoRecips.length
+      ? kakaoRecips.map((n, i) =>
+          '<span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid var(--br-mid);border-radius:16px;font-size:13px;color:var(--tx)">' +
+          escHtml(n) + '<span onclick="kakaoRecips.splice(' + i + ',1);renderKakaoRecipients()" style="cursor:pointer;color:var(--tx-3);font-weight:700">✕</span></span>').join('')
+      : '<div style="font-size:12px;color:var(--tx-3)">아래에서 받는 사람을 골라 주세요.</div>';
+    document.getElementById('kakao-add').innerHTML = '<option value="">+ 직원 추가</option>' +
+      kakaoStaffNames.filter(n => !kakaoRecips.includes(n)).map(n => '<option value="' + escHtml(n) + '">' + escHtml(n) + '</option>').join('');
+  }
+  function addKakaoRecipient(name) {
+    if (!name) return;
+    kakaoRecips.push(name);
+    renderKakaoRecipients();
+  }
+  async function sendKakao() {
+    const r = shareReport;
+    const err = document.getElementById('kakao-error');
+    const fail = m => { err.textContent = m; err.style.display = ''; };
+    if (!kakaoRecips.length) return fail('받는 사람을 1명 이상 골라 주세요.');
+    const btn = document.getElementById('kakao-send-btn');
+    btn.disabled = true;
+    let out = {};
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/kakao-send`, {
+        method: 'POST',
+        headers: await pushHeaders(),
+        body: JSON.stringify({ report_id: r.id, recipients: kakaoRecips })
+      });
+      out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error === 'no_key' ? '카카오 알림톡 설정이 아직 끝나지 않았습니다.' : (out.error || ('오류 ' + res.status)));
+    } catch (e) {
+      btn.disabled = false;
+      return fail('보내기 실패: ' + e.message);
+    }
+    btn.disabled = false;
+    closeModal('kakao-modal');
+    const msg = [];
+    if (out.sent?.length) msg.push('💬 ' + out.sent.join(', ') + '님에게 보냈습니다.');
+    if (out.failed?.length) msg.push('❌ 실패: ' + out.failed.join(', '));
+    if (out.noPhone?.length) msg.push('⚠️ 번호 없음: ' + out.noPhone.join(', '));
+    showToast(msg.join(' ') || '보냈습니다.');
+    renderReportKakao(r);
   }
 
   // 홈 "공유받은 고장 (미확인)" 숫자
