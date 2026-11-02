@@ -135,7 +135,7 @@
 
     .report-item { background: var(--bg-card); border: 1.5px solid var(--br-hi); border-radius: 12px; padding: 18px 20px; display: grid; grid-template-columns: 1fr auto; gap: 12px; transition: border-color 0.2s; box-shadow: 0 2px 8px var(--sh2); -webkit-tap-highlight-color: transparent; }
     .report-item:hover { border-color: var(--tx-4); }
-    .report-item:active:not(:has(.tmap-nav-btn:active)) { background: rgba(59,130,246,0.08); border-color: var(--tx-4); }
+    .report-item:active:not(:has(.tmap-nav-btn:active, .kakao-card-btn:active)) { background: rgba(59,130,246,0.08); border-color: var(--tx-4); }
     .report-left { display: flex; flex-direction: column; gap: 6px; }
     .report-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .report-id { font-size: 12px; color: var(--tx-2); font-weight: 600; }
@@ -2060,7 +2060,7 @@
       <h3>💬 카카오톡으로 보내기</h3>
       <p>고장이 <strong>처음 배정되거나</strong>, 관리자가 <strong>담당자를 바꾸면</strong>(아직 배치완료 상태일 때) 새 담당자에게 카카오톡이 <strong>자동으로</strong> 갑니다. 그 밖에 다른 직원에게 신고 내용을 급히 알려야 할 때(담당자 연락이 안 될 때, 팀장에게 알릴 때 등) 직접 보낼 수 있습니다.</p>
       <ul class="mn-steps">
-        <li>고장 상세 화면 아래 <strong>💬 카톡 알림</strong> 칸에서 <strong>"💬 카톡 보내기"</strong>를 누릅니다.</li>
+        <li>신고 내역 카드의 <strong>노란 💬 카톡 아이콘</strong>을 누르거나, 고장 상세 화면 아래 <strong>💬 카톡 알림</strong> 칸에서 <strong>"💬 카톡 보내기"</strong>를 누릅니다. (아이콘의 <strong>빨간 숫자</strong> = 이 신고로 보낸 카톡 수)</li>
         <li><strong>"+ 직원 추가"</strong>에서 받을 사람을 고릅니다. 여러 명 고를 수 있고, ✕로 뺄 수 있습니다.</li>
         <li><strong>💬 보내기</strong>를 누르면 현장·호기·유형·접수시간·접수번호·신고자·연락처·신고내용이 카카오톡으로 갑니다.</li>
       </ul>
@@ -3404,7 +3404,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.02-5';
+  const APP_VERSION = '2026.11.02-6';
   const RELEASE_NOTES = [
     { version: '2026.10.26-4', date: '10/26', items: [
       { text: '📤 <b>고장 공유</b> 기능이 생겼습니다. 고장을 처리하다가 현장 담당자에게 알려야 할 내용이 있으면, 고장 상세 맨 아래 <b>"📤 담당자에게 공유"</b>를 눌러 보내세요.' },
@@ -4285,6 +4285,12 @@
       (list || '<div style="font-size:12px;color:#718096">이 신고를 카카오톡으로 직원에게 보낼 수 있습니다.</div>') +
       '</div>';
   }
+  async function openKakaoForReport(id) {
+    const { data: r } = await db.from('reports').select('*').eq('id', id).maybeSingle();
+    if (!r) return showToast('신고를 찾을 수 없습니다.');
+    shareReport = r;
+    openKakaoModal();
+  }
   async function openKakaoModal() {
     const r = shareReport;
     if (!r) return;
@@ -4338,6 +4344,7 @@
     if (out.noPhone?.length) msg.push('⚠️ 번호 없음: ' + out.noPhone.join(', '));
     showToast(msg.join(' ') || '보냈습니다.');
     renderReportKakao(r);
+    loadReports().then(renderList);
   }
 
   // 홈 "공유받은 고장 (미확인)" 숫자
@@ -4998,6 +5005,12 @@
         reports.forEach(r => { if (r.regno && modelMap[r.regno]) r._elevator_model = modelMap[r.regno]; });
       }
     }
+    if (KAKAO_READY && reports.length) {
+      const { data: kl } = await db.from('kakao_logs').select('report_id').eq('status', 'sent').in('report_id', reports.map(r => r.id));
+      const cnt = {};
+      (kl || []).forEach(k => { cnt[k.report_id] = (cnt[k.report_id] || 0) + 1; });
+      reports.forEach(r => { r._kakao_count = cnt[r.id] || 0; });
+    }
   }
 
   async function loadRepeatCountMap() {
@@ -5139,15 +5152,22 @@
         : '';
       const _isMob = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
       const _tmapBtn = _isMob ? '<button class=tmap-nav-btn ontouchstart="event.stopPropagation()" onclick="event.stopPropagation();openNavForReport(' + JSON.stringify(r.building).replace(/"/g,'&quot;') + ')" style="position:absolute;top:10px;right:10px;background:none;border:none;padding:0;cursor:pointer;z-index:2;line-height:0;-webkit-tap-highlight-color:transparent"><img src="./tmap-icon.png" style="width:28px;height:28px;border-radius:6px;display:block;pointer-events:none"></button>' : '';
-      return '<div class=report-item style="cursor:pointer;position:relative" onclick="if(!event.target.closest(\'.tmap-nav-btn\'))showReportDetail(\'' + r.id + '\')">' +
+      const _kc = r._kakao_count || 0;
+      const _kakaoBtn = KAKAO_READY ? '<button class=kakao-card-btn title="카톡 보내기' + (_kc ? ' (보낸 카톡 ' + _kc + '건)' : '') + '" ontouchstart="event.stopPropagation()" onclick="event.stopPropagation();openKakaoForReport(' + JSON.stringify(r.id).replace(/"/g,'&quot;') + ')" style="' + (_isMob ? 'position:absolute;top:10px;right:46px;' : 'position:relative;margin-left:auto;') + 'background:#FEE500;border:none;border-radius:6px;width:28px;height:28px;padding:0;cursor:pointer;z-index:2;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent">' +
+        '<svg width="18" height="18" viewBox="0 0 24 24" style="pointer-events:none"><path fill="#3C1E1E" d="M12 3C6.48 3 2 6.58 2 11c0 2.86 1.88 5.37 4.7 6.78-.2.74-.74 2.7-.85 3.12-.13.52.19.51.4.37.17-.11 2.62-1.78 3.68-2.5.67.1 1.36.15 2.07.15 5.52 0 10-3.58 10-8S17.52 3 12 3z"/></svg>' +
+        (_kc ? '<span style="position:absolute;top:-6px;right:-6px;min-width:17px;height:17px;padding:0 4px;box-sizing:border-box;background:#ff3b30;color:#fff;border-radius:9px;font-size:11px;font-weight:700;line-height:17px;text-align:center;pointer-events:none">' + _kc + '</span>' : '') +
+        '</button>' : '';
+      return '<div class=report-item style="cursor:pointer;position:relative" onclick="if(!event.target.closest(\'.tmap-nav-btn,.kakao-card-btn\'))showReportDetail(\'' + r.id + '\')">' +
         _tmapBtn +
+        (_isMob ? _kakaoBtn : '') +
         '<div class=report-left>' +
         repeatNotice +
-        '<div class=report-header' + (_isMob ? ' style="padding-right:36px"' : '') + '>' +
+        '<div class=report-header' + (_isMob ? ' style="padding-right:' + (KAKAO_READY ? 72 : 36) + 'px"' : '') + '>' +
         '<span class=report-id>' + r.id + '</span>' +
         '<span class=report-title>' + escHtml(r.building||'') + ' · ' + escHtml(r.elevator||'') + '</span>' +
         '<span class=status-badge status-PLACEHOLDER>' + r.status + '</span>'.replace('status-PLACEHOLDER', 'status-'+r.status) +
         (r.parts_replaced ? '<span style=background:#fffbeb;color:#744210;border:1px_solid_#fbd38d;border-radius:12px;padding:2px_8px;font-size:11px;font-weight:700>부품교체</span>'.replace(/_/g,' ') : '') +
+        (_isMob ? '' : _kakaoBtn) +
         '</div>' +
         '<div class=report-meta>' +
         '<span class=meta-item>🔧 ' + escHtml(r.type||'') + '</span>' +
