@@ -43,7 +43,9 @@ Deno.serve(async (req) => {
     const API_SECRET = Deno.env.get('SOLAPI_API_SECRET');
     const PFID = Deno.env.get('SOLAPI_PFID');
     const SENDER = Deno.env.get('SOLAPI_SENDER');
-    const TPL = Deno.env.get('SOLAPI_TPL_ASSIGN');
+    // V2(승강기번호·접수자·신고자 연락처) 템플릿 ID가 있으면 V2로, 없으면 기존 템플릿
+    const TPL_V2 = Deno.env.get('SOLAPI_TPL_ASSIGN_V2');
+    const TPL = TPL_V2 || Deno.env.get('SOLAPI_TPL_ASSIGN');
 
     const { report_id, handler } = await req.json().catch(() => ({}));
     if (!report_id) return json({ error: 'report_id 없음' }, 400);
@@ -62,7 +64,7 @@ Deno.serve(async (req) => {
       .eq('id', report_id).eq('status', '배치완료').is('confirmed_at', null).eq('completion_handler', target)
       .or(`assigned_at.gte."${since}",created_at.gte."${days3}"`);
     q = cur.kakao_sent_to ? q.eq('kakao_sent_to', cur.kakao_sent_to) : q.is('kakao_sent_to', null);
-    const { data: rows, error } = await q.select('id, building, elevator, type, name, phone, description, created_at, completion_handler');
+    const { data: rows, error } = await q.select('id, building, elevator, type, name, phone, description, created_at, regno, completion_handler');
     if (error) return json({ error: error.message }, 500);
     const r = rows?.[0];
     if (!r) return json({ skipped: 'not_target' });
@@ -87,7 +89,7 @@ Deno.serve(async (req) => {
           '#{유형}': v(r.type),
           '#{접수시간}': fmtTime(r.created_at),
           '#{접수번호}': v(r.id),
-          '#{신고자}': v(r.name),
+          ...(TPL_V2 ? { '#{접수자}': v(r.name), '#{승강기번호}': v(r.regno) } : { '#{신고자}': v(r.name) }),
           '#{연락처}': v(fmtPhone(r.phone)),
           '#{신고내용}': v(r.description, 300)
         },

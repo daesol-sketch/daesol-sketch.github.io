@@ -60,7 +60,9 @@ Deno.serve(async (req) => {
     const API_SECRET = Deno.env.get('SOLAPI_API_SECRET');
     const PFID = Deno.env.get('SOLAPI_PFID');
     const SENDER = Deno.env.get('SOLAPI_SENDER');
-    const TPL = Deno.env.get('SOLAPI_TPL_FORWARD');
+    // V2(승강기번호·접수자·신고자 연락처) 템플릿 ID가 있으면 V2로, 없으면 기존 템플릿
+    const TPL_V2 = Deno.env.get('SOLAPI_TPL_FORWARD_V2');
+    const TPL = TPL_V2 || Deno.env.get('SOLAPI_TPL_FORWARD');
     if (!API_KEY || !API_SECRET || !PFID || !TPL) return json({ error: 'no_key' }, 503);
 
     const { report_id, recipients } = await req.json().catch(() => ({}));
@@ -68,7 +70,7 @@ Deno.serve(async (req) => {
     if (!report_id || !names.length) return json({ error: '신고번호나 받는 사람이 없습니다.' }, 400);
     if (names.length > 20) return json({ error: '한 번에 20명까지 보낼 수 있습니다.' }, 400);
 
-    const { data: r } = await db.from('reports').select('id, building, elevator, type, name, phone, description, created_at').eq('id', report_id).maybeSingle();
+    const { data: r } = await db.from('reports').select('id, building, elevator, type, name, phone, description, created_at, regno').eq('id', report_id).maybeSingle();
     if (!r) return json({ error: '신고를 찾을 수 없습니다.' }, 404);
     const { data: accs } = await db.from('accounts').select('username, phone').in('username', names).eq('status', '재직');
 
@@ -79,7 +81,7 @@ Deno.serve(async (req) => {
       '#{유형}': v(r.type),
           '#{접수시간}': fmtTime(r.created_at),
       '#{접수번호}': v(r.id),
-      '#{신고자}': v(r.name),
+      ...(TPL_V2 ? { '#{접수자}': v(r.name), '#{승강기번호}': v(r.regno) } : { '#{신고자}': v(r.name) }),
       '#{연락처}': v(fmtPhone(r.phone)),
       '#{신고내용}': v(r.description, 300)
     };
