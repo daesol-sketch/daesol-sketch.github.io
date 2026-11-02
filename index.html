@@ -2050,7 +2050,7 @@
         <li><strong>"+ 직원 추가"</strong>에서 받을 사람을 고릅니다. 여러 명 고를 수 있고, ✕로 뺄 수 있습니다.</li>
         <li><strong>💬 보내기</strong>를 누르면 현장·호기·유형·접수시간·접수번호·신고자·연락처·신고내용이 카카오톡으로 갑니다.</li>
       </ul>
-      <div class="mn-tip">💬 카톡 알림 칸에서 이 신고로 <strong>누구에게 언제</strong> 카톡이 갔는지 볼 수 있습니다. (자동 배정은 <strong>"자동(배정)"</strong>으로 표시) 인사관리에 <strong>휴대폰 번호가 없는 직원</strong>에게는 보내지 못합니다.</div>
+      <div class="mn-tip">💬 카톡 알림 칸에서 <strong>같은 승강기의 최근 1달</strong> 신고에 <strong>누구에게 언제</strong> 카톡이 갔는지 볼 수 있습니다. (🔧 배정 = 자동, 📨 전달 = 직접 보낸 것 / 지금 보는 신고는 <strong>"이 신고"</strong>로 표시) 인사관리에 <strong>휴대폰 번호가 없는 직원</strong>에게는 보내지 못합니다.</div>
     </div>
   </section>
 
@@ -3390,7 +3390,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.02-1';
+  const APP_VERSION = '2026.11.02-2';
   const RELEASE_NOTES = [
     { version: '2026.10.26-4', date: '10/26', items: [
       { text: '📤 <b>고장 공유</b> 기능이 생겼습니다. 고장을 처리하다가 현장 담당자에게 알려야 할 내용이 있으면, 고장 상세 맨 아래 <b>"📤 담당자에게 공유"</b>를 눌러 보내세요.' },
@@ -4240,16 +4240,33 @@
     const el = document.getElementById('rdm-kakao-section');
     el.innerHTML = '';
     if (!KAKAO_READY) return;
-    const { data } = await db.from('kakao_logs').select('*').eq('report_id', r.id).order('created_at');
+    // 같은 승강기번호의 최근 1달 신고 카톡 기록 (승강기번호 없으면 이 신고만)
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const regno = (r.regno || '').trim();
+    let reps = [{ id: r.id, created_at: r.created_at }];
+    if (regno) {
+      const { data: same } = await db.from('reports').select('id, created_at').eq('regno', regno).gte('created_at', monthAgo);
+      (same || []).forEach(x => { if (x.id !== r.id) reps.push(x); });
+    }
+    const repById = Object.fromEntries(reps.map(x => [x.id, x]));
+    const { data } = await db.from('kakao_logs').select('*').in('report_id', reps.map(x => x.id)).gte('created_at', monthAgo).order('created_at', { ascending: false });
     if (shareReport?.id !== r.id) return;
-    const list = (data || []).map(k =>
-      '<div style="padding:6px 0;border-top:1px solid #fbd38d;font-size:12px;color:#4a5568">' +
-      (k.kind === 'assign' ? '<strong>자동(배정)</strong>' : '<strong>' + escHtml(k.sender || '') + '</strong>') +
-      ' → <strong>' + escHtml(k.recipient || '') + '</strong> · ' + fmtShareTime(k.created_at) + ' · ' + (kakaoStatus[k.status] || escHtml(k.status)) + '</div>').join('');
+    const fmtDay = d => { const t = new Date(d); return (t.getMonth() + 1) + '/' + t.getDate(); };
+    const list = (data || []).map(k => {
+      const mine = k.report_id === r.id;
+      const tag = mine
+        ? '<span style="background:#d69e2e;color:white;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:700">이 신고</span>'
+        : '<span style="background:#edf2f7;color:#4a5568;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:700">' + fmtDay(repById[k.report_id]?.created_at || k.created_at) + ' 접수 ' + escHtml(k.report_id) + '</span>';
+      const who = k.kind === 'assign'
+        ? '🔧 배정 · <strong>자동</strong>'
+        : '📨 전달 · <strong>' + escHtml(k.sender || '') + '</strong>';
+      return '<div style="padding:6px 0;border-top:1px solid #fbd38d;font-size:12px;color:#4a5568;' + (mine ? '' : 'opacity:.85') + '">' +
+        tag + ' ' + who + ' → <strong>' + escHtml(k.recipient || '') + '</strong> · ' + fmtShareTime(k.created_at) + ' · ' + (kakaoStatus[k.status] || escHtml(k.status)) + '</div>';
+    }).join('');
     el.innerHTML =
       '<div style="margin-top:12px;background:#fffbeb;border:1.5px solid #fbd38d;border-radius:10px;padding:14px 16px">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">' +
-      '<span style="font-size:14px;font-weight:700;color:#975a16">💬 카톡 알림</span>' +
+      '<span style="font-size:14px;font-weight:700;color:#975a16">💬 카톡 알림' + (regno ? ' <span style="font-size:11px;font-weight:600;color:#b7791f">(이 승강기 최근 1달)</span>' : '') + '</span>' +
       '<button type="button" onclick="openKakaoModal()" style="padding:7px 14px;background:#d69e2e;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">💬 카톡 보내기</button></div>' +
       (list || '<div style="font-size:12px;color:#718096">이 신고를 카카오톡으로 직원에게 보낼 수 있습니다.</div>') +
       '</div>';

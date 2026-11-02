@@ -42,3 +42,6 @@ revoke all on function public.kakao_assign_trigger() from public, anon, authenti
 drop trigger if exists reports_kakao_assign on public.reports;
 create trigger reports_kakao_assign after insert or update of completion_handler, status on public.reports
   for each row execute function public.kakao_assign_trigger();
+
+-- 2026-11-02: 신고 삭제 시 카톡 기록도 삭제 (접수번호 재사용 때 옛 기록이 붙는 문제)
+alter table public.kakao_logs add constraint kakao_logs_report_id_fkey foreign key (report_id) references public.reports(id) on delete cascade;
