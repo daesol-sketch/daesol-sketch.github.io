@@ -3,6 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    (function () {
+      try {
+        var ua = navigator.userAgent, q = new URLSearchParams(location.search);
+        if (!/Android/i.test(ua) || !q.get('openReport') || q.get('noapp')) return;
+        if (window.matchMedia && matchMedia('(display-mode: standalone)').matches) return;
+        var isChrome = /Chrome\//.test(ua) && !/SamsungBrowser|EdgA|OPR|Whale|NAVER|KAKAOTALK|; wv\)/.test(ua);
+        if (isChrome) return;
+        var fallback = location.href + (location.search ? '&' : '?') + 'noapp=1';
+        location.href = 'intent://' + location.host + location.pathname + location.search +
+          '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(fallback) + ';end';
+      } catch (e) {}
+    })();
+  </script>
   <title>대솔이엘 유지보수 관리 시스템</title>
   <link rel="manifest" href="./manifest.json" />
   <meta name="theme-color" content="#000000" />
@@ -3390,7 +3404,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.02-2';
+  const APP_VERSION = '2026.11.02-3';
   const RELEASE_NOTES = [
     { version: '2026.10.26-4', date: '10/26', items: [
       { text: '📤 <b>고장 공유</b> 기능이 생겼습니다. 고장을 처리하다가 현장 담당자에게 알려야 할 내용이 있으면, 고장 상세 맨 아래 <b>"📤 담당자에게 공유"</b>를 눌러 보내세요.' },
