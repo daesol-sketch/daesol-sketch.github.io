@@ -3404,8 +3404,16 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.02-6';
+  const APP_VERSION = '2026.11.02-8';
   const RELEASE_NOTES = [
+    { version: '2026.11.02-8', date: '11/2', items: [
+      { text: '💬 고장이 <b>배정</b>되거나 <b>담당자가 바뀌면</b> 담당자에게 <b>카카오톡 알림</b>이 갑니다. ("주식회사 대솔이엘" 채널)' },
+      { text: '💬 카톡의 <b>[신고 확인하기]</b>를 누르면 앱이 열리고 <b>배정 확인(처리중)</b>까지 한 번에 됩니다.' },
+      { text: '💬 신고 내역 카드의 <b>노란 💬 아이콘</b>으로 다른 직원에게 신고 내용을 카톡으로 보낼 수 있습니다. (빨간 숫자 = 보낸 카톡 수)' },
+      { text: '👥 처리담당자·카톡 받는 사람 목록이 <b>팀별(1팀·2팀·3팀·상주)</b>로 나뉘어 보입니다.' },
+      { text: '⚠️ 카톡 채널의 <b>"알림톡 받지 않기"</b>는 누르지 마세요. 배정 알림을 받을 수 없게 됩니다.' },
+      { text: '📱 갤럭시에서 앱 대신 인터넷 창이 열리면, 대솔 앱을 <b>크롬에서 다시 설치</b>해 주세요.' },
+    ]},
     { version: '2026.10.26-4', date: '10/26', items: [
       { text: '📤 <b>고장 공유</b> 기능이 생겼습니다. 고장을 처리하다가 현장 담당자에게 알려야 할 내용이 있으면, 고장 상세 맨 아래 <b>"📤 담당자에게 공유"</b>를 눌러 보내세요.' },
       { text: '👔 공유하면 그 현장 팀의 <b>팀장님에게도 자동으로</b> 같이 갑니다.' },
@@ -3822,9 +3830,9 @@
 
       document.getElementById('rdm-status').value = r.status || '접수중';
       document.getElementById('rdm-status').disabled = true;
-      const { data: handlerAccs } = await db.from('accounts').select('username').in('role', ['직원', '마스터']).order('username');
+      const { data: handlerAccs } = await db.from('accounts').select('username, team, position').in('role', ['직원', '마스터']).order('username');
       const handlerSel = document.getElementById('rdm-handler');
-      handlerSel.innerHTML = (handlerAccs || []).map(a => `<option value="${escHtml(a.username)}">${escHtml(a.username)}</option>`).join('');
+      handlerSel.innerHTML = staffOptionsByTeam(handlerAccs, r.completion_handler);
       handlerSel.value = r.completion_handler || (currentUser ? currentUser.username : '');
       handlerSel.disabled = r.status === '처리중' && currentRole === '직원';
       const todayStr = new Date().toLocaleDateString('sv');
@@ -4248,7 +4256,21 @@
 
   // ── 카카오 알림톡: 배정 시 자동(서버 트리거) + 상세에서 골라 보내기 ──
   const KAKAO_READY = true;  // false로 바꾸면 고장 상세의 카톡 칸 숨김
-  let kakaoRecips = [], kakaoStaffNames = [];
+  let kakaoRecips = [], kakaoStaffNames = [], kakaoStaff = [];
+  // keep: 목록 팀이 아니어도 넣어야 하는 이름(지금 처리담당자) → 맨 위 "현재 담당"으로
+  function staffOptionsByTeam(accs, keep) {
+    const ORDER = ['1팀', '2팀', '3팀', '상주'];
+    const POS = ['대표','전무','이사','부장','차장','과장','대리','사원'];
+    const rank = (arr, v) => { const i = arr.indexOf(v || ''); return i < 0 ? arr.length : i; };
+    const groups = {};
+    (accs || []).forEach(a => { if (ORDER.includes(a.team)) (groups[a.team] = groups[a.team] || []).push(a); });
+    const teams = ORDER.filter(t => groups[t]);
+    const keepHtml = keep && !teams.some(t => groups[t].some(a => a.username === keep))
+      ? `<optgroup label="── 현재 담당 ──"><option value="${escHtml(keep)}">${escHtml(keep)}</option></optgroup>` : '';
+    return keepHtml + teams.map(t => `<optgroup label="── ${escHtml(t)} ──">` +
+      groups[t].sort((a, b) => rank(POS, a.position) - rank(POS, b.position) || (a.username || '').localeCompare(b.username || '', 'ko'))
+        .map(a => `<option value="${escHtml(a.username)}">${escHtml(a.username)}</option>`).join('') + '</optgroup>').join('');
+  }
   const kakaoStatus = { sent: '<span style="color:#38a169;font-weight:700">✅ 발송</span>', failed: '<span style="color:#e53e3e;font-weight:700">❌ 실패</span>', no_phone: '<span style="color:#dd6b20;font-weight:700">⚠️ 번호 없음</span>' };
   async function renderReportKakao(r) {
     const el = document.getElementById('rdm-kakao-section');
@@ -4296,8 +4318,9 @@
     if (!r) return;
     document.getElementById('kakao-target').textContent = r.building + ' · ' + r.elevator;
     document.getElementById('kakao-error').style.display = 'none';
-    const { data: accs } = await db.from('accounts').select('username').eq('status', '재직').order('username');
-    kakaoStaffNames = (accs || []).map(a => a.username).filter(Boolean);
+    const { data: accs } = await db.from('accounts').select('username, team, position').eq('status', '재직').order('username');
+    kakaoStaff = (accs || []).filter(a => a.username);
+    kakaoStaffNames = kakaoStaff.map(a => a.username);
     kakaoRecips = [];
     renderKakaoRecipients();
     openModal('kakao-modal');
@@ -4309,7 +4332,7 @@
           escHtml(n) + '<span onclick="kakaoRecips.splice(' + i + ',1);renderKakaoRecipients()" style="cursor:pointer;color:var(--tx-3);font-weight:700">✕</span></span>').join('')
       : '<div style="font-size:12px;color:var(--tx-3)">아래에서 받는 사람을 골라 주세요.</div>';
     document.getElementById('kakao-add').innerHTML = '<option value="">+ 직원 추가</option>' +
-      kakaoStaffNames.filter(n => !kakaoRecips.includes(n)).map(n => '<option value="' + escHtml(n) + '">' + escHtml(n) + '</option>').join('');
+      staffOptionsByTeam(kakaoStaff.filter(a => !kakaoRecips.includes(a.username)));
   }
   function addKakaoRecipient(name) {
     if (!name) return;
