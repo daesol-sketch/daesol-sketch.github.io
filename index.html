@@ -3404,7 +3404,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.02-3';
+  const APP_VERSION = '2026.11.02-4';
   const RELEASE_NOTES = [
     { version: '2026.10.26-4', date: '10/26', items: [
       { text: '📤 <b>고장 공유</b> 기능이 생겼습니다. 고장을 처리하다가 현장 담당자에게 알려야 할 내용이 있으면, 고장 상세 맨 아래 <b>"📤 담당자에게 공유"</b>를 눌러 보내세요.' },
@@ -8051,7 +8051,27 @@
   const _tabParam = _urlParams.get('tab');
   const _openReportParam = _urlParams.get('openReport');
   if (_tabParam) { setTimeout(() => switchTab(_tabParam, null), 800); history.replaceState(null, '', location.pathname); }
-  if (_openReportParam) { setTimeout(() => { switchTab('list', null); setTimeout(() => showReportDetail(_openReportParam), 400); }, 800); history.replaceState(null, '', location.pathname); }
+  if (_openReportParam) {
+    history.replaceState(null, '', location.pathname);
+    (async () => {
+      await new Promise(res => setTimeout(res, 800));
+      // 로그인 준비될 때까지 최대 10초 대기
+      for (let i = 0; i < 50 && !currentUser; i++) await new Promise(res => setTimeout(res, 200));
+      // 카톡 [신고 확인하기]: 처리담당자 본인이 열면 웹 알림 클릭처럼 배치완료 → 처리중
+      if (currentUser) {
+        try {
+          const { data: rep } = await db.from('reports').select('status, completion_handler, confirmed_at').eq('id', _openReportParam).maybeSingle();
+          if (rep && rep.status === '배치완료' && !rep.confirmed_at && rep.completion_handler === currentUser.username) {
+            await db.from('reports').update({ status: '처리중', confirmed_at: new Date().toISOString() })
+              .eq('id', _openReportParam).eq('status', '배치완료').is('confirmed_at', null);
+            await loadReports(); updateStats(); updatePendingBadge(); renderList();
+          }
+        } catch (e) { console.warn('신고 확인 처리 실패:', e); }
+      }
+      switchTab('list', null);
+      setTimeout(() => showReportDetail(_openReportParam), 400);
+    })();
+  }
   if (_urlParams.get('shareInbox')) {
     history.replaceState(null, '', location.pathname);
     const _shareWait = setInterval(() => { if (currentUser) { clearInterval(_shareWait); showShareInbox('recv'); } }, 500);
