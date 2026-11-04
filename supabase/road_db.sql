@@ -69,3 +69,9 @@ create policy road_submits_write on road_submits for all to authenticated
   with check (road_is_admin() or road_in_team(team_id));
 
 revoke all on road_site_plans, road_submits from anon;
+
+-- 11/4 추가: 격월 없앰(매월·분기만), 분기 현장의 점검 달
+alter table road_site_plans drop constraint if exists road_site_plans_cycle_check;
+alter table road_site_plans add constraint road_site_plans_cycle_check check (cycle in ('매월','분기'));
+alter table road_site_plans add column if not exists q_month smallint check (q_month between 1 and 3);
+comment on column road_site_plans.q_month is '분기 현장의 점검 달: 1=1·4·7·10월, 2=2·5·8·11월, 3=3·6·9·12월';

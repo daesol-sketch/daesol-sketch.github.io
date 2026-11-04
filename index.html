@@ -2859,13 +2859,26 @@
     <div style="font-size:12px;font-weight:700;color:var(--tx-2);margin:14px 0 6px">가는 날 <span style="font-weight:400;color:var(--tx-3)">(여러 날 고르면 대수를 나눠 넣습니다)</span></div>
     <div id="road-sheet-grid"></div>
     <div style="font-size:12px;font-weight:700;color:var(--tx-2);margin:14px 0 6px">점검 주기</div>
-    <div id="road-sheet-cycle" style="display:flex;gap:6px"></div>
+    <div id="road-sheet-cycle"></div>
     <div style="font-size:12px;font-weight:700;color:var(--tx-2);margin:14px 0 6px">로드표에 쓸 짧은 이름 <span style="font-weight:400;color:var(--tx-3)">(비우면 현장명 그대로)</span></div>
     <input id="road-sheet-short" class="modal-input normal" style="margin-bottom:0" placeholder="">
     <div id="road-sheet-note" style="font-size:12px;color:var(--tx-2);margin-top:10px;line-height:1.6"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button type="button" onclick="closeRoadSheet()" style="flex:1;padding:12px;border:1px solid var(--br-mid);border-radius:8px;background:transparent;color:var(--tx-2);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">취소</button>
       <button type="button" onclick="saveRoadSheet()" style="flex:1;padding:12px;border:none;border-radius:8px;background:#2b6cb0;color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 관리자: 휴일 등록 알림 -->
+<div class="modal-overlay" id="holiday-remind-modal" style="display:none;z-index:999">
+  <div class="modal-box" style="width:400px">
+    <div class="modal-icon">📅</div>
+    <h3>휴일 등록 알림</h3>
+    <p id="holiday-remind-text" style="font-size:14px;color:var(--tx-2);line-height:1.7;margin:8px 0 0;word-break:keep-all"></p>
+    <div class="modal-btn-row">
+      <button class="modal-btn cancel" onclick="closeHolidayRemind(false)">나중에</button>
+      <button class="modal-btn confirm" onclick="closeHolidayRemind(true)">휴일 관리로 가기</button>
     </div>
   </div>
 </div>
@@ -3467,7 +3480,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.04-3';
+  const APP_VERSION = '2026.11.04-4';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -3560,6 +3573,10 @@
 
   async function showInspUpcoming() {
     if (_inspUpcomingDone || !currentUser || _launchedWithLink) return;
+    const shown = await _showInspUpcomingInner();
+    if (!shown) checkHolidayReminder();
+  }
+  async function _showInspUpcomingInner() {
     _inspUpcomingDone = true;
     const isAdmin = currentRole === '관리자' || currentRole === '마스터';
     if (!isAdmin && currentRole !== '직원') return;
@@ -3593,6 +3610,7 @@
       const html = isAdmin ? _inspAdminHtml(rows) : _inspStaffHtml(rows);
       if (!html) return;
       document.getElementById('insp-upcoming-modal').style.display = 'flex';
+      return true;
     } catch (e) { console.warn('검사 팝업 실패:', e); }
   }
 
@@ -3676,6 +3694,30 @@
       try { localStorage.setItem(INSP_HIDE_KEY, new Date().toLocaleDateString('sv') + '|' + currentUser.username); } catch (e) {}
     }
     document.getElementById('insp-upcoming-modal').style.display = 'none';
+    checkHolidayReminder();
+  }
+
+  // 관리자: 휴일 관리에 올해(11월부터는 내년도) 휴일이 하나도 없으면 하루 한 번 알림 — 로드표·당직이 휴일을 못 알아봄
+  let _holidayRemindDone = false;
+  async function checkHolidayReminder() {
+    if (_holidayRemindDone || (currentRole !== '관리자' && currentRole !== '마스터')) return;
+    _holidayRemindDone = true;
+    const now = new Date(), today = now.toLocaleDateString('sv'), y = now.getFullYear();
+    try { if (localStorage.getItem('daesol_holiday_remind') === today) return; } catch (e) {}
+    const years = now.getMonth() + 1 >= 11 ? [y, y + 1] : [y];
+    const missing = [];
+    for (const yy of years) {
+      const { count, error } = await db.from('holidays').select('id', { count: 'exact', head: true }).gte('date', yy + '-01-01').lte('date', yy + '-12-31');
+      if (!error && !count) missing.push(yy);
+    }
+    if (!missing.length) return;
+    try { localStorage.setItem('daesol_holiday_remind', today); } catch (e) {}
+    document.getElementById('holiday-remind-text').innerHTML = `<b>${missing.join('·')}년</b> 휴일이 휴일 관리에 아직 하나도 등록되지 않았습니다.<br>공휴일·회사 휴일을 등록해야 로드표와 당직에 휴일로 표시됩니다.`;
+    document.getElementById('holiday-remind-modal').style.display = 'flex';
+  }
+  function closeHolidayRemind(go) {
+    document.getElementById('holiday-remind-modal').style.display = 'none';
+    if (go) switchTab('holiday', null);
   }
 
   // 검사일정 화면의 해당 날짜로 이동
@@ -7207,10 +7249,11 @@
 
   /* ── 📆 로드표 ──
      현장마다 '몇째 주·무슨 요일'(여러 개 가능)만 정해 두면, 매달 같은 주·요일로 자동으로 채워진다.
-     격월·분기는 표시만 (매달 로드표에 들어감). 같은 조는 같은 로드표를 함께 고친다.
+     분기는 표시만 (매달 로드표·합계에 들어가고 점검 달이 아니면 흐리게). 같은 조는 같은 로드표를 함께 고친다.
      저장: road_site_plans(현장별 설정) · road_submits(조×월 제출). 현장·대수·계약구분은 관리현장 데이터에서 읽기만. */
   const ROAD_DOW = ['월', '화', '수', '목', '금'];
-  const ROAD_CYCLES = ['매월', '격월', '분기'];
+  const ROAD_CYCLES = ['매월', '분기'];
+  const ROAD_Q = { 1: '1·4·7·10월', 2: '2·5·8·11월', 3: '3·6·9·12월' };   // 분기 현장의 점검 달
   let roadTeamId = null, roadYm = null, roadCtx = null, roadView = 'list', roadEdit = null, roadViewKey = '';
 
   function roadIsAdmin() { return currentRole === '관리자' || currentRole === '마스터'; }
@@ -7241,13 +7284,16 @@
   // 이번 달 현장 상태 계산
   function roadSiteMonth(site, cfg, ym, weeks) {
     const slots = (cfg?.slots || []).slice().sort((a, b) => a.w - b.w || a.d - b.d);
-    const cycle = cfg?.cycle || '매월';
+    const cycle = cfg?.cycle === '분기' ? '분기' : '매월';
+    const q = cycle === '분기' ? (cfg?.q || 1) : null;
+    // 분기 현장: 점검 달이 아니어도 로드표·합계엔 들어가고, 흐리게 표시만
+    const off = cycle === '분기' && ((+ym.slice(5, 7) - q) % 3 + 3) % 3 !== 0;
     const units = roadSplit(site.units, Math.max(1, slots.length));
     const days = slots.map((s, i) => ({ ...s, date: weeks[s.w - 1]?.[s.d] || null, units: units[i] }));
     let state = 'ok';
     if (!slots.length) state = 'none';
     else if (days.some(x => !x.date)) state = 'bad';
-    return { site, cfg, cycle, days, state };
+    return { site, cfg, cycle, q, off, days, state };
   }
   function roadWhenText(r) {
     if (r.state === 'none') return '날짜 미정';
@@ -7255,7 +7301,7 @@
     r.days.forEach(x => { (byW[x.w] = byW[x.w] || []).push(ROAD_DOW[x.d]); });
     return Object.entries(byW).map(([w, ds]) => w + '주 ' + ds.join('·')).join(', ');
   }
-  function roadCycleText(r) { return r.cycle === '매월' ? '' : r.cycle; }
+  function roadCycleText(r) { return r.cycle === '분기' ? '분기(' + ROAD_Q[r.q] + ')' : ''; }
 
   async function loadRoad() {
     if (!inspTeams.length) await loadInspTeams();
@@ -7303,18 +7349,19 @@
     const [y, m] = ym.split('-').map(Number);
     const from = ym + '-01', to = new Date(y, m, 1).toLocaleDateString('sv');
     const { data: hol } = await db.from('holidays').select('date, name').gte('date', from).lt('date', to);
+    const { count: yearHol } = await db.from('holidays').select('id', { count: 'exact', head: true }).gte('date', y + '-01-01').lte('date', y + '-12-31');
     const holidays = {};
     (hol || []).forEach(h => { holidays[h.date] = h.name || '휴일'; });
     const plans = {};
     for (let i = 0; i < ids.length; i += 200) {
-      const { data: pl, error } = await db.from('road_site_plans').select('site_id, slots, cycle, short_name, updated_by, updated_at').in('site_id', ids.slice(i, i + 200));
+      const { data: pl, error } = await db.from('road_site_plans').select('site_id, slots, cycle, q_month, short_name, updated_by, updated_at').in('site_id', ids.slice(i, i + 200));
       if (error) throw error;
-      (pl || []).forEach(x => { plans[x.site_id] = { slots: Array.isArray(x.slots) ? x.slots : [], cycle: x.cycle, short: x.short_name || '', by: x.updated_by, at: x.updated_at }; });
+      (pl || []).forEach(x => { plans[x.site_id] = { slots: Array.isArray(x.slots) ? x.slots : [], cycle: x.cycle, q: x.q_month || null, short: x.short_name || '', by: x.updated_by, at: x.updated_at }; });
     }
     const { data: sub } = await db.from('road_submits').select('total, submitted_by, submitted_at').eq('team_id', teamId).eq('ym', ym).maybeSingle();
     const weeks = roadWeeks(ym);
     const rows = list.map(x => roadSiteMonth({ ...x, units: cnt[x.id] || 0 }, plans[x.id], ym, weeks));
-    return { teamId, ym, weeks, holidays, rows, sub: sub || null };
+    return { teamId, ym, weeks, holidays, rows, sub: sub || null, noYearHol: yearHol === 0 };
   }
   function roadName(r) { return (r.cfg?.short || '').trim() || r.site.site_name; }
 
@@ -7324,16 +7371,17 @@
     const totalUnits = c.rows.reduce((a, r) => a + r.site.units, 0);
     const monthUnits = c.rows.filter(r => r.state === 'ok').reduce((a, r) => a + r.site.units, 0);
     const none = c.rows.filter(r => r.state === 'none' || r.state === 'bad');
-    const cyc = c.rows.filter(r => r.cycle !== '매월');
+    const cyc = c.rows.filter(r => r.cycle === '분기');
     const holHits = c.rows.filter(r => r.state === 'ok' && r.days.some(x => c.holidays[x.date]));
     const sub = c.sub;
     document.getElementById('road-summary').innerHTML = `<div style="padding:10px 12px;background:var(--bg-high);border:1px solid var(--br);border-radius:10px;font-size:13px;line-height:1.7;color:var(--tx)">
       현장 <b>${c.rows.length}곳 · ${totalUnits}대</b> &nbsp;|&nbsp; 이번 달 점검 <b>${monthUnits}대</b>
       ${none.length ? `<br><span style="color:#e53e3e;font-weight:700">⚠️ 날짜를 정해야 하는 현장 ${none.length}곳</span>` : '<br><span style="color:#38a169;font-weight:700">✅ 모든 현장의 날짜가 정해졌습니다</span>'}
       ${holHits.length ? `<br><span style="color:#dd6b20;font-weight:700">🎌 휴일에 잡힌 현장 ${holHits.length}곳</span>` : ''}
+      ${c.noYearHol ? `<br><span style="color:#dd6b20;font-weight:700">📅 ${c.ym.slice(0, 4)}년 휴일이 아직 등록되지 않았습니다${roadIsAdmin() ? ' — <a href="#" onclick="switchTab(\'holiday\',null);return false" style="color:#3182ce">휴일 관리에서 등록</a>' : ' (관리자 등록 전)'}</span>` : ''}
       ${sub ? `<br><span style="color:#3182ce;font-weight:700">📨 제출함 · ${escHtml(sub.submitted_by || '')} ${roadFmt(sub.submitted_at)} (${sub.total}대)</span>` : ''}
     </div>`;
-    const tabs = [['list', `전체 ${c.rows.length}`], ['none', `날짜 미정 ${none.length}`], ['cycle', `격월·분기 ${cyc.length}`], ['preview', '📋 미리보기']];
+    const tabs = [['list', `전체 ${c.rows.length}`], ['none', `날짜 미정 ${none.length}`], ['cycle', `분기 ${cyc.length}`], ['preview', '📋 미리보기']];
     document.getElementById('road-tabs').innerHTML = tabs.map(([k, label]) =>
       `<button type="button" onclick="roadView='${k}';renderRoad()" style="padding:6px 12px;border-radius:16px;border:1.5px solid ${roadView === k ? '#2b6cb0' : 'var(--br-mid)'};background:${roadView === k ? '#2b6cb0' : 'var(--bg-card)'};color:${roadView === k ? 'white' : 'var(--tx)'};font-size:12px;font-weight:${roadView === k ? 700 : 500};font-family:inherit;cursor:pointer">${label}</button>`).join('');
     document.getElementById('road-submit-btn').textContent = sub ? '다시 제출' : '제출';
@@ -7356,9 +7404,10 @@
       if (r.state === 'ok') subs.push(r.days.map(x => roadMD(x.date).replace(/\(.\)/, '')).join(', '));
       if (r.state === 'bad') subs.push('이번 달엔 없는 날이 있습니다');
       if (hol) subs.push('🎌 휴일 포함');
-      return `<div onclick="openRoadSheet(${r.site.id})" style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--br);border-radius:10px;cursor:pointer">
+      if (r.cycle === '분기') subs.push(r.off ? '이번 달은 분기 점검 달 아님' : '이번 달 분기 점검');
+      return `<div onclick="openRoadSheet(${r.site.id})" style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--br);border-radius:10px;cursor:pointer;${r.off ? 'opacity:.5' : ''}">
         <span style="font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;flex-shrink:0;${isT ? 'background:rgba(99,179,237,.15);color:#3182ce' : 'background:rgba(104,211,145,.15);color:#38a169'}">${escHtml(mark || '-')}</span>
-        <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:var(--tx);word-break:keep-all;overflow-wrap:anywhere">${escHtml(roadName(r))}${r.cycle !== '매월' ? ` <span style="font-size:11px;font-weight:700;color:#dd6b20;border:1px solid #dd6b20;border-radius:6px;padding:0 5px;white-space:nowrap">${escHtml(r.cycle)}</span>` : ''}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:var(--tx);word-break:keep-all;overflow-wrap:anywhere">${escHtml(roadName(r))}${r.cycle === '분기' ? ` <span style="font-size:11px;font-weight:700;color:#dd6b20;border:1px solid #dd6b20;border-radius:6px;padding:0 5px;white-space:nowrap">${escHtml(roadCycleText(r))}</span>` : ''}</div>
           <div style="font-size:11px;color:${hol ? '#dd6b20' : 'var(--tx-3)'};margin-top:2px">${escHtml(subs.join(' · '))}</div></div>
         <span style="font-size:13px;font-weight:700;padding:6px 10px;border-radius:8px;border:1px solid;white-space:nowrap;${wc}">${escHtml(roadWhenText(r))}</span>
       </div>`;
@@ -7368,7 +7417,7 @@
   // 미리보기: 지금 엑셀과 같은 월~금 × 주 표
   function roadCellItems(c, date) {
     const L = [];
-    c.rows.forEach(r => { if (r.state === 'ok') r.days.forEach(x => { if (x.date === date) L.push({ mark: roadMark(r.site.contract_type), name: roadName(r) + (r.cycle !== '매월' ? ' (' + r.cycle + ')' : ''), units: x.units }); }); });
+    c.rows.forEach(r => { if (r.state === 'ok') r.days.forEach(x => { if (x.date === date) L.push({ mark: roadMark(r.site.contract_type), name: roadName(r) + (r.cycle === '분기' ? ' (분기)' : ''), units: x.units, off: r.off }); }); });
     return L;
   }
   function roadPreviewHtml(c) {
@@ -7378,9 +7427,9 @@
       const items = roadCellItems(c, date);
       items.forEach(i => { total += i.units; });
       const hol = c.holidays[date];
-      return `<td style="padding:3px 3px 5px;border:1px solid var(--br);vertical-align:top;font-size:10.5px;line-height:1.45">
-        <div style="font-size:10px;color:${hol ? '#e53e3e' : 'var(--tx-3)'};font-weight:${hol ? 700 : 400}">${+date.slice(8)}${hol ? ' ' + escHtml(hol) : ''}</div>
-        ${items.map(i => `<div style="color:var(--tx);word-break:keep-all;overflow-wrap:anywhere"><span style="color:${i.mark.startsWith('T') ? '#3182ce' : '#38a169'};font-weight:700">${escHtml(i.mark.slice(0, 1))}</span> ${escHtml(i.name)} <b>${i.units}</b></div>`).join('')}
+      return `<td style="padding:3px 3px 5px;border:1px solid var(--br);vertical-align:top;font-size:10.5px;line-height:1.45;${hol ? 'background:rgba(229,62,62,.18)' : ''}">
+        <div style="font-size:10px;${hol ? 'background:#e53e3e;color:white;font-weight:700;border-radius:4px;padding:0 4px;display:inline-block' : 'color:var(--tx-3)'}">${+date.slice(8)}${hol ? ' ' + escHtml(hol) : ''}</div>
+        ${items.map(i => `<div style="color:${i.off ? 'var(--tx-4)' : 'var(--tx)'};word-break:keep-all;overflow-wrap:anywhere"><span style="color:${i.off ? 'var(--tx-4)' : i.mark.startsWith('T') ? '#3182ce' : '#38a169'};font-weight:700">${escHtml(i.mark.slice(0, 1))}</span> ${escHtml(i.name)} <b>${i.units}</b></div>`).join('')}
       </td>`;
     }).join('') + '</tr>').join('');
     return `<div style="overflow-x:auto"><table style="width:100%;min-width:520px;border-collapse:collapse;table-layout:fixed">
@@ -7389,7 +7438,7 @@
       ${body}
       <tr><td colspan="6" style="padding:6px 8px;border:1px solid var(--br);text-align:right;font-weight:800;color:var(--tx);font-size:13px">합계 ${total}대</td></tr>
     </table></div>
-    <div style="font-size:11px;color:var(--tx-3);margin-top:8px">T = TK 계약, D = 대솔 계약. 엑셀은 지금 쓰시는 양식과 같은 모양으로 받아집니다.</div>`;
+    <div style="font-size:11px;color:var(--tx-3);margin-top:8px">T = TK 계약, D = 대솔 계약. 빨간 칸 = 휴일(☰ 휴일 관리), 회색 = 이번 달이 점검 달이 아닌 분기 현장(합계엔 포함).</div>`;
   }
 
   function roadMoveMonth(n) {
@@ -7404,7 +7453,7 @@
     const r = roadCtx.rows.find(x => x.site.id === siteId);
     if (!r) return;
     if (!roadIsAdmin() && !roadIsMember(inspTeamById(roadCtx.teamId))) return showToast('우리 조 로드표만 고칠 수 있습니다.');
-    roadEdit = { siteId, slots: (r.cfg?.slots || []).map(s => ({ ...s })), cycle: r.cfg?.cycle || '매월' };
+    roadEdit = { siteId, slots: (r.cfg?.slots || []).map(s => ({ ...s })), cycle: r.cycle, q: r.q || ((+roadCtx.ym.slice(5, 7) - 1) % 3) + 1 };
     document.getElementById('road-sheet-title').textContent = r.site.site_name;
     document.getElementById('road-sheet-sub').textContent = [roadMark(r.site.contract_type), r.site.units + '대', r.cfg?.by ? '마지막 수정 ' + r.cfg.by + ' ' + roadFmt(r.cfg.at) : ''].filter(Boolean).join(' · ');
     document.getElementById('road-sheet-short').value = r.cfg?.short || '';
@@ -7434,21 +7483,24 @@
         const on = e.slots.some(s => s.w === wi + 1 && s.d === d);
         const hol = date && c.holidays[date];
         if (!date && !on) { html += '<div style="border-radius:8px;background:var(--bg-high);opacity:.4"></div>'; return; }
-        html += `<button type="button" onclick="roadToggleSlot(${wi + 1},${d})" style="${cell};${on ? 'background:#2b6cb0;border-color:#2b6cb0;color:white' : 'background:var(--bg-high);border-color:var(--br-mid);color:' + (hol ? '#e53e3e' : 'var(--tx)')}">
+        html += `<button type="button" onclick="roadToggleSlot(${wi + 1},${d})" style="${cell};${on ? 'background:#2b6cb0;border-color:#2b6cb0;color:white' : hol ? 'background:#e53e3e;border-color:#e53e3e;color:white' : 'background:var(--bg-high);border-color:var(--br-mid);color:var(--tx)'}">
           ${date ? +date.slice(8) : '없음'}<div style="font-size:10px;font-weight:400;opacity:.85">${hol ? escHtml(hol) : load[date] ? load[date] + '대' : '&nbsp;'}</div></button>`;
       });
     });
     html += '</div><div style="font-size:11px;color:var(--tx-3);margin-top:6px">날짜 아래 숫자 = 그날 이미 잡힌 다른 현장 대수</div>';
     document.getElementById('road-sheet-grid').innerHTML = html;
-    document.getElementById('road-sheet-cycle').innerHTML = ROAD_CYCLES.map(cy =>
-      `<button type="button" onclick="roadSetCycle('${cy}')" style="flex:1;${cell};padding:10px 0;${e.cycle === cy ? 'background:#2b6cb0;border-color:#2b6cb0;color:white' : 'background:var(--bg-high);border-color:var(--br-mid);color:var(--tx)'}">${cy}</button>`).join('');
-    const tmp = roadSiteMonth(r.site, { slots: e.slots, cycle: e.cycle }, c.ym, c.weeks);
+    const on = 'background:#2b6cb0;border-color:#2b6cb0;color:white', offc = 'background:var(--bg-high);border-color:var(--br-mid);color:var(--tx)';
+    document.getElementById('road-sheet-cycle').innerHTML = `<div style="display:flex;gap:6px;width:100%">` + ROAD_CYCLES.map(cy =>
+      `<button type="button" onclick="roadSetCycle('${cy}')" style="flex:1;${cell};padding:10px 0;${e.cycle === cy ? on : offc}">${cy}</button>`).join('') + '</div>' +
+      (e.cycle === '분기' ? `<div style="font-size:12px;color:var(--tx-2);margin:10px 0 6px;font-weight:700">점검하는 달</div><div style="display:flex;gap:6px;width:100%">` +
+        [1, 2, 3].map(q => `<button type="button" onclick="roadEdit.q=${q};renderRoadSheet()" style="flex:1;${cell};padding:10px 0;font-size:12px;${e.q === q ? on : offc}">${ROAD_Q[q]}</button>`).join('') + '</div>' : '');
+    const tmp = roadSiteMonth(r.site, { slots: e.slots, cycle: e.cycle, q: e.q }, c.ym, c.weeks);
     let note = '';
     if (!e.slots.length) note = '가는 날을 눌러 주세요. 여러 날을 고르면 대수를 나눠서 넣습니다.';
     else {
       note = '→ ' + tmp.days.map(x => (x.date ? `<b style="color:var(--tx)">${roadMD(x.date)}</b>` : '<b style="color:#e53e3e">없는 날</b>') + ` ${x.units}대`).join(', ');
       if (e.slots.length > Math.max(1, r.site.units)) note += `<br><b style="color:#e53e3e">⚠️ ${r.site.units}대 현장이라 ${Math.max(1, r.site.units)}일까지만 고를 수 있습니다.</b>`;
-      if (e.cycle !== '매월') note += `<br>로드표에 <b style="color:#dd6b20">${escHtml(e.cycle)}</b> 표시가 붙습니다.`;
+      if (e.cycle === '분기') note += `<br>로드표에 <b style="color:#dd6b20">분기</b> 표시가 붙고, ${ROAD_Q[e.q]}이 아닌 달에는 흐리게 보입니다. (합계엔 포함)`;
       note += '<br>다음 달부터는 같은 주·요일로 자동으로 채워집니다.';
     }
     document.getElementById('road-sheet-note').innerHTML = note;
@@ -7459,7 +7511,7 @@
     if (e.slots.length > Math.max(1, units)) { showToast(`❌ ${units}대 현장은 ${Math.max(1, units)}일까지만 고를 수 있습니다.`); return; }
     const short = document.getElementById('road-sheet-short').value.trim();
     const slots = e.slots.slice().sort((a, b) => a.w - b.w || a.d - b.d);
-    const { error } = await db.from('road_site_plans').upsert({ site_id: e.siteId, slots, cycle: e.cycle, short_name: short || null }, { onConflict: 'site_id' });
+    const { error } = await db.from('road_site_plans').upsert({ site_id: e.siteId, slots, cycle: e.cycle, q_month: e.cycle === '분기' ? e.q : null, short_name: short || null }, { onConflict: 'site_id' });
     if (error) { showToast('❌ 저장하지 못했습니다: ' + error.message); return; }
     closeRoadSheet();
     loadRoad();
@@ -7478,32 +7530,49 @@
     loadRoad();
   }
 
-  // 엑셀: 지금 쓰는 양식 (월~금 × 날짜·스마트·현장명·대수)
+  // 엑셀: 각 조가 쓰던 양식 그대로 (월~금 × 날짜·스마트·현장명·대수, 한 주 8줄 고정, 모자라면 늘림)
   async function exportRoadExcel() {
     if (typeof ExcelJS === 'undefined') return showToast('엑셀 기능을 불러오는 중입니다. 잠시 후 다시 눌러 주세요.');
     const c = roadCtx, t = inspTeamById(c.teamId);
-    const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet((t?.name || '로드표').replace(/[\\\/?*\[\]:]/g, '').slice(0, 31), { pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
-    const widths = [6];
-    for (let k = 0; k < 5; k++) widths.push(5, 8, 22, 5);
-    ws.columns = widths.map(w => ({ width: w }));
     const [y, m] = c.ym.split('-').map(Number);
-    const F = { name: '맑은 고딕', size: 10 };
-    const thin = { style: 'thin', color: { argb: 'FF888888' } };
-    const B = { top: thin, left: thin, bottom: thin, right: thin };
-    const RED = { ...F, bold: true, color: { argb: 'FFE53E3E' } };
-    ws.mergeCells(1, 1, 1, 21);
-    Object.assign(ws.getCell(1, 1), { value: `${y}년 ${m}월 점검계획서 (${t?.name || ''} ${roadMembers(t)})`, font: { ...F, size: 15, bold: true }, alignment: { horizontal: 'center', vertical: 'middle' } });
-    ws.getRow(1).height = 30;
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet(`${y % 100}년 ${m}월`, {
+      pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 1, horizontalCentered: true,
+        margins: { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 } }
+    });
+    ws.columns = [4.3, 3.8, 5.8, 13.8, 3.8, 3.8, 5.8, 13.8, 3.8, 3.8, 5.8, 13.8, 3.8, 3.8, 5.8, 13.8, 3.8, 3.8, 5.8, 13.8, 5.2].map(w => ({ width: w }));
+    const font = (o = {}) => ({ name: '맑은 고딕', size: 8, ...o });
+    const RED = 'FFFF0000';
+    const LAST = 21;   // U열
+    // 테두리: 바깥 굵게, 요일 사이 가는 선, 요일 안은 점선(hair)
+    const line = st => st ? { style: st } : undefined;
+    const setB = (cell, l, r, tp, bt) => { cell.border = { left: line(l), right: line(r), top: line(tp), bottom: line(bt) }; };
+
+    // 1행 제목
+    ws.mergeCells(1, 1, 1, LAST);
+    Object.assign(ws.getCell(1, 1), { value: `${y}년 ${m}월 점검계획서 (${[t?.main_inspector, t?.sub_inspector, t?.sub_inspector2].filter(Boolean).join(',')})`,
+      font: font({ size: 16 }), alignment: { horizontal: 'center', vertical: 'middle' } });
+    ws.getRow(1).height = 38.25;
+    // 2~3행 머리글
     ws.mergeCells(2, 1, 3, 1);
     ROAD_DOW.forEach((d, k) => {
-      const b = 2 + k * 4;
-      ws.mergeCells(2, b, 2, b + 3);
-      ws.getCell(2, b).value = d + '요일';
-      ['날짜', '스마트', '현장명', '대수'].forEach((v, j) => { ws.getCell(3, b + j).value = v; });
+      const b0 = 2 + k * 4;
+      ws.mergeCells(2, b0 + 1, 2, b0 + 3);
+      Object.assign(ws.getCell(2, b0 + 1), { value: d + '요일', font: font({ bold: true }), alignment: { horizontal: 'center', vertical: 'middle' } });
+      ['날짜', '스마트', '현장명', '대수'].forEach((v, j) => Object.assign(ws.getCell(3, b0 + j), { value: v, font: font(), alignment: { horizontal: 'center', vertical: 'middle' } }));
     });
-    for (let r = 2; r <= 3; r++) for (let cc = 1; cc <= 21; cc++) Object.assign(ws.getCell(r, cc), { font: { ...F, bold: true }, alignment: { horizontal: 'center', vertical: 'middle' }, border: B, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEDF2F7' } } });
-    let r = 4, total = 0;
+    for (let cc = 1; cc <= LAST; cc++) {
+      const k = (cc - 2) % 4;
+      const l = cc === 1 ? 'medium' : k === 0 ? 'thin' : 'hair';
+      const r = cc === LAST ? 'medium' : k === 3 || cc === 1 ? 'thin' : 'hair';
+      setB(ws.getCell(2, cc), cc === 1 ? 'medium' : k === 1 || k === 0 ? 'thin' : undefined, cc === LAST ? 'medium' : k === 3 ? 'thin' : undefined, 'medium', 'thin');
+      setB(ws.getCell(3, cc), l, r, 'thin', 'thin');
+    }
+    ws.getRow(2).height = 12.75; ws.getRow(3).height = 12.75;
+
+    // 주마다 8줄 (현장이 더 많으면 그만큼 늘림)
+    let r = 4;
+    const sumRanges = ROAD_DOW.map(() => []);
     c.weeks.forEach((w, wi) => {
       const lines = w.map(date => {
         if (!date) return [];
@@ -7512,34 +7581,58 @@
         roadCellItems(c, date).forEach(i => L.push(i));
         return L;
       });
-      const n = Math.max(1, ...lines.map(l => l.length));
-      for (let rr = r; rr < r + n; rr++) for (let cc = 1; cc <= 21; cc++) {
-        const k = (cc - 2) % 4;
-        Object.assign(ws.getCell(rr, cc), { font: F, border: B, alignment: { horizontal: cc === 1 || k !== 2 ? 'center' : 'left', vertical: 'middle', wrapText: k === 2 } });
+      const n = Math.max(8, ...lines.map(l => l.length));
+      const lastWeek = wi === c.weeks.length - 1;
+      for (let rr = r; rr < r + n; rr++) {
+        ws.getRow(rr).height = 12;
+        for (let cc = 1; cc <= LAST; cc++) {
+          const k = (cc - 2) % 4;
+          const cell = ws.getCell(rr, cc);
+          cell.font = font(cc === 1 ? { size: 9 } : {});
+          cell.alignment = { horizontal: cc === 1 || k === 0 || k === 1 || k === 3 ? 'center' : 'left', vertical: 'middle', shrinkToFit: k === 1 || k === 2 };
+          const l = cc === 1 ? 'medium' : k === 0 ? 'thin' : 'hair';
+          const rt = cc === LAST ? 'medium' : cc === 1 || k === 3 || k === 0 ? 'thin' : 'hair';
+          const tp = rr === r ? 'thin' : (k === 0 || cc === 1 ? undefined : 'hair');
+          const bt = rr === r + n - 1 ? (lastWeek ? 'medium' : 'thin') : (k === 0 || cc === 1 ? undefined : 'hair');
+          setB(cell, l, rt, tp, bt);
+        }
       }
-      if (n > 1) ws.mergeCells(r, 1, r + n - 1, 1);
-      Object.assign(ws.getCell(r, 1), { value: (wi + 1) + '주', font: { ...F, bold: true } });
+      ws.mergeCells(r, 1, r + n - 1, 1);
+      Object.assign(ws.getCell(r, 1), { value: (wi + 1) + '주', font: font({ size: 9 }), alignment: { horizontal: 'center', vertical: 'middle' } });
       w.forEach((date, k) => {
-        const b = 2 + k * 4;
-        if (n > 1) ws.mergeCells(r, b, r + n - 1, b);
-        if (date) { ws.getCell(r, b).value = +date.slice(8); if (c.holidays[date]) ws.getCell(r, b).font = RED; }
+        const b0 = 2 + k * 4;
+        ws.mergeCells(r, b0, r + n - 1, b0);
+        // 휴일은 기존 양식처럼 날짜 칸을 빨갛게 칠함
+        if (date) Object.assign(ws.getCell(r, b0), { value: +date.slice(8), font: font(), alignment: { horizontal: 'center', vertical: 'middle' },
+          ...(c.holidays[date] ? { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: RED } } } : {}) });
         lines[k].forEach((L, li) => {
-          ws.getCell(r + li, b + 1).value = L.mark || null;
-          ws.getCell(r + li, b + 2).value = L.name;
-          ws.getCell(r + li, b + 3).value = L.units ?? null;
-          if (L.red) ws.getCell(r + li, b + 2).font = RED;
-          total += L.units || 0;
+          ws.getCell(r + li, b0 + 1).value = L.mark || null;
+          ws.getCell(r + li, b0 + 2).value = L.name;
+          ws.getCell(r + li, b0 + 3).value = L.units ?? null;
+          if (L.red) ws.getCell(r + li, b0 + 2).font = font({ color: { argb: RED } });
+          if (L.off) [1, 2, 3].forEach(j => { ws.getCell(r + li, b0 + j).font = font({ color: { argb: 'FFA0A0A0' } }); });
         });
+        sumRanges[k].push(ws.getCell(r, b0 + 3).address + ':' + ws.getCell(r + n - 1, b0 + 3).address);
       });
       r += n;
     });
-    ws.mergeCells(r, 1, r, 20);
-    Object.assign(ws.getCell(r, 1), { value: '합계', font: { ...F, bold: true, size: 11 }, alignment: { horizontal: 'right', vertical: 'middle' }, border: B });
-    Object.assign(ws.getCell(r, 21), { value: total, font: { ...F, bold: true, size: 11 }, alignment: { horizontal: 'center', vertical: 'middle' }, border: B });
-    r++;
-    ws.mergeCells(r, 1, r, 21);
-    ws.getCell(r, 1).value = '▶ 격월, 분기 점검현장은 점검방문 해당월만 표기   ▶ TKE 계약은 T/--, 대솔 계약은 D/-- 로 구분';
-    ws.getCell(r, 1).font = { ...F, size: 9, color: { argb: 'FF666666' } };
+
+    // 안내 + 합계 (합계는 엑셀에서 고쳐도 다시 계산되게 수식으로)
+    let total = 0;
+    c.weeks.forEach(w => w.forEach(date => { if (date) roadCellItems(c, date).forEach(i => { total += i.units || 0; }); }));
+    ws.getRow(r).height = 15; ws.getRow(r + 1).height = 15;
+    ws.getCell(r, 1).value = '▶'; ws.getCell(r, 1).font = font();
+    ws.mergeCells(r, 2, r, 13);
+    Object.assign(ws.getCell(r, 2), { value: '격월, 분기 점검현장은 점검방문 해당월만 대수로 표기하세요.', font: font() });
+    Object.assign(ws.getCell(r, 19), { value: '합계', font: font({ bold: true }), alignment: { horizontal: 'center', vertical: 'middle' } });
+    ws.mergeCells(r, 20, r, 21);
+    Object.assign(ws.getCell(r, 20), { value: { formula: 'SUM(' + sumRanges.flat().join(',') + ')', result: total }, font: font({ bold: true }), alignment: { horizontal: 'center', vertical: 'middle' } });
+    [19, 20, 21].forEach(cc => setB(ws.getCell(r, cc), cc === 19 ? 'medium' : undefined, cc === 21 || cc === 19 ? 'medium' : undefined, 'medium', 'medium'));
+    ws.getCell(r + 1, 1).value = '▶'; ws.getCell(r + 1, 1).font = font();
+    ws.mergeCells(r + 1, 2, r + 1, 13);
+    Object.assign(ws.getCell(r + 1, 2), { value: '[TKE 계약은 T/--/-- .  대솔계약은 D/--/-- 로 구분 기록합니다]', font: font() });
+    ws.pageSetup.printArea = 'A1:U' + (r + 1);
+
     const buf = await wb.xlsx.writeBuffer();
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
