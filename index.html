@@ -508,6 +508,7 @@
   <button class="drawer-menu-item tab-btn" id="tab-fault-btn" onclick="switchTab('fault');closeNavMenu()"><span class="menu-icon">🔧</span> 고장 관리</button>
   <button class="drawer-menu-item tab-btn" id="tab-mgmt-btn" onclick="switchTab('mgmt');closeNavMenu()" style="display:none"><span class="menu-icon">🏢</span> 관리현장</button>
   <button class="drawer-menu-item tab-btn" id="tab-insp-calendar-btn" onclick="switchTab('insp-calendar');closeNavMenu()" style="display:none"><span class="menu-icon">🗓️</span> 검사일정</button>
+  <button class="drawer-menu-item tab-btn" id="tab-road-btn" onclick="switchTab('road');closeNavMenu()" style="display:none"><span class="menu-icon">📆</span> 로드표</button>
   <button class="drawer-menu-item tab-btn" id="tab-jungong-btn" onclick="switchTab('jungong');closeNavMenu()" style="display:none"><span class="menu-icon">📋</span> 준공계</button>
   <button class="drawer-menu-item tab-btn" id="tab-gongsa-btn" onclick="switchTab('gongsa');closeNavMenu()" style="display:none"><span class="menu-icon">📸</span> 공사팀 사진철</button>
   <button class="drawer-menu-item tab-btn" id="tab-docket-btn" onclick="switchTab('docket');closeNavMenu()" style="display:none"><span class="menu-icon">📝</span> 서비스다켓</button>
@@ -1063,6 +1064,30 @@
     </div>
   </div>
   <!-- 관리현장 -->
+  <!-- 📆 로드표 -->
+  <div class="page" id="page-road">
+    <div style="padding:14px 14px 90px;max-width:760px;margin:0 auto">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+        <h2 style="font-size:18px;font-weight:800;margin:0;color:var(--tx)">📆 로드표</h2>
+        <span style="font-size:11px;font-weight:700;color:#dd6b20;border:1px solid #dd6b20;border-radius:10px;padding:1px 8px">시험 운영</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button type="button" onclick="roadMoveMonth(-1)" style="background:none;border:none;color:var(--tx);font-size:18px;cursor:pointer;padding:2px 8px">&#9664;</button>
+        <span id="road-ym-label" style="font-size:16px;font-weight:800;color:var(--tx)"></span>
+        <button type="button" onclick="roadMoveMonth(1)" style="background:none;border:none;color:var(--tx);font-size:18px;cursor:pointer;padding:2px 8px">&#9654;</button>
+        <select id="road-team" onchange="roadTeamId=+this.value;loadRoad()" style="margin-left:auto;padding:7px 12px;border:1.5px solid var(--br-mid);border-radius:20px;font-size:13px;font-family:inherit;color:var(--tx);background:var(--bg-card);max-width:200px"></select>
+      </div>
+      <div id="road-members" style="font-size:12px;color:var(--tx-3);margin-bottom:10px"></div>
+      <div id="road-summary"></div>
+      <div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap" id="road-tabs"></div>
+      <div id="road-body"><div class="loading-state">불러오는 중...</div></div>
+    </div>
+    <div style="position:fixed;left:0;right:0;bottom:0;padding:10px 14px calc(12px + env(safe-area-inset-bottom));background:var(--bg-head);border-top:1px solid var(--br);display:flex;gap:8px;z-index:50;max-width:760px;margin:0 auto" id="road-actions">
+      <button type="button" onclick="exportRoadExcel()" style="flex:1;padding:12px;border:none;border-radius:8px;background:#1d6f42;color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">📥 엑셀 받기</button>
+      <button type="button" id="road-submit-btn" onclick="roadSubmit()" style="flex:1;padding:12px;border:none;border-radius:8px;background:#2b6cb0;color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">제출</button>
+    </div>
+  </div>
+
   <div class="page" id="page-mgmt">
     <div class="card">
       <h2>🏢 관리현장
@@ -2826,6 +2851,25 @@
   </div>
 </div>
 
+<!-- 로드표: 현장 날짜 고르기 -->
+<div class="modal-overlay" id="road-sheet" style="display:none;align-items:flex-end" onclick="if(event.target===this)closeRoadSheet()">
+  <div style="width:100%;max-width:520px;background:var(--bg-card);border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:92vh;overflow-y:auto;box-sizing:border-box">
+    <div id="road-sheet-title" style="font-size:16px;font-weight:800;color:var(--tx)"></div>
+    <div id="road-sheet-sub" style="font-size:12px;color:var(--tx-3);margin-top:3px"></div>
+    <div style="font-size:12px;font-weight:700;color:var(--tx-2);margin:14px 0 6px">가는 날 <span style="font-weight:400;color:var(--tx-3)">(여러 날 고르면 대수를 나눠 넣습니다)</span></div>
+    <div id="road-sheet-grid"></div>
+    <div style="font-size:12px;font-weight:700;color:var(--tx-2);margin:14px 0 6px">점검 주기</div>
+    <div id="road-sheet-cycle" style="display:flex;gap:6px"></div>
+    <div style="font-size:12px;font-weight:700;color:var(--tx-2);margin:14px 0 6px">로드표에 쓸 짧은 이름 <span style="font-weight:400;color:var(--tx-3)">(비우면 현장명 그대로)</span></div>
+    <input id="road-sheet-short" class="modal-input normal" style="margin-bottom:0" placeholder="">
+    <div id="road-sheet-note" style="font-size:12px;color:var(--tx-2);margin-top:10px;line-height:1.6"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button type="button" onclick="closeRoadSheet()" style="flex:1;padding:12px;border:1px solid var(--br-mid);border-radius:8px;background:transparent;color:var(--tx-2);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">취소</button>
+      <button type="button" onclick="saveRoadSheet()" style="flex:1;padding:12px;border:none;border-radius:8px;background:#2b6cb0;color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- 다가오는 검사 팝업 (로그인 시 하루 1번) -->
 <div class="modal-overlay" id="insp-upcoming-modal" style="display:none;z-index:999">
   <div class="modal-box" style="width:480px;max-width:calc(100vw - 32px);text-align:left;padding:0;display:flex;flex-direction:column;max-height:88vh">
@@ -3423,7 +3467,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.04-1';
+  const APP_VERSION = '2026.11.04-2';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -3666,7 +3710,7 @@
   updateClock(); setInterval(updateClock, 1000);
 
   /* ── NAV MENU (사이드 드로어) ── */
-  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', gongsa:'📸 공사팀 사진철', holiday:'📅 휴일 관리', 'insp-calendar':'🗓️ 검사일정', docket:'📝 서비스다켓', 'call-logs':'📞 전화 기록', contracts:'📄 계약서', stats:'📊 통계', 'push-test':'🔔 알림 테스트', manual:'📘 사용 설명서' };
+  const TAB_LABELS = { home:'홈', fault:'🔧 고장 관리', duty:'🕐 고장 담당자 현황', mgmt:'🏢 관리현장', sites:'👤 관리', jungong:'📋 준공계', gongsa:'📸 공사팀 사진철', holiday:'📅 휴일 관리', 'insp-calendar':'🗓️ 검사일정', road:'📆 로드표', docket:'📝 서비스다켓', 'call-logs':'📞 전화 기록', contracts:'📄 계약서', stats:'📊 통계', 'push-test':'🔔 알림 테스트', manual:'📘 사용 설명서' };
   function toggleNavMenu() {
     if (!currentUser) return;
     document.getElementById('side-drawer').classList.toggle('open');
@@ -3823,6 +3867,7 @@
     if (tab === 'jungong') initJungong();
     if (tab === 'gongsa') initGongsa();
     if (tab === 'insp-calendar') loadInspCalendar();
+    if (tab === 'road') loadRoad();
     if (tab === 'docket') initDocketTab();
     if (tab === 'call-logs') loadCallLogs();
     if (tab === 'contracts') loadContracts();
@@ -5013,6 +5058,7 @@
     const cBtns = document.getElementById('contracts-upload-btns');
     if (cBtns) cBtns.style.display = isAdmin ? '' : 'none';
     document.getElementById('tab-insp-calendar-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
+    document.getElementById('tab-road-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-mgmt-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-duty-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
     document.getElementById('tab-jungong-btn').style.display = (isAdmin || isStaff) ? 'flex' : 'none';
@@ -7157,6 +7203,345 @@
     } catch(e) {
       showToast('❌ 파일 읽기 오류: ' + e.message);
     }
+  }
+
+  /* ── 📆 로드표 ──
+     현장마다 '몇째 주·무슨 요일'(여러 개 가능)만 정해 두면, 매달 같은 주·요일로 자동으로 채워진다.
+     격월·분기는 표시만 (매달 로드표에 들어감). 같은 조는 같은 로드표를 함께 고친다.
+     저장: road_site_plans(현장별 설정) · road_submits(조×월 제출). 현장·대수·계약구분은 관리현장 데이터에서 읽기만. */
+  const ROAD_DOW = ['월', '화', '수', '목', '금'];
+  const ROAD_CYCLES = ['매월', '격월', '분기'];
+  let roadTeamId = null, roadYm = null, roadCtx = null, roadView = 'list', roadEdit = null;
+
+  function roadIsAdmin() { return currentRole === '관리자' || currentRole === '마스터'; }
+  function roadIsMember(t) { const me = currentUser?.username; return !!(t && me && [t.main_inspector, t.sub_inspector, t.sub_inspector2].some(n => (n || '').trim() === me)); }
+  function roadMembers(t) { return [t?.main_inspector, t?.sub_inspector, t?.sub_inspector2].filter(Boolean).join(', '); }
+  function roadYmLabel(ym) { const [y, m] = ym.split('-').map(Number); return y + '년 ' + m + '월'; }
+  function roadDefaultYm() { const d = new Date(); if (d.getDate() >= 20) d.setMonth(d.getMonth() + 1, 1); return d.toLocaleDateString('sv').slice(0, 7); }
+  function roadMark(ct) { return (ct || '').trim().replace(/^TK-/, 'T/').replace(/^대솔/, 'D/'); }
+  // 달의 주(월~금) 목록. 각 주는 [월..금] 날짜(그 달이 아니면 null)
+  function roadWeeks(ym) {
+    const [y, m] = ym.split('-').map(Number);
+    const last = new Date(y, m, 0);
+    const d = new Date(y, m - 1, 1);
+    d.setDate(1 - ((d.getDay() + 6) % 7));
+    const weeks = [];
+    while (d <= last) {
+      const days = [];
+      for (let i = 0; i < 5; i++) { const x = new Date(d); x.setDate(d.getDate() + i); days.push(x.getMonth() === m - 1 ? x.toLocaleDateString('sv') : null); }
+      if (days.some(Boolean)) weeks.push(days);
+      d.setDate(d.getDate() + 7);
+    }
+    return weeks;
+  }
+  function roadSplit(n, k) { return Array.from({ length: k }, (_, i) => Math.floor(n / k) + (i < n % k ? 1 : 0)); }
+  function roadFmt(ts) { const d = new Date(ts); return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  function roadMD(d) { const [, m, dd] = d.split('-').map(Number); return m + '/' + dd + '(' + '일월화수목금토'[new Date(d + 'T00:00:00').getDay()] + ')'; }
+
+  // 이번 달 현장 상태 계산
+  function roadSiteMonth(site, cfg, ym, weeks) {
+    const slots = (cfg?.slots || []).slice().sort((a, b) => a.w - b.w || a.d - b.d);
+    const cycle = cfg?.cycle || '매월';
+    const units = roadSplit(site.units, Math.max(1, slots.length));
+    const days = slots.map((s, i) => ({ ...s, date: weeks[s.w - 1]?.[s.d] || null, units: units[i] }));
+    let state = 'ok';
+    if (!slots.length) state = 'none';
+    else if (days.some(x => !x.date)) state = 'bad';
+    return { site, cfg, cycle, days, state };
+  }
+  function roadWhenText(r) {
+    if (r.state === 'none') return '날짜 미정';
+    const byW = {};
+    r.days.forEach(x => { (byW[x.w] = byW[x.w] || []).push(ROAD_DOW[x.d]); });
+    return Object.entries(byW).map(([w, ds]) => w + '주 ' + ds.join('·')).join(', ');
+  }
+  function roadCycleText(r) { return r.cycle === '매월' ? '' : r.cycle; }
+
+  async function loadRoad() {
+    if (!inspTeams.length) await loadInspTeams();
+    if (!roadYm) roadYm = roadDefaultYm();
+    const teams = roadIsAdmin() ? inspTeams : inspTeams.filter(roadIsMember);
+    const sel = document.getElementById('road-team');
+    document.getElementById('road-ym-label').textContent = roadYmLabel(roadYm);
+    if (!teams.length) {
+      sel.style.display = 'none';
+      document.getElementById('road-body').innerHTML = '<div class="empty-state"><div class="icon">📆</div>소속된 점검조가 없습니다.<br>관리현장 → 👥 점검조에서 조원으로 등록되어 있어야 합니다.</div>';
+      document.getElementById('road-actions').style.display = 'none';
+      return;
+    }
+    if (!teams.some(t => t.id === roadTeamId)) roadTeamId = teams[0].id;
+    sel.style.display = teams.length > 1 ? '' : 'none';
+    const { data: subs } = await db.from('road_submits').select('team_id').eq('ym', roadYm);
+    const subSet = new Set((subs || []).map(x => x.team_id));
+    sel.innerHTML = inspTeamGroupsHtml(teams, t => {
+      const sub = subSet.has(t.id);
+      return `<option value="${t.id}">${escHtml(t.name)}${t.main_inspector ? ' (' + escHtml(t.main_inspector) + ')' : ''}${roadIsAdmin() ? (sub ? ' ✅' : ' ·미제출') : ''}</option>`;
+    });
+    sel.value = roadTeamId;
+    document.getElementById('road-actions').style.display = 'flex';
+    document.getElementById('road-body').innerHTML = '<div class="loading-state">불러오는 중...</div>';
+    try {
+      roadCtx = await roadLoadData(roadTeamId, roadYm);
+      renderRoad();
+    } catch (e) {
+      document.getElementById('road-body').innerHTML = '<div class="empty-state">불러오지 못했습니다. 잠시 후 다시 열어 주세요.</div>';
+    }
+  }
+
+  async function roadLoadData(teamId, ym) {
+    const { data: sites } = await db.from('managed_sites').select('id, site_name, contract_type, site_type').eq('team_id', teamId);
+    const list = (sites || []).filter(x => x.site_type !== '상실' && x.site_type !== '계산서발행용');
+    const ids = list.map(x => x.id);
+    const cnt = {};
+    for (let i = 0; i < ids.length; i += 200) {
+      const { data: el } = await db.from('site_elevators').select('site_id').in('site_id', ids.slice(i, i + 200)).limit(5000);
+      (el || []).forEach(e => { cnt[e.site_id] = (cnt[e.site_id] || 0) + 1; });
+    }
+    const [y, m] = ym.split('-').map(Number);
+    const from = ym + '-01', to = new Date(y, m, 1).toLocaleDateString('sv');
+    const { data: hol } = await db.from('holidays').select('date, name').gte('date', from).lt('date', to);
+    const holidays = {};
+    (hol || []).forEach(h => { holidays[h.date] = h.name || '휴일'; });
+    const plans = {};
+    for (let i = 0; i < ids.length; i += 200) {
+      const { data: pl, error } = await db.from('road_site_plans').select('site_id, slots, cycle, short_name, updated_by, updated_at').in('site_id', ids.slice(i, i + 200));
+      if (error) throw error;
+      (pl || []).forEach(x => { plans[x.site_id] = { slots: Array.isArray(x.slots) ? x.slots : [], cycle: x.cycle, short: x.short_name || '', by: x.updated_by, at: x.updated_at }; });
+    }
+    const { data: sub } = await db.from('road_submits').select('total, submitted_by, submitted_at').eq('team_id', teamId).eq('ym', ym).maybeSingle();
+    const weeks = roadWeeks(ym);
+    const rows = list.map(x => roadSiteMonth({ ...x, units: cnt[x.id] || 0 }, plans[x.id], ym, weeks));
+    return { teamId, ym, weeks, holidays, rows, sub: sub || null };
+  }
+  function roadName(r) { return (r.cfg?.short || '').trim() || r.site.site_name; }
+
+  function renderRoad() {
+    const c = roadCtx, t = inspTeamById(c.teamId);
+    document.getElementById('road-members').textContent = (t ? t.name + ' · ' : '') + roadMembers(t);
+    const totalUnits = c.rows.reduce((a, r) => a + r.site.units, 0);
+    const monthUnits = c.rows.filter(r => r.state === 'ok').reduce((a, r) => a + r.site.units, 0);
+    const none = c.rows.filter(r => r.state === 'none' || r.state === 'bad');
+    const cyc = c.rows.filter(r => r.cycle !== '매월');
+    const holHits = c.rows.filter(r => r.state === 'ok' && r.days.some(x => c.holidays[x.date]));
+    const sub = c.sub;
+    document.getElementById('road-summary').innerHTML = `<div style="padding:10px 12px;background:var(--bg-high);border:1px solid var(--br);border-radius:10px;font-size:13px;line-height:1.7;color:var(--tx)">
+      현장 <b>${c.rows.length}곳 · ${totalUnits}대</b> &nbsp;|&nbsp; 이번 달 점검 <b>${monthUnits}대</b>
+      ${none.length ? `<br><span style="color:#e53e3e;font-weight:700">⚠️ 날짜를 정해야 하는 현장 ${none.length}곳</span>` : '<br><span style="color:#38a169;font-weight:700">✅ 모든 현장의 날짜가 정해졌습니다</span>'}
+      ${holHits.length ? `<br><span style="color:#dd6b20;font-weight:700">🎌 휴일에 잡힌 현장 ${holHits.length}곳</span>` : ''}
+      ${sub ? `<br><span style="color:#3182ce;font-weight:700">📨 제출함 · ${escHtml(sub.submitted_by || '')} ${roadFmt(sub.submitted_at)} (${sub.total}대)</span>` : ''}
+    </div>`;
+    const tabs = [['list', `전체 ${c.rows.length}`], ['none', `날짜 미정 ${none.length}`], ['cycle', `격월·분기 ${cyc.length}`], ['preview', '📋 미리보기']];
+    document.getElementById('road-tabs').innerHTML = tabs.map(([k, label]) =>
+      `<button type="button" onclick="roadView='${k}';renderRoad()" style="padding:6px 12px;border-radius:16px;border:1.5px solid ${roadView === k ? '#2b6cb0' : 'var(--br-mid)'};background:${roadView === k ? '#2b6cb0' : 'var(--bg-card)'};color:${roadView === k ? 'white' : 'var(--tx)'};font-size:12px;font-weight:${roadView === k ? 700 : 500};font-family:inherit;cursor:pointer">${label}</button>`).join('');
+    document.getElementById('road-submit-btn').textContent = sub ? '다시 제출' : '제출';
+    if (roadView === 'preview') { document.getElementById('road-body').innerHTML = roadPreviewHtml(c); return; }
+    let rows = c.rows;
+    if (roadView === 'none') rows = none;
+    if (roadView === 'cycle') rows = cyc;
+    const rank = r => r.state === 'none' || r.state === 'bad' ? 0 : 1;
+    const firstDate = r => r.days.find(x => x.date)?.date || '9999';
+    rows = rows.slice().sort((a, b) => rank(a) - rank(b) || firstDate(a).localeCompare(firstDate(b)) || a.site.site_name.localeCompare(b.site.site_name, 'ko'));
+    if (!rows.length) { document.getElementById('road-body').innerHTML = '<div class="empty-state">해당하는 현장이 없습니다.</div>'; return; }
+    document.getElementById('road-body').innerHTML = rows.map(r => {
+      const mark = roadMark(r.site.contract_type);
+      const isT = mark.startsWith('T');
+      const bad = r.state === 'none' || r.state === 'bad';
+      const wc = bad ? 'color:#e53e3e;border-color:#e53e3e;background:rgba(229,62,62,.1)' : 'color:var(--tx);border-color:var(--br-mid)';
+      const hol = r.state === 'ok' && r.days.some(x => c.holidays[x.date]);
+      const subs = [r.site.units + '대'];
+      if (r.days.length > 1 && r.state === 'ok') subs.push(r.days.length + '일에 나눠서');
+      if (r.state === 'ok') subs.push(r.days.map(x => roadMD(x.date).replace(/\(.\)/, '')).join(', '));
+      if (r.state === 'bad') subs.push('이번 달엔 없는 날이 있습니다');
+      if (hol) subs.push('🎌 휴일 포함');
+      return `<div onclick="openRoadSheet(${r.site.id})" style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--br);border-radius:10px;cursor:pointer">
+        <span style="font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;flex-shrink:0;${isT ? 'background:rgba(99,179,237,.15);color:#3182ce' : 'background:rgba(104,211,145,.15);color:#38a169'}">${escHtml(mark || '-')}</span>
+        <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:var(--tx);word-break:keep-all;overflow-wrap:anywhere">${escHtml(roadName(r))}${r.cycle !== '매월' ? ` <span style="font-size:11px;font-weight:700;color:#dd6b20;border:1px solid #dd6b20;border-radius:6px;padding:0 5px;white-space:nowrap">${escHtml(r.cycle)}</span>` : ''}</div>
+          <div style="font-size:11px;color:${hol ? '#dd6b20' : 'var(--tx-3)'};margin-top:2px">${escHtml(subs.join(' · '))}</div></div>
+        <span style="font-size:13px;font-weight:700;padding:6px 10px;border-radius:8px;border:1px solid;white-space:nowrap;${wc}">${escHtml(roadWhenText(r))}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // 미리보기: 지금 엑셀과 같은 월~금 × 주 표
+  function roadCellItems(c, date) {
+    const L = [];
+    c.rows.forEach(r => { if (r.state === 'ok') r.days.forEach(x => { if (x.date === date) L.push({ mark: roadMark(r.site.contract_type), name: roadName(r) + (r.cycle !== '매월' ? ' (' + r.cycle + ')' : ''), units: x.units }); }); });
+    return L;
+  }
+  function roadPreviewHtml(c) {
+    let total = 0;
+    const body = c.weeks.map((w, wi) => '<tr><td style="padding:4px 2px;border:1px solid var(--br);text-align:center;font-weight:700;background:var(--bg-high);font-size:11px">' + (wi + 1) + '주</td>' + w.map(date => {
+      if (!date) return '<td style="border:1px solid var(--br);background:var(--bg-high)"></td>';
+      const items = roadCellItems(c, date);
+      items.forEach(i => { total += i.units; });
+      const hol = c.holidays[date];
+      return `<td style="padding:3px 3px 5px;border:1px solid var(--br);vertical-align:top;font-size:10.5px;line-height:1.45">
+        <div style="font-size:10px;color:${hol ? '#e53e3e' : 'var(--tx-3)'};font-weight:${hol ? 700 : 400}">${+date.slice(8)}${hol ? ' ' + escHtml(hol) : ''}</div>
+        ${items.map(i => `<div style="color:var(--tx);word-break:keep-all;overflow-wrap:anywhere"><span style="color:${i.mark.startsWith('T') ? '#3182ce' : '#38a169'};font-weight:700">${escHtml(i.mark.slice(0, 1))}</span> ${escHtml(i.name)} <b>${i.units}</b></div>`).join('')}
+      </td>`;
+    }).join('') + '</tr>').join('');
+    return `<div style="overflow-x:auto"><table style="width:100%;min-width:520px;border-collapse:collapse;table-layout:fixed">
+      <colgroup><col style="width:34px">${ROAD_DOW.map(() => '<col>').join('')}</colgroup>
+      <tr><th style="border:1px solid var(--br);background:var(--bg-high)"></th>${ROAD_DOW.map(d => `<th style="padding:5px 2px;border:1px solid var(--br);background:var(--bg-high);font-size:12px;color:var(--tx)">${d}</th>`).join('')}</tr>
+      ${body}
+      <tr><td colspan="6" style="padding:6px 8px;border:1px solid var(--br);text-align:right;font-weight:800;color:var(--tx);font-size:13px">합계 ${total}대</td></tr>
+    </table></div>
+    <div style="font-size:11px;color:var(--tx-3);margin-top:8px">T = TK 계약, D = 대솔 계약. 엑셀은 지금 쓰시는 양식과 같은 모양으로 받아집니다.</div>`;
+  }
+
+  function roadMoveMonth(n) {
+    const [y, m] = roadYm.split('-').map(Number);
+    const d = new Date(y, m - 1 + n, 1);
+    roadYm = d.toLocaleDateString('sv').slice(0, 7);
+    loadRoad();
+  }
+
+  // 현장 날짜 고르기 창
+  function openRoadSheet(siteId) {
+    const r = roadCtx.rows.find(x => x.site.id === siteId);
+    if (!r) return;
+    if (!roadIsAdmin() && !roadIsMember(inspTeamById(roadCtx.teamId))) return showToast('우리 조 로드표만 고칠 수 있습니다.');
+    roadEdit = { siteId, slots: (r.cfg?.slots || []).map(s => ({ ...s })), cycle: r.cfg?.cycle || '매월' };
+    document.getElementById('road-sheet-title').textContent = r.site.site_name;
+    document.getElementById('road-sheet-sub').textContent = [roadMark(r.site.contract_type), r.site.units + '대', r.cfg?.by ? '마지막 수정 ' + r.cfg.by + ' ' + roadFmt(r.cfg.at) : ''].filter(Boolean).join(' · ');
+    document.getElementById('road-sheet-short').value = r.cfg?.short || '';
+    document.getElementById('road-sheet-short').placeholder = r.site.site_name;
+    renderRoadSheet();
+    document.getElementById('road-sheet').style.display = 'flex';
+  }
+  function closeRoadSheet() { document.getElementById('road-sheet').style.display = 'none'; roadEdit = null; }
+  function roadToggleSlot(w, d) {
+    const i = roadEdit.slots.findIndex(s => s.w === w && s.d === d);
+    if (i >= 0) roadEdit.slots.splice(i, 1); else roadEdit.slots.push({ w, d });
+    renderRoadSheet();
+  }
+  function roadSetCycle(cy) { roadEdit.cycle = cy; renderRoadSheet(); }
+  function renderRoadSheet() {
+    const c = roadCtx, e = roadEdit;
+    const r = c.rows.find(x => x.site.id === e.siteId);
+    // 그날 이미 잡힌 대수 (이 현장 빼고) — 너무 몰리지 않게 참고용
+    const load = {};
+    c.rows.forEach(x => { if (x.site.id !== e.siteId && x.state === 'ok') x.days.forEach(d => { load[d.date] = (load[d.date] || 0) + d.units; }); });
+    const cell = 'padding:6px 0;border-radius:8px;text-align:center;font-family:inherit;cursor:pointer;font-size:13px;font-weight:700;border:1.5px solid';
+    let html = `<div style="display:grid;grid-template-columns:34px repeat(5,1fr);gap:4px;align-items:stretch">
+      <div></div>${ROAD_DOW.map(d => `<div style="text-align:center;font-size:12px;font-weight:700;color:var(--tx-2)">${d}</div>`).join('')}`;
+    c.weeks.forEach((w, wi) => {
+      html += `<div style="display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--tx-2)">${wi + 1}주</div>`;
+      w.forEach((date, d) => {
+        const on = e.slots.some(s => s.w === wi + 1 && s.d === d);
+        const hol = date && c.holidays[date];
+        if (!date && !on) { html += '<div style="border-radius:8px;background:var(--bg-high);opacity:.4"></div>'; return; }
+        html += `<button type="button" onclick="roadToggleSlot(${wi + 1},${d})" style="${cell};${on ? 'background:#2b6cb0;border-color:#2b6cb0;color:white' : 'background:var(--bg-high);border-color:var(--br-mid);color:' + (hol ? '#e53e3e' : 'var(--tx)')}">
+          ${date ? +date.slice(8) : '없음'}<div style="font-size:10px;font-weight:400;opacity:.85">${hol ? escHtml(hol) : load[date] ? load[date] + '대' : '&nbsp;'}</div></button>`;
+      });
+    });
+    html += '</div><div style="font-size:11px;color:var(--tx-3);margin-top:6px">날짜 아래 숫자 = 그날 이미 잡힌 다른 현장 대수</div>';
+    document.getElementById('road-sheet-grid').innerHTML = html;
+    document.getElementById('road-sheet-cycle').innerHTML = ROAD_CYCLES.map(cy =>
+      `<button type="button" onclick="roadSetCycle('${cy}')" style="flex:1;${cell};padding:10px 0;${e.cycle === cy ? 'background:#2b6cb0;border-color:#2b6cb0;color:white' : 'background:var(--bg-high);border-color:var(--br-mid);color:var(--tx)'}">${cy}</button>`).join('');
+    const tmp = roadSiteMonth(r.site, { slots: e.slots, cycle: e.cycle }, c.ym, c.weeks);
+    let note = '';
+    if (!e.slots.length) note = '가는 날을 눌러 주세요. 여러 날을 고르면 대수를 나눠서 넣습니다.';
+    else {
+      note = '→ ' + tmp.days.map(x => (x.date ? `<b style="color:var(--tx)">${roadMD(x.date)}</b>` : '<b style="color:#e53e3e">없는 날</b>') + ` ${x.units}대`).join(', ');
+      if (e.slots.length > Math.max(1, r.site.units)) note += `<br><b style="color:#e53e3e">⚠️ ${r.site.units}대 현장이라 ${Math.max(1, r.site.units)}일까지만 고를 수 있습니다.</b>`;
+      if (e.cycle !== '매월') note += `<br>로드표에 <b style="color:#dd6b20">${escHtml(e.cycle)}</b> 표시가 붙습니다.`;
+      note += '<br>다음 달부터는 같은 주·요일로 자동으로 채워집니다.';
+    }
+    document.getElementById('road-sheet-note').innerHTML = note;
+  }
+  async function saveRoadSheet() {
+    const e = roadEdit;
+    const units = roadCtx.rows.find(x => x.site.id === e.siteId)?.site.units || 0;
+    if (e.slots.length > Math.max(1, units)) { showToast(`❌ ${units}대 현장은 ${Math.max(1, units)}일까지만 고를 수 있습니다.`); return; }
+    const short = document.getElementById('road-sheet-short').value.trim();
+    const slots = e.slots.slice().sort((a, b) => a.w - b.w || a.d - b.d);
+    const { error } = await db.from('road_site_plans').upsert({ site_id: e.siteId, slots, cycle: e.cycle, short_name: short || null }, { onConflict: 'site_id' });
+    if (error) { showToast('❌ 저장하지 못했습니다: ' + error.message); return; }
+    closeRoadSheet();
+    loadRoad();
+  }
+
+  async function roadSubmit() {
+    const c = roadCtx;
+    if (!roadIsAdmin() && !roadIsMember(inspTeamById(c.teamId))) return showToast('우리 조 로드표만 제출할 수 있습니다.');
+    const none = c.rows.filter(r => r.state === 'none' || r.state === 'bad').length;
+    if (none && !confirm(`날짜를 정하지 않은 현장이 ${none}곳 있습니다. 그래도 제출할까요?`)) return;
+    const total = c.rows.filter(r => r.state === 'ok').reduce((a, r) => a + r.site.units, 0);
+    const { error } = await db.from('road_submits').upsert({ team_id: c.teamId, ym: c.ym, total }, { onConflict: 'team_id,ym' });
+    if (error) { showToast('❌ 제출하지 못했습니다: ' + error.message); return; }
+    showToast(`📨 ${roadYmLabel(c.ym)} 로드표를 제출했습니다.`);
+    loadRoad();
+  }
+
+  // 엑셀: 지금 쓰는 양식 (월~금 × 날짜·스마트·현장명·대수)
+  async function exportRoadExcel() {
+    if (typeof ExcelJS === 'undefined') return showToast('엑셀 기능을 불러오는 중입니다. 잠시 후 다시 눌러 주세요.');
+    const c = roadCtx, t = inspTeamById(c.teamId);
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet((t?.name || '로드표').replace(/[\\\/?*\[\]:]/g, '').slice(0, 31), { pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
+    const widths = [6];
+    for (let k = 0; k < 5; k++) widths.push(5, 8, 22, 5);
+    ws.columns = widths.map(w => ({ width: w }));
+    const [y, m] = c.ym.split('-').map(Number);
+    const F = { name: '맑은 고딕', size: 10 };
+    const thin = { style: 'thin', color: { argb: 'FF888888' } };
+    const B = { top: thin, left: thin, bottom: thin, right: thin };
+    const RED = { ...F, bold: true, color: { argb: 'FFE53E3E' } };
+    ws.mergeCells(1, 1, 1, 21);
+    Object.assign(ws.getCell(1, 1), { value: `${y}년 ${m}월 점검계획서 (${t?.name || ''} ${roadMembers(t)})`, font: { ...F, size: 15, bold: true }, alignment: { horizontal: 'center', vertical: 'middle' } });
+    ws.getRow(1).height = 30;
+    ws.mergeCells(2, 1, 3, 1);
+    ROAD_DOW.forEach((d, k) => {
+      const b = 2 + k * 4;
+      ws.mergeCells(2, b, 2, b + 3);
+      ws.getCell(2, b).value = d + '요일';
+      ['날짜', '스마트', '현장명', '대수'].forEach((v, j) => { ws.getCell(3, b + j).value = v; });
+    });
+    for (let r = 2; r <= 3; r++) for (let cc = 1; cc <= 21; cc++) Object.assign(ws.getCell(r, cc), { font: { ...F, bold: true }, alignment: { horizontal: 'center', vertical: 'middle' }, border: B, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEDF2F7' } } });
+    let r = 4, total = 0;
+    c.weeks.forEach((w, wi) => {
+      const lines = w.map(date => {
+        if (!date) return [];
+        const L = [];
+        if (c.holidays[date]) L.push({ name: c.holidays[date], red: true });
+        roadCellItems(c, date).forEach(i => L.push(i));
+        return L;
+      });
+      const n = Math.max(1, ...lines.map(l => l.length));
+      for (let rr = r; rr < r + n; rr++) for (let cc = 1; cc <= 21; cc++) {
+        const k = (cc - 2) % 4;
+        Object.assign(ws.getCell(rr, cc), { font: F, border: B, alignment: { horizontal: cc === 1 || k !== 2 ? 'center' : 'left', vertical: 'middle', wrapText: k === 2 } });
+      }
+      if (n > 1) ws.mergeCells(r, 1, r + n - 1, 1);
+      Object.assign(ws.getCell(r, 1), { value: (wi + 1) + '주', font: { ...F, bold: true } });
+      w.forEach((date, k) => {
+        const b = 2 + k * 4;
+        if (n > 1) ws.mergeCells(r, b, r + n - 1, b);
+        if (date) { ws.getCell(r, b).value = +date.slice(8); if (c.holidays[date]) ws.getCell(r, b).font = RED; }
+        lines[k].forEach((L, li) => {
+          ws.getCell(r + li, b + 1).value = L.mark || null;
+          ws.getCell(r + li, b + 2).value = L.name;
+          ws.getCell(r + li, b + 3).value = L.units ?? null;
+          if (L.red) ws.getCell(r + li, b + 2).font = RED;
+          total += L.units || 0;
+        });
+      });
+      r += n;
+    });
+    ws.mergeCells(r, 1, r, 20);
+    Object.assign(ws.getCell(r, 1), { value: '합계', font: { ...F, bold: true, size: 11 }, alignment: { horizontal: 'right', vertical: 'middle' }, border: B });
+    Object.assign(ws.getCell(r, 21), { value: total, font: { ...F, bold: true, size: 11 }, alignment: { horizontal: 'center', vertical: 'middle' }, border: B });
+    r++;
+    ws.mergeCells(r, 1, r, 21);
+    ws.getCell(r, 1).value = '▶ 격월, 분기 점검현장은 점검방문 해당월만 표기   ▶ TKE 계약은 T/--, 대솔 계약은 D/-- 로 구분';
+    ws.getCell(r, 1).font = { ...F, size: 9, color: { argb: 'FF666666' } };
+    const buf = await wb.xlsx.writeBuffer();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    a.download = `로드표_${t?.name || ''}_${c.ym}.xlsx`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   }
 
   /* ── 검사일정 달력 ── */
