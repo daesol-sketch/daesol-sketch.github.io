@@ -1078,6 +1078,10 @@
           <div id="mgmt-filter-menu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;min-width:180px;background:var(--bg-card);border:1.5px solid var(--br-mid);border-radius:12px;box-shadow:0 8px 24px var(--sh2);z-index:300;overflow:hidden">
             <div class="mgmt-fopt active" id="mgmt-opt-active" data-val="active" onclick="selectMgmtFilter('active')">✅ 보수현장(TK+대솔)</div>
             <div class="mgmt-fopt" data-val="all" onclick="selectMgmtFilter('all')">전체</div>
+            <div class="mgmt-fopt" id="mgmt-opt-daesol" data-val="daesol" onclick="selectMgmtFilter('daesol')">🔵 대솔</div>
+            <div class="mgmt-fopt" id="mgmt-opt-tk" data-val="tk" onclick="selectMgmtFilter('tk')">🟣 TK</div>
+            <div class="mgmt-fopt" id="mgmt-opt-dpog" data-val="dpog" onclick="selectMgmtFilter('dpog')">🔹 대솔POG</div>
+            <div class="mgmt-fopt" id="mgmt-opt-tkpog" data-val="tkpog" onclick="selectMgmtFilter('tkpog')">🔸 TK-POG(3종)</div>
             <div class="mgmt-fopt" id="mgmt-opt-expire" data-val="expire" onclick="selectMgmtFilter('expire')">⚠️ 계약만료</div>
             <div class="mgmt-fopt" id="mgmt-opt-insp-expire" data-val="insp_expire" onclick="selectMgmtFilter('insp_expire')">🔍 검사만료</div>
             <div class="mgmt-fopt" id="mgmt-opt-defect" data-val="defect" onclick="selectMgmtFilter('defect')">🏗️ 하자</div>
@@ -2822,6 +2826,21 @@
   </div>
 </div>
 
+<!-- 다가오는 검사 팝업 (로그인 시 하루 1번) -->
+<div class="modal-overlay" id="insp-upcoming-modal" style="display:none;z-index:999">
+  <div class="modal-box" style="width:480px;max-width:calc(100vw - 32px);text-align:left;padding:0;display:flex;flex-direction:column;max-height:88vh">
+    <div style="padding:22px 22px 10px;flex-shrink:0">
+      <div style="font-size:17px;font-weight:800;color:var(--tx)" id="insp-upcoming-title">🗓️ 다가오는 검사</div>
+      <div style="font-size:13px;color:var(--tx-2);margin-top:6px;line-height:1.6" id="insp-upcoming-summary"></div>
+    </div>
+    <div style="padding:4px 22px 12px;overflow-y:auto;flex:1" id="insp-upcoming-body"></div>
+    <div style="display:flex;gap:8px;padding:12px 22px 18px;border-top:1px solid var(--br);flex-shrink:0">
+      <button type="button" onclick="closeInspUpcoming(true)" style="flex:1;padding:11px 6px;white-space:nowrap;border:1px solid var(--br-mid);border-radius:8px;background:transparent;color:var(--tx-2);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">오늘 다시 보지 않기</button>
+      <button type="button" onclick="closeInspUpcoming(false)" style="flex:1;padding:11px;border:none;border-radius:8px;background:#2b6cb0;color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- 직원 현장 정보 수정 모달 -->
 <div class="modal-overlay" id="notes-modal" style="display:none">
   <div class="modal-box" style="width:460px;max-width:calc(100vw - 40px);text-align:left;padding:0;display:flex;flex-direction:column;max-height:90vh">
@@ -3404,7 +3423,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.03-1';
+  const APP_VERSION = '2026.11.04-1';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -3464,10 +3483,10 @@
 
   // 이번 버전 안내를 아직 안 봤으면 로그인 후 한 번 표시 (기기별 기억)
   function showReleaseNotes() {
-    if (localStorage.getItem('daesol_seen_version') === APP_VERSION) return;
+    if (localStorage.getItem('daesol_seen_version') === APP_VERSION) { showInspUpcoming(); return; }
     const note = RELEASE_NOTES.find(n => n.version === APP_VERSION);
     const items = (note?.items || []).filter(i => !i.roles || i.roles.includes(currentRole));
-    if (!items.length) { localStorage.setItem('daesol_seen_version', APP_VERSION); return; }
+    if (!items.length) { localStorage.setItem('daesol_seen_version', APP_VERSION); showInspUpcoming(); return; }
     document.getElementById('release-notes-title').textContent = '업데이트 안내 (' + note.date + ')';
     document.getElementById('release-notes-list').innerHTML = items.map(i => '<li>' + i.text + '</li>').join('');
     document.getElementById('release-notes-modal').style.display = 'flex';
@@ -3475,6 +3494,153 @@
   function closeReleaseNotes() {
     localStorage.setItem('daesol_seen_version', APP_VERSION);
     document.getElementById('release-notes-modal').style.display = 'none';
+    showInspUpcoming();   // 업데이트 안내를 닫으면 이어서 검사 팝업
+  }
+
+  /* ── 다가오는 검사 팝업: 오늘부터 3주 안의 검사 (직원=내 조, 관리자=전체 요약) ── */
+  // 카톡·알림 링크(신고 열기·공유함·탭 이동)로 들어온 경우엔 띄우지 않음 (아래에서 주소창 값을 지우기 전에 기억)
+  const _launchedWithLink = /[?&](openReport|navReport|tab|shareInbox)=/.test(location.search);
+  let _inspUpcomingDone = false;
+  const INSP_HIDE_KEY = 'daesol_insp_popup_hide';
+  const _inspDays = d => Math.round((Date.parse(d) - Date.parse(new Date().toLocaleDateString('sv'))) / 86400000);
+  function _inspDateLabel(d, time) {
+    const dt = new Date(d + 'T00:00:00');
+    return `${dt.getMonth() + 1}/${dt.getDate()}(${'일월화수목금토'[dt.getDay()]})${time ? ' ' + escHtml(time) : ''}`;
+  }
+  function _inspBadge(d) {
+    const n = _inspDays(d);
+    if (n <= 1) return { color: '#e53e3e', bg: 'rgba(229,62,62,0.12)', text: n === 0 ? '오늘' : '내일' };
+    if (n <= 7) return { color: '#dd6b20', bg: 'rgba(221,107,32,0.12)', text: 'D-' + n };
+    return { color: 'var(--tx-3)', bg: 'transparent', text: 'D-' + n };
+  }
+
+  async function showInspUpcoming() {
+    if (_inspUpcomingDone || !currentUser || _launchedWithLink) return;
+    _inspUpcomingDone = true;
+    const isAdmin = currentRole === '관리자' || currentRole === '마스터';
+    if (!isAdmin && currentRole !== '직원') return;
+    const today = new Date().toLocaleDateString('sv');
+    try { if (localStorage.getItem(INSP_HIDE_KEY) === today + '|' + currentUser.username) return; } catch (e) {}
+    try {
+      const end = new Date(Date.parse(today) + 20 * 86400000).toISOString().slice(0, 10);   // 오늘 포함 21일
+      const { data: sch } = await db.from('inspection_schedules')
+        .select('elevator_number, inspection_date, arrival_time, inspection_type, building_name, unit_name, installation_place')
+        .gte('inspection_date', today).lte('inspection_date', end).order('inspection_date');
+      if (!sch?.length) return;
+      // 승강기번호 → 관리현장 → 조
+      const nos = [...new Set(sch.map(r => r.elevator_number))];
+      const { data: elevs } = await db.from('site_elevators').select('site_id, elevator_number').in('elevator_number', nos);
+      const siteByNo = {};
+      (elevs || []).forEach(e => { siteByNo[e.elevator_number] = e.site_id; });
+      const siteIds = [...new Set(Object.values(siteByNo))];
+      const [{ data: sites }, { data: teams }] = await Promise.all([
+        siteIds.length ? db.from('managed_sites').select('id, site_name, team_id').in('id', siteIds) : Promise.resolve({ data: [] }),
+        db.from('inspection_teams').select('id, name, main_inspector, sub_inspector, sub_inspector2')
+      ]);
+      const siteById = {};
+      (sites || []).forEach(x => { siteById[x.id] = x; });
+      const teamById = {};
+      (teams || []).forEach(t => { teamById[t.id] = t; });
+      const rows = sch.map(r => {
+        const site = siteById[siteByNo[r.elevator_number]] || null;
+        return { ...r, site, team: site ? teamById[site.team_id] || null : null };
+      }).sort((a, b) => a.inspection_date.localeCompare(b.inspection_date) || (a.arrival_time || '99').localeCompare(b.arrival_time || '99'));
+
+      const html = isAdmin ? _inspAdminHtml(rows) : _inspStaffHtml(rows);
+      if (!html) return;
+      document.getElementById('insp-upcoming-modal').style.display = 'flex';
+    } catch (e) { console.warn('검사 팝업 실패:', e); }
+  }
+
+  // 같은 날·같은 시간·같은 현장은 한 줄로 묶음
+  function _inspGroupRows(rows) {
+    const groups = [];
+    const map = {};
+    rows.forEach(r => {
+      const key = r.inspection_date + '|' + (r.arrival_time || '') + '|' + (r.site ? r.site.id : 'x:' + r.building_name);
+      if (!map[key]) { map[key] = { date: r.inspection_date, time: r.arrival_time, name: r.site ? r.site.site_name : r.building_name, units: [] }; groups.push(map[key]); }
+      map[key].units.push(r);
+    });
+    return groups;
+  }
+  function _inspCountText(rows) {
+    const n = f => rows.filter(f).length;
+    const d0 = n(r => _inspDays(r.inspection_date) <= 1), d7 = n(r => _inspDays(r.inspection_date) <= 7);
+    return `<span style="color:#e53e3e;font-weight:700">오늘·내일 ${d0}대</span> · <span style="color:#dd6b20;font-weight:700">7일 이내 ${d7}대</span>`;
+  }
+  function _inspGroupHtml(g) {
+    const b = _inspBadge(g.date);
+    const units = g.units.map(u => escHtml(u.installation_place || (u.unit_name ? u.unit_name + '호기' : u.elevator_number))).join(', ');
+    return `<div onclick="goInspDate('${g.date}')" style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin-bottom:6px;border:1px solid var(--br);border-left:4px solid ${b.color};border-radius:8px;background:${b.bg};cursor:pointer">
+      <div style="flex-shrink:0;min-width:42px;text-align:center;font-size:12px;font-weight:800;color:${b.color};padding-top:2px">${b.text}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;color:var(--tx-2)">${_inspDateLabel(g.date, g.time)}</div>
+        <div style="font-size:15px;font-weight:700;color:var(--tx);word-break:keep-all">${escHtml(g.name || '-')} <span style="font-size:13px;color:${b.color === 'var(--tx-3)' ? 'var(--tx-2)' : b.color}">${g.units.length}대</span></div>
+        <div style="font-size:12px;color:var(--tx-3);margin-top:2px;word-break:keep-all">${units}</div>
+      </div>
+    </div>`;
+  }
+
+  // 직원: 내가 주점검자·보조1·보조2인 조의 현장만
+  function _inspStaffHtml(rows) {
+    const me = currentUser.username;
+    const mine = rows.filter(r => r.team && [r.team.main_inspector, r.team.sub_inspector, r.team.sub_inspector2].some(n => (n || '').trim() === me));
+    if (!mine.length) return '';
+    const siteCount = new Set(mine.map(r => r.site.id)).size;
+    document.getElementById('insp-upcoming-title').textContent = '🗓️ 우리 조 다가오는 검사 (3주)';
+    document.getElementById('insp-upcoming-summary').innerHTML =
+      `${siteCount}개 현장 · <b>${mine.length}대</b><br>${_inspCountText(mine)}<br><span style="font-size:12px;color:var(--tx-3)">누르면 검사일정에서 그날 상세를 볼 수 있습니다.</span>`;
+    const html = _inspGroupRows(mine).map(_inspGroupHtml).join('');
+    document.getElementById('insp-upcoming-body').innerHTML = html;
+    return html;
+  }
+
+  // 관리자: 전체 요약 + 조별 대수 + 관리현장에 없는 호기
+  function _inspAdminHtml(rows) {
+    const byTeam = {};
+    rows.filter(r => r.site).forEach(r => {
+      const key = r.team ? r.team.id : 'none';
+      if (!byTeam[key]) byTeam[key] = { team: r.team, rows: [] };
+      byTeam[key].rows.push(r);
+    });
+    const unmatched = rows.filter(r => !r.site);
+    document.getElementById('insp-upcoming-title').textContent = '🗓️ 다가오는 검사 전체 요약 (3주)';
+    document.getElementById('insp-upcoming-summary').innerHTML =
+      `전체 <b>${rows.length}대</b><br>${_inspCountText(rows)}<br><span style="font-size:12px;color:var(--tx-3)">누르면 검사일정에서 가장 가까운 검사일을 엽니다.</span>`;
+    const teamRows = Object.values(byTeam).sort((a, b) => a.rows[0].inspection_date.localeCompare(b.rows[0].inspection_date));
+    let html = '<div style="font-size:13px;font-weight:700;color:var(--tx);margin:6px 0 8px">조별</div>' + teamRows.map(t => {
+      const first = t.rows[0].inspection_date;
+      const b = _inspBadge(first);
+      const name = t.team ? escHtml(t.team.name) + (t.team.main_inspector ? ' <span style="font-weight:400;color:var(--tx-3)">(' + escHtml(t.team.main_inspector) + ')</span>' : '') : '조 미지정';
+      const near = t.rows.filter(r => _inspDays(r.inspection_date) <= 7).length;
+      return `<div onclick="goInspDate('${first}')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;margin-bottom:6px;border:1px solid var(--br);border-left:4px solid ${b.color};border-radius:8px;cursor:pointer">
+        <div style="flex:1;font-size:14px;font-weight:700;color:var(--tx)">${name}</div>
+        <div style="font-size:13px;color:var(--tx-2);text-align:right">${t.rows.length}대${near ? ` · <span style="color:#dd6b20;font-weight:700">7일 내 ${near}</span>` : ''}<br><span style="font-size:12px;color:${b.color}">가장 빠른 검사 ${_inspDateLabel(first)}</span></div>
+      </div>`;
+    }).join('');
+    if (unmatched.length) {
+      html += `<div style="font-size:13px;font-weight:700;color:#dd6b20;margin:14px 0 4px">⚠️ 관리현장에 등록 안 된 호기 ${unmatched.length}대</div>
+        <div style="font-size:12px;color:var(--tx-3);margin-bottom:8px">관리현장 호기에 승강기번호를 등록하면 해당 조에 표시됩니다.</div>` +
+        _inspGroupRows(unmatched).map(g => _inspGroupHtml({ ...g, units: g.units.map(u => ({ ...u, installation_place: (u.installation_place || u.unit_name + '호기') + ' (' + u.elevator_number + ')' })) })).join('');
+    }
+    document.getElementById('insp-upcoming-body').innerHTML = html;
+    return html;
+  }
+
+  function closeInspUpcoming(hideToday) {
+    if (hideToday) {
+      try { localStorage.setItem(INSP_HIDE_KEY, new Date().toLocaleDateString('sv') + '|' + currentUser.username); } catch (e) {}
+    }
+    document.getElementById('insp-upcoming-modal').style.display = 'none';
+  }
+
+  // 검사일정 화면의 해당 날짜로 이동
+  function goInspDate(d) {
+    closeInspUpcoming(false);
+    const [y, m] = d.split('-').map(Number);
+    inspCalYear = y; inspCalMonth = m; inspCalSelectedDate = d;
+    switchTab('insp-calendar', null);
+    setTimeout(() => document.getElementById('insp-cal-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 700);
   }
   setInterval(checkForUpdate, 30 * 60 * 1000);   // 켜둔 채로 있어도 30분마다 확인
   setTimeout(checkForUpdate, 5000);
@@ -6343,6 +6509,9 @@
     if (mgmtFilter === 'expire') {
       list = list.filter(m => isAlreadyExpired(m.contract_end) || isExpireThisMonth(m.contract_end));
     }
+    if (MGMT_CONTRACT_GROUPS[mgmtFilter]) {
+      list = list.filter(m => mgmtContractMatch(m, mgmtFilter));
+    }
     if (!list.length) { showToast('내보낼 현장이 없습니다.'); return; }
 
     const rows = [];
@@ -6432,7 +6601,7 @@
     if (arrow) arrow.style.transform = '';
   });
 
-  const MGMT_FILTER_LABELS = { active: '✅ 보수현장(TK+대솔)', all: '전체', expire: '⚠️ 계약만료', insp_expire: '🔍 검사만료', defect: '🏗️ 하자', free: '🆓 무상', lost: '❌ 상실', billing: '🧾 계산서발행용' };
+  const MGMT_FILTER_LABELS = { active: '✅ 보수현장(TK+대솔)', all: '전체', daesol: '🔵 대솔', tk: '🟣 TK', dpog: '🔹 대솔POG', tkpog: '🔸 TK-POG(3종)', expire: '⚠️ 계약만료', insp_expire: '🔍 검사만료', defect: '🏗️ 하자', free: '🆓 무상', lost: '❌ 상실', billing: '🧾 계산서발행용' };
 
   function selectMgmtFilter(type) {
     document.getElementById('mgmt-filter-menu').style.display = 'none';
@@ -6490,6 +6659,15 @@
            noSp(m.elevator_address).includes(qText);
   }
 
+  // 관리현장 필터의 계약구분 묶음 (모두 상실 제외)
+  const MGMT_CONTRACT_GROUPS = {
+    daesol: m => (m.contract_type || '').trim().startsWith('대솔'),
+    tk: m => (m.contract_type || '').trim().startsWith('TK'),
+    dpog: m => (m.contract_type || '').trim() === '대솔POG',
+    tkpog: m => (m.contract_type || '').trim().startsWith('TK-POG')   // TK-POG, TK-POG MAX, TK-POG MAX PLUS
+  };
+  const mgmtContractMatch = (m, type) => m.site_type !== '상실' && MGMT_CONTRACT_GROUPS[type](m);
+
   function renderMgmtList() {
     const q = (document.getElementById('mgmt-search')?.value || '').trim().toLowerCase();
     const teamFilter = (document.getElementById('mgmt-team-filter')?.value || '');
@@ -6530,6 +6708,15 @@
     if (mgmtFilter === 'billing') {
       list = list.filter(m => m.site_type === '계산서발행용');
     }
+    if (MGMT_CONTRACT_GROUPS[mgmtFilter]) {
+      list = list.filter(m => mgmtContractMatch(m, mgmtFilter));
+    }
+    // 계약구분 묶음 건수 배지
+    [['daesol', '🔵 대솔'], ['tk', '🟣 TK'], ['dpog', '🔹 대솔POG'], ['tkpog', '🔸 TK-POG(3종)']].forEach(([k, label]) => {
+      const opt = document.getElementById('mgmt-opt-' + k);
+      const n = mgmtData.filter(m => mgmtContractMatch(m, k)).length;
+      if (opt) opt.innerHTML = `${label}${n > 0 ? ` <span class="fopt-badge">${n}</span>` : ''}`;
+    });
     // 검사만료 건수 배지
     const inspCount = mgmtData.filter(m => m.insp_expired > 0 || m.insp_soon > 0).length;
     const optInsp = document.getElementById('mgmt-opt-insp-expire');
@@ -7081,17 +7268,21 @@
       const colMap = {
         '검사종류': 'inspection_type', '건물명': 'building_name', '소재지': 'address',
         '승강기번호': 'elevator_number', '검사시작일': 'inspection_date',
-        '검사자 도착시간': 'arrival_time', '검사자': 'inspector', '호기': 'unit_name',
+        '검사자 도착시간': 'arrival_time', '호기': 'unit_name',
         '설치장소': 'installation_place', '승강기종류': 'elevator_type',
         '검사지원': 'inspection_support'
       };
       // 검사확정여부 컬럼 인덱스 별도 추추
       let inspConfirmedCol = -1;
+      // 검사자는 '검사자 이름' 칸이 2개라 모두 모아서 "A, B"로 저장
+      let inspectorCols = [];
       for (let r = 0; r < Math.min(rows.length, 10); r++) {
+        inspectorCols = [];
         rows[r].forEach((cell, c) => {
           const key = String(cell).trim();
           if (colMap[key]) colIdx[colMap[key]] = c;
           if (key === '검사확정여부') inspConfirmedCol = c;
+          if (key === '검사자' || key === '검사자 이름') inspectorCols.push(c);
         });
         if (colIdx.elevator_number !== undefined && colIdx.inspection_date !== undefined) { headerRow = r; break; }
       }
@@ -7117,6 +7308,8 @@
           rec[field] = v instanceof Date ? v.toLocaleDateString('sv') : String(v || '').trim() || null;
         });
         rec.elevator_number = elevNo;
+        const inspectors = [...new Set(inspectorCols.map(ci => String(row[ci] || '').trim()).filter(Boolean))];
+        rec.inspector = inspectors.length ? inspectors.join(', ') : null;
         // 검사확정여부를 inspection_support에 합산
         if (inspConfirmedCol >= 0) {
           const confirmed = String(row[inspConfirmedCol] || '').trim();
