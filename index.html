@@ -3467,7 +3467,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.04-2';
+  const APP_VERSION = '2026.11.04-3';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -7211,7 +7211,7 @@
      저장: road_site_plans(현장별 설정) · road_submits(조×월 제출). 현장·대수·계약구분은 관리현장 데이터에서 읽기만. */
   const ROAD_DOW = ['월', '화', '수', '목', '금'];
   const ROAD_CYCLES = ['매월', '격월', '분기'];
-  let roadTeamId = null, roadYm = null, roadCtx = null, roadView = 'list', roadEdit = null;
+  let roadTeamId = null, roadYm = null, roadCtx = null, roadView = 'list', roadEdit = null, roadViewKey = '';
 
   function roadIsAdmin() { return currentRole === '관리자' || currentRole === '마스터'; }
   function roadIsMember(t) { const me = currentUser?.username; return !!(t && me && [t.main_inspector, t.sub_inspector, t.sub_inspector2].some(n => (n || '').trim() === me)); }
@@ -7282,6 +7282,9 @@
     document.getElementById('road-body').innerHTML = '<div class="loading-state">불러오는 중...</div>';
     try {
       roadCtx = await roadLoadData(roadTeamId, roadYm);
+      // 조·달이 바뀌면 처음 화면: 제출한 조는 달력표, 아니면 현장 목록
+      const key = roadTeamId + '|' + roadYm;
+      if (key !== roadViewKey) { roadViewKey = key; roadView = roadCtx.sub ? 'preview' : 'list'; }
       renderRoad();
     } catch (e) {
       document.getElementById('road-body').innerHTML = '<div class="empty-state">불러오지 못했습니다. 잠시 후 다시 열어 주세요.</div>';
@@ -7471,6 +7474,7 @@
     const { error } = await db.from('road_submits').upsert({ team_id: c.teamId, ym: c.ym, total }, { onConflict: 'team_id,ym' });
     if (error) { showToast('❌ 제출하지 못했습니다: ' + error.message); return; }
     showToast(`📨 ${roadYmLabel(c.ym)} 로드표를 제출했습니다.`);
+    roadView = 'preview';
     loadRoad();
   }
 
