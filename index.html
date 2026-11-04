@@ -2857,7 +2857,7 @@
     <div id="road-day-title" style="font-size:16px;font-weight:800;color:var(--tx);flex-shrink:0"></div>
     <div style="overflow-y:auto;flex:1;min-height:0">
       <div id="road-day-on"></div>
-      <div style="font-size:12px;font-weight:700;color:var(--tx-2);margin:14px 0 6px">현장 넣기 <span style="font-weight:400;color:var(--tx-3)">(여러 곳 체크 가능)</span></div>
+      <div style="font-size:12px;font-weight:700;color:var(--tx-2);margin:14px 0 6px">현장 넣기 <span style="font-weight:400;color:var(--tx-3)">(누른 현장이 이날로 들어갑니다 · 11대 이상은 대수를 물어봅니다)</span></div>
       <input id="road-day-search" class="modal-input normal" style="margin-bottom:6px" placeholder="🔍 현장 이름 검색" oninput="roadDay.q=this.value;renderRoadDayList()">
       <div id="road-day-all" style="margin-bottom:6px"></div>
       <div id="road-day-list"></div>
@@ -3498,7 +3498,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.04-5';
+  const APP_VERSION = '2026.11.04-6';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -7306,15 +7306,25 @@
     const q = cycle === '분기' ? (cfg?.q || 1) : null;
     // 분기 현장: 점검 달이 아니어도 로드표·합계엔 들어가고, 흐리게 표시만
     const off = cycle === '분기' && ((+ym.slice(5, 7) - q) % 3 + 3) % 3 !== 0;
-    const units = roadSplit(site.units, Math.max(1, slots.length));
-    const days = slots.map((s, i) => ({ ...s, date: weeks[s.w - 1]?.[s.d] || null, units: units[i] }));
+    const hasU = x => Number.isFinite(x.u);
+    const fixed = slots.filter(hasU).reduce((a, x) => a + x.u, 0);
+    const autoN = slots.filter(x => !hasU(x)).length;
+    const autoUnits = roadSplit(Math.max(0, site.units - fixed), Math.max(1, autoN));
+    let ai = 0;
+    const days = slots.map(x => ({ ...x, date: weeks[x.w - 1]?.[x.d] || null, units: hasU(x) ? x.u : autoUnits[ai++] }));
+    // 모든 날에 대수를 정했는데 합이 모자라면 '○대 남음'
+    const remain = slots.length && !autoN ? Math.max(0, site.units - fixed) : 0;
     let state = 'ok';
     if (!slots.length) state = 'none';
     else if (days.some(x => !x.date)) state = 'bad';
-    return { site, cfg, cycle, q, off, days, state };
+    return { site, cfg, cycle, q, off, days, state, remain };
   }
+  // 날짜를 더 정해야 하는 현장 (미정·없는 날·남은 대수)
+  function roadNeeds(r) { return r.state === 'none' || r.state === 'bad' || r.remain > 0; }
+  function roadPlaced(r) { return r.state === 'ok' ? r.days.reduce((a, x) => a + x.units, 0) : 0; }
   function roadWhenText(r) {
     if (r.state === 'none') return '날짜 미정';
+    if (r.remain > 0) return r.remain + '대 남음';
     const byW = {};
     r.days.forEach(x => { (byW[x.w] = byW[x.w] || []).push(ROAD_DOW[x.d]); });
     return Object.entries(byW).map(([w, ds]) => w + '주 ' + ds.join('·')).join(', ');
@@ -7387,8 +7397,8 @@
     const c = roadCtx, t = inspTeamById(c.teamId);
     document.getElementById('road-members').textContent = (t ? t.name + ' · ' : '') + roadMembers(t);
     const totalUnits = c.rows.reduce((a, r) => a + r.site.units, 0);
-    const monthUnits = c.rows.filter(r => r.state === 'ok').reduce((a, r) => a + r.site.units, 0);
-    const none = c.rows.filter(r => r.state === 'none' || r.state === 'bad');
+    const monthUnits = c.rows.reduce((a, r) => a + roadPlaced(r), 0);
+    const none = c.rows.filter(roadNeeds);
     const cyc = c.rows.filter(r => r.cycle === '분기');
     const holHits = c.rows.filter(r => r.state === 'ok' && r.days.some(x => c.holidays[x.date]));
     const sub = c.sub;
@@ -7399,7 +7409,7 @@
       ${c.noYearHol ? `<br><span style="color:#dd6b20;font-weight:700">📅 ${c.ym.slice(0, 4)}년 휴일이 아직 등록되지 않았습니다${roadIsAdmin() ? ' — <a href="#" onclick="switchTab(\'holiday\',null);return false" style="color:#3182ce">휴일 관리에서 등록</a>' : ' (관리자 등록 전)'}</span>` : ''}
       ${sub ? `<br><span style="color:#3182ce;font-weight:700">📨 제출함 · ${escHtml(sub.submitted_by || '')} ${roadFmt(sub.submitted_at)} (${sub.total}대)</span>` : ''}
     </div>`;
-    const tabs = [['cal', '📅 달력'], ['list', `현장 목록 ${c.rows.length}`], ['none', `날짜 미정 ${none.length}`], ['cycle', `분기 ${cyc.length}`]];
+    const tabs = [['cal', '📅 달력'], ['list', `현장 목록 ${c.rows.length}`], ['none', `날짜 미정·남음 ${none.length}`], ['cycle', `분기 ${cyc.length}`]];
     document.getElementById('road-tabs').innerHTML = tabs.map(([k, label]) =>
       `<button type="button" onclick="roadView='${k}';renderRoad()" style="padding:6px 12px;border-radius:16px;border:1.5px solid ${roadView === k ? '#2b6cb0' : 'var(--br-mid)'};background:${roadView === k ? '#2b6cb0' : 'var(--bg-card)'};color:${roadView === k ? 'white' : 'var(--tx)'};font-size:12px;font-weight:${roadView === k ? 700 : 500};font-family:inherit;cursor:pointer">${label}</button>`).join('');
     document.getElementById('road-submit-btn').textContent = sub ? '다시 제출' : '제출';
@@ -7407,19 +7417,19 @@
     let rows = c.rows;
     if (roadView === 'none') rows = none;
     if (roadView === 'cycle') rows = cyc;
-    const rank = r => r.state === 'none' || r.state === 'bad' ? 0 : 1;
+    const rank = r => roadNeeds(r) ? 0 : 1;
     const firstDate = r => r.days.find(x => x.date)?.date || '9999';
     rows = rows.slice().sort((a, b) => rank(a) - rank(b) || firstDate(a).localeCompare(firstDate(b)) || a.site.site_name.localeCompare(b.site.site_name, 'ko'));
     if (!rows.length) { document.getElementById('road-body').innerHTML = '<div class="empty-state">해당하는 현장이 없습니다.</div>'; return; }
     document.getElementById('road-body').innerHTML = rows.map(r => {
       const mark = roadMark(r.site.contract_type);
       const isT = mark.startsWith('T');
-      const bad = r.state === 'none' || r.state === 'bad';
+      const bad = roadNeeds(r);
       const wc = bad ? 'color:#e53e3e;border-color:#e53e3e;background:rgba(229,62,62,.1)' : 'color:var(--tx);border-color:var(--br-mid)';
       const hol = r.state === 'ok' && r.days.some(x => c.holidays[x.date]);
       const subs = [r.site.units + '대'];
       if (r.days.length > 1 && r.state === 'ok') subs.push(r.days.length + '일에 나눠서');
-      if (r.state === 'ok') subs.push(r.days.map(x => roadMD(x.date).replace(/\(.\)/, '')).join(', '));
+      if (r.state === 'ok') subs.push(r.days.map(x => roadMD(x.date).replace(/\(.\)/, '') + (r.days.length > 1 ? ' ' + x.units + '대' : '')).join(', '));
       if (r.state === 'bad') subs.push('이번 달엔 없는 날이 있습니다');
       if (hol) subs.push('🎌 휴일 포함');
       if (r.cycle === '분기') subs.push(r.off ? '이번 달은 분기 점검 달 아님' : '이번 달 분기 점검');
@@ -7462,69 +7472,148 @@
   }
 
   // ── 날짜 하나 눌러서 그날 현장 넣기·빼기 (여러 곳 한 번에) ──
+  // 바꾼 내용은 roadDay.work(현장별 설정 사본)에 모았다가 [저장]에서 한 번에 저장
+  const ROAD_ASK_UNITS = 11;   // 이 대수 이상인 현장은 넣을 때 '몇 대를 넣을까요?'
+  const ROAD_ASK_DEFAULT = 10;
   let roadDay = null;
   function openRoadDay(date) {
     const c = roadCtx;
     let w = 0, d = 0;
     c.weeks.forEach((wk, wi) => wk.forEach((x, di) => { if (x === date) { w = wi + 1; d = di; } }));
     if (!w) return;
-    roadDay = { date, w, d, add: new Set(), remove: new Set(), all: false, q: '' };
+    roadDay = { date, w, d, work: new Map(), all: false, q: '', ask: null, edit: null };
     document.getElementById('road-day-title').innerHTML = `${roadMD(date)} 로드표${c.holidays[date] ? ` <span style="font-size:12px;background:#e53e3e;color:white;border-radius:4px;padding:1px 6px;margin-left:4px">${escHtml(c.holidays[date])}</span>` : ''}`;
     document.getElementById('road-day-search').value = '';
     renderRoadDay();
     document.getElementById('road-day-sheet').style.display = 'flex';
   }
   function closeRoadDay() { document.getElementById('road-day-sheet').style.display = 'none'; roadDay = null; }
-  function roadDayOn(r) { return r.days.some(x => x.date === roadDay.date); }
+  function roadDayCfg(id) {
+    if (roadDay.work.has(id)) return roadDay.work.get(id);
+    const r = roadCtx.rows.find(x => x.site.id === id);
+    return { slots: (r.cfg?.slots || []).map(x => ({ ...x })), cycle: r.cycle, q: r.q, short: r.cfg?.short || '' };
+  }
+  function roadDayRows() {
+    return roadCtx.rows.map(x => roadDay.work.has(x.site.id) ? roadSiteMonth(x.site, roadDay.work.get(x.site.id), roadCtx.ym, roadCtx.weeks) : x);
+  }
+  function roadDayIsHere(x) { return x.w === roadDay.w && x.d === roadDay.d; }
+  function roadDayOn(r) { return r.days.some(roadDayIsHere); }
+  const roadBtn = (label, onclick, color = 'var(--tx-2)', border = 'var(--br-mid)') =>
+    `<button type="button" onclick="event.stopPropagation();${onclick}" style="padding:4px 9px;border:1px solid ${border};border-radius:6px;background:transparent;color:${color};font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">${label}</button>`;
+  const roadMarkHtml = r => `<span style="font-size:10px;font-weight:700;color:${roadMark(r.site.contract_type).startsWith('T') ? '#3182ce' : '#38a169'};flex-shrink:0">${escHtml(roadMark(r.site.contract_type))}</span>`;
+  const roadNumInput = (val, max) => `<input id="road-day-num" type="number" inputmode="numeric" min="1" max="${max}" value="${val}" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter')this.nextElementSibling.click()" style="width:64px;padding:6px;border:1.5px solid #2b6cb0;border-radius:6px;background:var(--bg-high);color:var(--tx);font-size:14px;font-family:inherit;text-align:center">`;
+
   function renderRoadDay() {
-    const c = roadCtx, D = roadDay;
-    const on = c.rows.filter(roadDayOn);
-    const keep = on.filter(r => !D.remove.has(r.site.id));
-    const units = keep.reduce((a, r) => a + (r.days.find(x => x.date === D.date)?.units || 0), 0);
-    document.getElementById('road-day-on').innerHTML = `<div style="font-size:12px;font-weight:700;color:var(--tx-2);margin:12px 0 6px">이날 현장 <span style="font-weight:400;color:var(--tx-3)">${keep.length}곳 · ${units}대</span></div>` +
+    const D = roadDay, rows = roadDayRows();
+    const on = rows.filter(roadDayOn);
+    const units = on.reduce((a, r) => a + (r.days.find(roadDayIsHere)?.units || 0), 0);
+    document.getElementById('road-day-on').innerHTML = `<div style="font-size:12px;font-weight:700;color:var(--tx-2);margin:12px 0 6px">이날 현장 <span style="font-weight:400;color:var(--tx-3)">${on.length}곳 · ${units}대</span></div>` +
       (on.length ? on.map(r => {
-        const rm = D.remove.has(r.site.id);
-        const u = r.days.find(x => x.date === D.date)?.units || 0;
-        return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;border:1px solid var(--br);border-radius:8px;${rm ? 'opacity:.45;text-decoration:line-through' : ''}">
-          <span style="font-size:10px;font-weight:700;color:${roadMark(r.site.contract_type).startsWith('T') ? '#3182ce' : '#38a169'}">${escHtml(roadMark(r.site.contract_type))}</span>
-          <span style="flex:1;font-size:13px;color:var(--tx);word-break:keep-all;overflow-wrap:anywhere">${escHtml(roadName(r))} <b>${u}대</b>${r.days.length > 1 ? ` <span style="font-size:11px;color:var(--tx-3)">(${r.days.length}일에 나눔)</span>` : ''}</span>
-          <button type="button" onclick="roadDayToggleRemove(${r.site.id})" style="padding:4px 10px;border:1px solid ${rm ? 'var(--br-mid)' : '#e53e3e'};border-radius:6px;background:transparent;color:${rm ? 'var(--tx-2)' : '#e53e3e'};font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">${rm ? '되돌리기' : '빼기'}</button>
-        </div>`;
+        const id = r.site.id, u = r.days.find(roadDayIsHere)?.units || 0;
+        const ed = D.edit && D.edit.id === id ? D.edit.kind : null;
+        let body;
+        if (ed === 'name') body = `<input id="road-day-name" value="${escHtml(r.cfg?.short || '')}" placeholder="${escHtml(r.site.site_name)}" onkeydown="if(event.key==='Enter')roadDaySaveName(${id})" style="flex:1;min-width:0;padding:6px 8px;border:1.5px solid #2b6cb0;border-radius:6px;background:var(--bg-high);color:var(--tx);font-size:13px;font-family:inherit">${roadBtn('확인', `roadDaySaveName(${id})`, '#3182ce', '#3182ce')}`;
+        else if (ed === 'units') body = `<span style="flex:1;font-size:13px;color:var(--tx);word-break:keep-all;overflow-wrap:anywhere">${escHtml(roadName(r))}</span><span style="font-size:12px;color:var(--tx-3)">${r.site.units}대 중</span>${roadNumInput(u, r.site.units)}${roadBtn('확인', `roadDaySaveUnits(${id})`, '#3182ce', '#3182ce')}`;
+        else body = `<span style="flex:1;font-size:13px;color:var(--tx);word-break:keep-all;overflow-wrap:anywhere">${escHtml(roadName(r))}${r.days.length > 1 || r.remain ? ` <span style="font-size:11px;color:var(--tx-3)">(${r.site.units}대 중${r.days.length > 1 ? ' · ' + r.days.length + '일' : ''}${r.remain ? ' · <b style="color:#e53e3e">' + r.remain + '대 남음</b>' : ''})</span>` : ''}</span>` +
+          (r.site.units > 1 ? roadBtn(u + '대 ✎', `roadDay.edit={id:${id},kind:'units'};renderRoadDay()`, 'var(--tx)') : `<b style="font-size:13px;color:var(--tx)">${u}대</b>`) +
+          roadBtn('✏️', `roadDay.edit={id:${id},kind:'name'};renderRoadDay()`) + roadBtn('빼기', `roadDayRemove(${id})`, '#e53e3e', '#e53e3e');
+        return `<div style="display:flex;align-items:center;gap:6px;padding:7px 8px;margin-bottom:4px;border:1px solid var(--br);border-radius:8px;flex-wrap:wrap">${roadMarkHtml(r)}${body}</div>`;
       }).join('') : '<div style="font-size:12px;color:var(--tx-3);padding:6px 0">아직 잡힌 현장이 없습니다.</div>');
     renderRoadDayList();
+    setTimeout(() => { const el = document.getElementById('road-day-name') || document.getElementById('road-day-num'); if (el) { el.focus(); el.select?.(); } }, 0);
   }
   function renderRoadDayList() {
-    const c = roadCtx, D = roadDay;
+    const D = roadDay, rows = roadDayRows();
     const q = D.q.replace(/\s+/g, '').toLowerCase();
-    let cand = c.rows.filter(r => !roadDayOn(r) && (D.all || r.state === 'none' || r.state === 'bad'));
+    let cand = rows.filter(r => !roadDayOn(r) && (D.all || roadNeeds(r)));
     if (q) cand = cand.filter(r => (r.site.site_name + (r.cfg?.short || '')).replace(/\s+/g, '').toLowerCase().includes(q));
-    cand.sort((a, b) => (a.state === 'ok') - (b.state === 'ok') || roadName(a).localeCompare(roadName(b), 'ko'));
-    const noneCnt = c.rows.filter(r => !roadDayOn(r) && (r.state === 'none' || r.state === 'bad')).length;
-    document.getElementById('road-day-all').innerHTML = `<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx-2);cursor:pointer"><input type="checkbox" ${D.all ? 'checked' : ''} onchange="roadDay.all=this.checked;renderRoadDayList()"> 다른 날에 잡힌 현장도 보기 (고르면 이날로 옮김)</label>`;
+    cand.sort((a, b) => roadNeeds(b) - roadNeeds(a) || roadName(a).localeCompare(roadName(b), 'ko'));
+    document.getElementById('road-day-all').innerHTML = `<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx-2);cursor:pointer"><input type="checkbox" ${D.all ? 'checked' : ''} onchange="roadDay.all=this.checked;renderRoadDayList()"> 다른 날에 잡힌 현장도 보기</label>`;
     document.getElementById('road-day-list').innerHTML = cand.length ? cand.map(r => {
-      const ck = D.add.has(r.site.id);
-      const moving = r.state === 'ok';
-      return `<div onclick="roadDayToggleAdd(${r.site.id})" style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;border:1.5px solid ${ck ? '#2b6cb0' : 'var(--br)'};border-radius:8px;cursor:pointer;background:${ck ? 'rgba(43,108,176,.12)' : 'transparent'}">
-        <span style="width:18px;height:18px;border-radius:4px;border:2px solid ${ck ? '#2b6cb0' : 'var(--br-hi)'};background:${ck ? '#2b6cb0' : 'transparent'};color:white;font-size:12px;line-height:14px;text-align:center;flex-shrink:0">${ck ? '✓' : ''}</span>
-        <span style="font-size:10px;font-weight:700;color:${roadMark(r.site.contract_type).startsWith('T') ? '#3182ce' : '#38a169'}">${escHtml(roadMark(r.site.contract_type))}</span>
-        <span style="flex:1;font-size:13px;color:var(--tx);word-break:keep-all;overflow-wrap:anywhere">${escHtml(roadName(r))} <b>${r.site.units}대</b>${r.cycle === '분기' ? ' <span style="font-size:10px;color:#dd6b20">분기</span>' : ''}</span>
-        ${moving ? `<span style="font-size:11px;color:#dd6b20;white-space:nowrap">${escHtml(roadWhenText(r))} → 이날</span>` : ''}
+      const id = r.site.id;
+      const left = r.state === 'none' || r.state === 'bad' ? r.site.units : r.remain;
+      const need = roadNeeds(r);
+      const asking = D.ask && D.ask.id === id;
+      let right = '';
+      if (asking) right = `<div style="width:100%;display:flex;align-items:center;gap:6px;margin-top:6px;padding-left:2px"><span style="font-size:12px;color:var(--tx-2)">몇 대를 넣을까요?</span>${roadNumInput(D.ask.def, D.ask.max)}${roadBtn('넣기', `roadDayAskOk()`, 'white', '#2b6cb0').replace('background:transparent', 'background:#2b6cb0')}${roadBtn('취소', `roadDay.ask=null;renderRoadDayList()`)}</div>`;
+      else if (need) right = roadBtn('+ 넣기', `roadDayAdd(${id})`, '#3182ce', '#3182ce');
+      else right = (r.site.units > r.days.length ? roadBtn('+ 이날도', `roadDayAlso(${id})`, '#3182ce', '#3182ce') : '') + roadBtn('→ 옮기기', `roadDayMove(${id})`, '#dd6b20', '#dd6b20');
+      const info = need ? (r.remain ? `<b style="color:#e53e3e">${r.remain}대 남음</b> · ${escHtml(roadWhenText({ ...r, remain: 0 }))}` : `${r.site.units}대`) : `${r.site.units}대 · ${escHtml(roadWhenText(r))}`;
+      return `<div ${need && !asking ? `onclick="roadDayAdd(${id})"` : ''} style="display:flex;align-items:center;gap:6px;padding:7px 8px;margin-bottom:4px;border:1.5px solid ${asking ? '#2b6cb0' : 'var(--br)'};border-radius:8px;flex-wrap:wrap;${need && !asking ? 'cursor:pointer' : ''}">
+        ${roadMarkHtml(r)}
+        <span style="flex:1;min-width:0;font-size:13px;color:var(--tx);word-break:keep-all;overflow-wrap:anywhere">${escHtml(roadName(r))}${r.cycle === '분기' ? ' <span style="font-size:10px;color:#dd6b20">분기</span>' : ''}<br><span style="font-size:11px;color:var(--tx-3)">${info}</span></span>
+        ${asking ? '' : right}${asking ? right : ''}
       </div>`;
-    }).join('') : `<div style="font-size:12px;color:var(--tx-3);padding:6px 0">${q ? '검색 결과가 없습니다.' : noneCnt ? '' : '날짜 미정 현장이 없습니다. 다른 날 현장을 옮기려면 위 칸을 체크하세요.'}</div>`;
-    const n = D.add.size, m = D.remove.size;
-    document.getElementById('road-day-save').textContent = n || m ? `저장 (${[n ? '넣기 ' + n + '곳' : '', m ? '빼기 ' + m + '곳' : ''].filter(Boolean).join(' · ')})` : '저장';
+    }).join('') : `<div style="font-size:12px;color:var(--tx-3);padding:6px 0">${q ? '검색 결과가 없습니다.' : '날짜를 정할 현장이 없습니다. 다른 날 현장을 넣거나 옮기려면 위 칸을 체크하세요.'}</div>`;
+    const n = D.work.size;
+    document.getElementById('road-day-save').textContent = n ? `저장 (${n}곳 바뀜)` : '저장';
+    if (D.ask) setTimeout(() => { const el = document.getElementById('road-day-num'); if (el) { el.focus(); el.select(); } }, 0);
   }
-  function roadDayToggleAdd(id) { const S = roadDay.add; S.has(id) ? S.delete(id) : S.add(id); renderRoadDayList(); }
-  function roadDayToggleRemove(id) { const S = roadDay.remove; S.has(id) ? S.delete(id) : S.add(id); renderRoadDay(); }
+  function roadDayPut(id, cfg) { roadDay.work.set(id, cfg); roadDay.ask = null; roadDay.edit = null; renderRoadDay(); }
+  // 날짜 미정·남은 대수 현장 넣기 (11대 이상이면 몇 대 넣을지 물어봄)
+  function roadDayAdd(id) {
+    const r = roadDayRows().find(x => x.site.id === id);
+    const left = r.state === 'none' || r.state === 'bad' ? r.site.units : r.remain;
+    if (left >= ROAD_ASK_UNITS) { roadDay.ask = { id, mode: 'add', max: left, def: Math.min(ROAD_ASK_DEFAULT, left) }; renderRoadDayList(); return; }
+    roadDayDoAdd(id, null);
+  }
+  function roadDayDoAdd(id, u) {
+    const cfg = roadDayCfg(id), r = roadDayRows().find(x => x.site.id === id);
+    if (cfg.slots.some(roadDayIsHere)) return;   // 이미 이날에 있음
+    // 날짜 미정·없는 날이면 새로, 대수가 남았으면 이날을 더함. 남은 대수 전부면 대수를 비워 둠(나머지 자동)
+    const base = r.state === 'none' || r.state === 'bad' ? cfg.slots.filter(x => r.days.find(d => d.w === x.w && d.d === x.d)?.date) : cfg.slots;
+    const left = r.state === 'none' || r.state === 'bad' ? r.site.units - base.reduce((a, x) => a + (Number.isFinite(x.u) ? x.u : 0), 0) : r.remain;
+    const slot = { w: roadDay.w, d: roadDay.d };
+    if (u != null && u < left) slot.u = u;
+    roadDayPut(id, { ...cfg, slots: [...base, slot] });
+  }
+  // 이미 잡힌 현장에 이날도 더하기 (11대 이상이면 이날 대수를 물어봄, 나머지 날은 남은 대수를 나눔)
+  function roadDayAlso(id) {
+    const r = roadDayRows().find(x => x.site.id === id);
+    if (r.days.length + 1 > r.site.units) { showToast(`❌ ${r.site.units}대 현장은 ${r.site.units}일까지만 나눌 수 있습니다.`); return; }
+    if (r.site.units >= ROAD_ASK_UNITS) { roadDay.ask = { id, mode: 'also', max: r.site.units - r.days.length, def: Math.min(ROAD_ASK_DEFAULT, Math.floor(r.site.units / 2)) }; renderRoadDayList(); return; }
+    roadDayDoAlso(id, null);
+  }
+  function roadDayDoAlso(id, u) {
+    const cfg = roadDayCfg(id);
+    if (cfg.slots.some(roadDayIsHere)) return;
+    const slots = cfg.slots.map(x => ({ w: x.w, d: x.d }));   // 다른 날은 남은 대수를 자동으로 나눔
+    const slot = { w: roadDay.w, d: roadDay.d };
+    if (u != null) slot.u = u;
+    roadDayPut(id, { ...cfg, slots: [...slots, slot] });
+  }
+  function roadDayMove(id) { const cfg = roadDayCfg(id); roadDayPut(id, { ...cfg, slots: [{ w: roadDay.w, d: roadDay.d }] }); }
+  function roadDayAskOk() {
+    const A = roadDay.ask, v = parseInt(document.getElementById('road-day-num').value, 10);
+    if (!(v >= 1 && v <= A.max)) { showToast(`1~${A.max}대 사이로 넣어 주세요.`); return; }
+    A.mode === 'add' ? roadDayDoAdd(A.id, v) : roadDayDoAlso(A.id, v);
+  }
+  function roadDayRemove(id) {
+    const cfg = roadDayCfg(id);
+    roadDayPut(id, { ...cfg, slots: cfg.slots.filter(x => !roadDayIsHere(x)) });
+  }
+  function roadDaySaveUnits(id) {
+    const r = roadDayRows().find(x => x.site.id === id), cfg = roadDayCfg(id);
+    const v = parseInt(document.getElementById('road-day-num').value, 10);
+    const others = cfg.slots.filter(x => !roadDayIsHere(x));
+    const othersFixed = others.reduce((a, x) => a + (Number.isFinite(x.u) ? x.u : 0), 0);
+    const othersAuto = others.filter(x => !Number.isFinite(x.u)).length;
+    const max = r.site.units - othersFixed - othersAuto;   // 다른 날이 최소 1대씩은 남게
+    if (!(v >= 1 && v <= max)) { showToast(`1~${max}대 사이로 넣어 주세요.`); return; }
+    roadDayPut(id, { ...cfg, slots: cfg.slots.map(x => roadDayIsHere(x) ? { w: x.w, d: x.d, u: v } : x) });
+  }
+  function roadDaySaveName(id) {
+    const cfg = roadDayCfg(id);
+    roadDayPut(id, { ...cfg, short: document.getElementById('road-day-name').value.trim() });
+  }
   async function saveRoadDay() {
-    const c = roadCtx, D = roadDay;
-    if (!D.add.size && !D.remove.size) { closeRoadDay(); return; }
-    const ups = [];
-    D.remove.forEach(id => {
-      const r = c.rows.find(x => x.site.id === id);
-      ups.push({ site_id: id, slots: (r.cfg?.slots || []).filter(s => !(s.w === D.w && s.d === D.d)) });
-    });
-    D.add.forEach(id => ups.push({ site_id: id, slots: [{ w: D.w, d: D.d }] }));   // 새로 넣거나, 다른 날에서 이날로 옮김
+    const D = roadDay;
+    if (!D.work.size) { closeRoadDay(); return; }
+    const ups = [...D.work.entries()].map(([id, cfg]) => ({
+      site_id: id,
+      slots: cfg.slots.slice().sort((a, b) => a.w - b.w || a.d - b.d).map(x => Number.isFinite(x.u) ? { w: x.w, d: x.d, u: x.u } : { w: x.w, d: x.d }),
+      short_name: (cfg.short || '').trim() || null
+    }));
     const btn = document.getElementById('road-day-save');
     btn.disabled = true;
     const { error } = await db.from('road_site_plans').upsert(ups, { onConflict: 'site_id' });
@@ -7608,6 +7697,7 @@
     const e = roadEdit;
     const units = roadCtx.rows.find(x => x.site.id === e.siteId)?.site.units || 0;
     if (e.slots.length > Math.max(1, units)) { showToast(`❌ ${units}대 현장은 ${Math.max(1, units)}일까지만 고를 수 있습니다.`); return; }
+    if (e.slots.reduce((a, x) => a + (Number.isFinite(x.u) ? x.u : 0), 0) > units) { showToast(`❌ 날마다 정한 대수 합이 ${units}대를 넘습니다. 달력에서 대수를 고쳐 주세요.`); return; }
     const short = document.getElementById('road-sheet-short').value.trim();
     const slots = e.slots.slice().sort((a, b) => a.w - b.w || a.d - b.d);
     const { error } = await db.from('road_site_plans').upsert({ site_id: e.siteId, slots, cycle: e.cycle, q_month: e.cycle === '분기' ? e.q : null, short_name: short || null }, { onConflict: 'site_id' });
@@ -7619,9 +7709,9 @@
   async function roadSubmit() {
     const c = roadCtx;
     if (!roadIsAdmin() && !roadIsMember(inspTeamById(c.teamId))) return showToast('우리 조 로드표만 제출할 수 있습니다.');
-    const none = c.rows.filter(r => r.state === 'none' || r.state === 'bad').length;
-    if (none && !confirm(`날짜를 정하지 않은 현장이 ${none}곳 있습니다. 그래도 제출할까요?`)) return;
-    const total = c.rows.filter(r => r.state === 'ok').reduce((a, r) => a + r.site.units, 0);
+    const none = c.rows.filter(roadNeeds).length;
+    if (none && !confirm(`날짜를 정하지 않았거나 대수가 남은 현장이 ${none}곳 있습니다. 그래도 제출할까요?`)) return;
+    const total = c.rows.reduce((a, r) => a + roadPlaced(r), 0);
     const { error } = await db.from('road_submits').upsert({ team_id: c.teamId, ym: c.ym, total }, { onConflict: 'team_id,ym' });
     if (error) { showToast('❌ 제출하지 못했습니다: ' + error.message); return; }
     showToast(`📨 ${roadYmLabel(c.ym)} 로드표를 제출했습니다.`);
