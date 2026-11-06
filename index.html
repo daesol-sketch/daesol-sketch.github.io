@@ -3501,7 +3501,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.06-2';
+  const APP_VERSION = '2026.11.06-3';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -6913,6 +6913,7 @@
     const epKeys = ['emergency_phone','emergency_phone2','emergency_phone3','emergency_phone4','emergency_phone5','emergency_phone6','emergency_phone7','emergency_phone8','emergency_phone9','emergency_phone10'];
     const epEntries = epKeys.map(k => m[k] || '').filter(Boolean);
     const fields = [
+      ...(m.search_keywords ? [['🔑 검색 키워드', m.search_keywords]] : []),
       ...(m.site_type ? [['현장유형', m.site_type]] : []),
       ['계약구분', m.contract_type], ['점검조', inspTeamById(m.team_id)?.name || (m.main_inspector ? '미지정' : '')], ['점검자', inspectorText(m)],
       ['계약일자', m.contract_date], ['계약시작', m.contract_start], ['계약만료', m.contract_end],
@@ -6930,7 +6931,7 @@
       <div style="display:none;padding:8px 12px;border-top:1px solid #e2e8f0">${epEntries.map(v => `<div style="font-size:13px;color:#1a202c;font-weight:500;padding:3px 0">${escHtml(v)}</div>`).join('')}</div>
     </div>` : '';
     document.getElementById('elevator-modal-site-info').innerHTML = `<div class="site-info-grid">${fields.map(([k,v]) => {
-        const extra = k === '비고' ? 'grid-column:1/-1' : (k === '승강기 소재지' || k === '점검자') ? 'grid-column:span 2' : '';
+        const extra = k === '비고' || k === '🔑 검색 키워드' ? 'grid-column:1/-1' : (k === '승강기 소재지' || k === '점검자') ? 'grid-column:span 2' : '';
         let val;
         if (v && k === '승강기 소재지' && _isMobile) {
           val = `<span style="color:#2b6cb0;font-weight:600;cursor:pointer;text-decoration:underline" onclick="openTmap('${v.replace(/'/g, "\\'").replace(/\n/g, ' ')}','${(m.site_name||'').replace(/'/g, "\\'")}')">📍 ${escHtml(String(v))}</span>`;
