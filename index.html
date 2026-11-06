@@ -2725,8 +2725,8 @@
         <input type="text" class="modal-input normal" id="mgmt-name" placeholder="현장명" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
       </div>
       <div style="grid-column:1/-1">
-        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">짧은 이름 <span style="font-weight:400;color:#718096">(화면에 크게 보이는 이름 · 비우면 현장명 그대로 · 현장명은 검색용으로 그대로 둠)</span></label>
-        <input type="text" class="modal-input normal" id="mgmt-short-name" placeholder="예: 그레이프힐103동" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
+        <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">검색 키워드 <span style="font-weight:400;color:#718096">(현장명에서 뺀 긴 이름·주소·옛 이름 등 · 관리현장·고장 접수 검색에 걸림)</span></label>
+        <input type="text" class="modal-input normal" id="mgmt-keywords" placeholder="예: B1행신동644-31대수선공사 대한예수교장로회" style="margin-bottom:0" onkeydown="mgmtEnterNext(event,this)" />
       </div>
       <div style="grid-column:1/-1">
         <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">승강기 소재지</label>
@@ -2812,6 +2812,7 @@
         <label style="font-size:12px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">비고</label>
         <textarea class="modal-input normal" id="mgmt-notes" placeholder="메모" style="margin-bottom:0;min-height:70px;resize:vertical"></textarea>
       </div>
+      <div id="mgmt-name-history" style="grid-column:1/-1;display:none"></div>
       <!-- 호기 섹션 -->
       <div style="grid-column:1/-1;margin-top:8px;padding-top:14px;border-top:2px solid #e2e8f0">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -2882,10 +2883,6 @@
     <div id="road-sheet-grid"></div>
     <div style="font-size:12px;font-weight:700;color:var(--tx-2);margin:14px 0 6px">점검 주기</div>
     <div id="road-sheet-cycle"></div>
-    <div id="road-sheet-short-wrap">
-      <div style="font-size:12px;font-weight:700;color:var(--tx-2);margin:14px 0 6px">짧은 이름 <span style="font-weight:400;color:var(--tx-3)">(관리현장·로드표·엑셀 공통 · 비우면 현장명 그대로)</span></div>
-      <input id="road-sheet-short" class="modal-input normal" style="margin-bottom:0" placeholder="">
-    </div>
     <div id="road-sheet-note" style="font-size:12px;color:var(--tx-2);margin-top:10px;line-height:1.6"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button type="button" onclick="closeRoadSheet()" style="flex:1;padding:12px;border:1px solid var(--br-mid);border-radius:8px;background:transparent;color:var(--tx-2);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">취소</button>
@@ -3504,7 +3501,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.04-7';
+  const APP_VERSION = '2026.11.06-1';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -3619,7 +3616,7 @@
       (elevs || []).forEach(e => { siteByNo[e.elevator_number] = e.site_id; });
       const siteIds = [...new Set(Object.values(siteByNo))];
       const [{ data: sites }, { data: teams }] = await Promise.all([
-        siteIds.length ? db.from('managed_sites').select('id, site_name, short_name, team_id').in('id', siteIds) : Promise.resolve({ data: [] }),
+        siteIds.length ? db.from('managed_sites').select('id, site_name, team_id').in('id', siteIds) : Promise.resolve({ data: [] }),
         db.from('inspection_teams').select('id, name, main_inspector, sub_inspector, sub_inspector2')
       ]);
       const siteById = {};
@@ -3644,7 +3641,7 @@
     const map = {};
     rows.forEach(r => {
       const key = r.inspection_date + '|' + (r.arrival_time || '') + '|' + (r.site ? r.site.id : 'x:' + r.building_name);
-      if (!map[key]) { map[key] = { date: r.inspection_date, time: r.arrival_time, name: r.site ? siteLabel(r.site) : r.building_name, units: [] }; groups.push(map[key]); }
+      if (!map[key]) { map[key] = { date: r.inspection_date, time: r.arrival_time, name: r.site ? r.site.site_name : r.building_name, units: [] }; groups.push(map[key]); }
       map[key].units.push(r);
     });
     return groups;
@@ -6064,7 +6061,7 @@
   function acInputEditSite(inp) {
     const q=inp.value.trim().toLowerCase(), dd=document.getElementById('ac-edit-site-dd');
     if(!q){dd.style.display='none';acEditSiteMatches=[];return;}
-    acEditSiteMatches=SITES.filter(s=>s.name.toLowerCase().includes(q));
+    acEditSiteMatches=SITES.filter(s=>siteNameMatch(s,q));
     if(!acEditSiteMatches.length){dd.style.display='none';return;}
     dd.innerHTML=acEditSiteMatches.map((s,i)=>{const nm=s.name,sl=nm.toLowerCase(),idx=sl.indexOf(q);return`<div class="ac-item" data-i="${i}" onmousedown="acPickEditSite(${i})">${escHtml(nm.slice(0,idx))}<mark>${escHtml(nm.slice(idx,idx+q.length))}</mark>${escHtml(nm.slice(idx+q.length))}</div>`;}).join('')+`<div class="ac-count">총 ${acEditSiteMatches.length}건</div>`;
     dd.style.display='block';
@@ -6630,7 +6627,7 @@
     list.forEach(m => {
       const makeRow = (unitName, elevNo) => ({
         '현장명': m.site_name || '',
-        '짧은 이름': m.short_name || '',
+        '검색 키워드': m.search_keywords || '',
         '호기명': unitName,
         '승강기번호': elevNo,
         '현장유형': m.site_type || '',
@@ -6756,17 +6753,13 @@
     return dateStr < todayStr;
   }
 
-  // 화면에 보이는 현장 이름: 짧은 이름이 있으면 그것, 없으면 현장명 (현장명은 검색·연결용으로 그대로)
-  function siteHasShort(m) { const sn = (m?.short_name || '').trim(); return !!sn && sn !== (m?.site_name || '').trim(); }
-  function siteLabel(m) { return (m?.short_name || '').trim() || m?.site_name || ''; }
-
   // 관리현장 검색 매칭 (목록·엑셀 공통). 띄어쓰기 무시, 번호류는 '-'도 무시
   function mgmtSearchMatch(m, q) {
     const noSp = s => (s||'').toLowerCase().replace(/\s+/g, '');
     const qText = noSp(q);
     const qClean = qText.replace(/-/g, '');
     return noSp(m.site_name).includes(qText) ||
-           noSp(m.short_name).includes(qText) ||
+           noSp(m.search_keywords).includes(qText) ||
            noSp(m.main_inspector).includes(qText) ||
            noSp(m.sub_inspector).includes(qText) ||
            noSp(m.sub_inspector2).includes(qText) ||
@@ -6891,7 +6884,7 @@
         return `<tr style="cursor:pointer" onclick="showMgmtDetail(${m.id})">
         ${showCheck ? `<td onclick="event.stopPropagation()" style="text-align:center"><input type="checkbox" class="mgmt-row-check" data-id="${m.id}" onchange="handleMgmtCheck(${m.id},this.checked)" ${selectedMgmtIds.has(m.id)?'checked':''} /></td>` : ''}
         <td>${i+1}</td>
-        <td><strong style="${m.site_type==='상실'?'color:#e53e3e':''}">${escHtml(siteLabel(m))}</strong>${m.site_type==='상실'?` <span style="background:#fed7d7;color:#c53030;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">상실</span>`:''}${m.site_type==='무상'?` <span style="background:#c6f6d5;color:#276749;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">무상</span>`:''}${m.defect_count > 0 ? ` <span style="background:#fefcbf;color:#744210;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">하자 ${m.defect_count}대</span>` : ''}${siteHasShort(m) ? `<div style="font-size:11px;color:var(--tx-3);margin-top:2px;word-break:break-all">${escHtml(m.site_name)}</div>` : ''}</td>
+        <td><strong style="${m.site_type==='상실'?'color:#e53e3e':''}">${escHtml(m.site_name||'')}</strong>${m.site_type==='상실'?` <span style="background:#fed7d7;color:#c53030;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">상실</span>`:''}${m.site_type==='무상'?` <span style="background:#c6f6d5;color:#276749;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">무상</span>`:''}${m.defect_count > 0 ? ` <span style="background:#fefcbf;color:#744210;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">하자 ${m.defect_count}대</span>` : ''}</td>
         <td style="text-align:center">${m.elev_count > 0 ? `<span style="background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:700">${m.elev_count}대</span>` : '<span style="color:#a0aec0;font-size:12px">-</span>'}</td>
         <td><span style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;border-radius:12px;padding:2px 8px;font-size:11px;white-space:nowrap">${escHtml(m.contract_type||'-')}</span></td>
         <td style="font-size:13px;word-break:keep-all">${escHtml(inspectorText(m)||'-')}</td>
@@ -6913,7 +6906,7 @@
     const m = mgmtData.find(x => x.id === id);
     if (!m) return;
     currentSiteForElevator = m;
-    document.getElementById('elevator-modal-title').textContent = '🏢 ' + siteLabel(m) + (siteHasShort(m) ? ' (' + m.site_name + ')' : '');
+    document.getElementById('elevator-modal-title').textContent = '🏢 ' + m.site_name;
     document.getElementById('elevator-modal-add-btn').style.display = currentRole === '관리자' || currentRole === '마스터' ? 'inline-block' : 'none';
 
     // 현장 상세정보 표시
@@ -7378,7 +7371,7 @@
   }
 
   async function roadLoadData(teamId, ym) {
-    const { data: sites } = await db.from('managed_sites').select('id, site_name, short_name, contract_type, site_type').eq('team_id', teamId);
+    const { data: sites } = await db.from('managed_sites').select('id, site_name, search_keywords, contract_type, site_type').eq('team_id', teamId);
     const list = (sites || []).filter(x => x.site_type !== '상실' && x.site_type !== '계산서발행용');
     const ids = list.map(x => x.id);
     const cnt = {};
@@ -7403,8 +7396,7 @@
     const rows = list.map(x => roadSiteMonth({ ...x, units: cnt[x.id] || 0 }, plans[x.id], ym, weeks));
     return { teamId, ym, weeks, holidays, rows, sub: sub || null, noYearHol: yearHol === 0 };
   }
-  // 날짜 창에서 고치는 중이면 그 값(cfg.short), 아니면 관리현장 짧은 이름
-  function roadName(r) { return ((r.cfg?.short ?? r.site.short_name) || '').trim() || r.site.site_name; }
+  function roadName(r) { return r.site.site_name; }
 
   function renderRoad() {
     const c = roadCtx, t = inspTeamById(c.teamId);
@@ -7504,7 +7496,7 @@
   function roadDayCfg(id) {
     if (roadDay.work.has(id)) return roadDay.work.get(id);
     const r = roadCtx.rows.find(x => x.site.id === id);
-    return { slots: (r.cfg?.slots || []).map(x => ({ ...x })), cycle: r.cycle, q: r.q, short: r.site.short_name || '' };
+    return { slots: (r.cfg?.slots || []).map(x => ({ ...x })), cycle: r.cycle, q: r.q };
   }
   function roadDayRows() {
     return roadCtx.rows.map(x => roadDay.work.has(x.site.id) ? roadSiteMonth(x.site, roadDay.work.get(x.site.id), roadCtx.ym, roadCtx.weeks) : x);
@@ -7525,21 +7517,20 @@
         const id = r.site.id, u = r.days.find(roadDayIsHere)?.units || 0;
         const ed = D.edit && D.edit.id === id ? D.edit.kind : null;
         let body;
-        if (ed === 'name') body = `<input id="road-day-name" value="${escHtml(roadName(r) === r.site.site_name ? '' : roadName(r))}" placeholder="${escHtml(r.site.site_name)}" onkeydown="if(event.key==='Enter')roadDaySaveName(${id})" style="flex:1;min-width:0;padding:6px 8px;border:1.5px solid #2b6cb0;border-radius:6px;background:var(--bg-high);color:var(--tx);font-size:13px;font-family:inherit">${roadBtn('확인', `roadDaySaveName(${id})`, '#3182ce', '#3182ce')}`;
-        else if (ed === 'units') body = `<span style="flex:1;font-size:13px;color:var(--tx);word-break:keep-all;overflow-wrap:anywhere">${escHtml(roadName(r))}</span><span style="font-size:12px;color:var(--tx-3)">${r.site.units}대 중</span>${roadNumInput(u, r.site.units)}${roadBtn('확인', `roadDaySaveUnits(${id})`, '#3182ce', '#3182ce')}`;
+        if (ed === 'units') body = `<span style="flex:1;font-size:13px;color:var(--tx);word-break:keep-all;overflow-wrap:anywhere">${escHtml(roadName(r))}</span><span style="font-size:12px;color:var(--tx-3)">${r.site.units}대 중</span>${roadNumInput(u, r.site.units)}${roadBtn('확인', `roadDaySaveUnits(${id})`, '#3182ce', '#3182ce')}`;
         else body = `<span style="flex:1;font-size:13px;color:var(--tx);word-break:keep-all;overflow-wrap:anywhere">${escHtml(roadName(r))}${r.days.length > 1 || r.remain ? ` <span style="font-size:11px;color:var(--tx-3)">(${r.site.units}대 중${r.days.length > 1 ? ' · ' + r.days.length + '일' : ''}${r.remain ? ' · <b style="color:#e53e3e">' + r.remain + '대 남음</b>' : ''})</span>` : ''}</span>` +
           (r.site.units > 1 ? roadBtn(u + '대 ✎', `roadDay.edit={id:${id},kind:'units'};renderRoadDay()`, 'var(--tx)') : `<b style="font-size:13px;color:var(--tx)">${u}대</b>`) +
-          (roadIsAdmin() ? roadBtn('✏️', `roadDay.edit={id:${id},kind:'name'};renderRoadDay()`) : '') + roadBtn('빼기', `roadDayRemove(${id})`, '#e53e3e', '#e53e3e');
+          roadBtn('빼기', `roadDayRemove(${id})`, '#e53e3e', '#e53e3e');
         return `<div style="display:flex;align-items:center;gap:6px;padding:7px 8px;margin-bottom:4px;border:1px solid var(--br);border-radius:8px;flex-wrap:wrap">${roadMarkHtml(r)}${body}</div>`;
       }).join('') : '<div style="font-size:12px;color:var(--tx-3);padding:6px 0">아직 잡힌 현장이 없습니다.</div>');
     renderRoadDayList();
-    setTimeout(() => { const el = document.getElementById('road-day-name') || document.getElementById('road-day-num'); if (el) { el.focus(); el.select?.(); } }, 0);
+    setTimeout(() => { const el = document.getElementById('road-day-num'); if (el) { el.focus(); el.select?.(); } }, 0);
   }
   function renderRoadDayList() {
     const D = roadDay, rows = roadDayRows();
     const q = D.q.replace(/\s+/g, '').toLowerCase();
     let cand = rows.filter(r => !roadDayOn(r) && (D.all || roadNeeds(r)));
-    if (q) cand = cand.filter(r => (r.site.site_name + roadName(r)).replace(/\s+/g, '').toLowerCase().includes(q));
+    if (q) cand = cand.filter(r => (r.site.site_name + (r.site.search_keywords || '')).replace(/\s+/g, '').toLowerCase().includes(q));
     cand.sort((a, b) => roadNeeds(b) - roadNeeds(a) || roadName(a).localeCompare(roadName(b), 'ko'));
     document.getElementById('road-day-all').innerHTML = `<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx-2);cursor:pointer"><input type="checkbox" ${D.all ? 'checked' : ''} onchange="roadDay.all=this.checked;renderRoadDayList()"> 다른 날에 잡힌 현장도 보기</label>`;
     document.getElementById('road-day-list').innerHTML = cand.length ? cand.map(r => {
@@ -7615,10 +7606,6 @@
     if (!(v >= 1 && v <= max)) { showToast(`1~${max}대 사이로 넣어 주세요.`); return; }
     roadDayPut(id, { ...cfg, slots: cfg.slots.map(x => roadDayIsHere(x) ? { w: x.w, d: x.d, u: v } : x) });
   }
-  function roadDaySaveName(id) {
-    const cfg = roadDayCfg(id);
-    roadDayPut(id, { ...cfg, short: document.getElementById('road-day-name').value.trim() });
-  }
   async function saveRoadDay() {
     const D = roadDay;
     if (!D.work.size) { closeRoadDay(); return; }
@@ -7626,18 +7613,11 @@
       site_id: id,
       slots: cfg.slots.slice().sort((a, b) => a.w - b.w || a.d - b.d).map(x => Number.isFinite(x.u) ? { w: x.w, d: x.d, u: x.u } : { w: x.w, d: x.d })
     }));
-    // 짧은 이름이 바뀐 현장 (관리자만) → 관리현장 짧은 이름에 저장
-    const names = roadIsAdmin() ? [...D.work.entries()].filter(([id, cfg]) => (cfg.short || '').trim() !== (roadCtx.rows.find(x => x.site.id === id)?.site.short_name || '').trim()) : [];
     const btn = document.getElementById('road-day-save');
     btn.disabled = true;
     const { error } = await db.from('road_site_plans').upsert(ups, { onConflict: 'site_id' });
-    let nameErr = null;
-    for (const [id, cfg] of names) {
-      const { error: e2 } = await db.from('managed_sites').update({ short_name: (cfg.short || '').trim() || null }).eq('id', id);
-      if (e2) nameErr = e2;
-    }
     btn.disabled = false;
-    if (error || nameErr) { showToast('❌ 저장하지 못했습니다: ' + (error || nameErr).message); return; }
+    if (error) { showToast('❌ 저장하지 못했습니다: ' + error.message); return; }
     closeRoadDay();
     loadRoad();
   }
@@ -7657,9 +7637,6 @@
     roadEdit = { siteId, slots: (r.cfg?.slots || []).map(s => ({ ...s })), cycle: r.cycle, q: r.q || ((+roadCtx.ym.slice(5, 7) - 1) % 3) + 1 };
     document.getElementById('road-sheet-title').textContent = r.site.site_name;
     document.getElementById('road-sheet-sub').textContent = [roadMark(r.site.contract_type), r.site.units + '대', r.cfg?.by ? '마지막 수정 ' + r.cfg.by + ' ' + roadFmt(r.cfg.at) : ''].filter(Boolean).join(' · ');
-    document.getElementById('road-sheet-short-wrap').style.display = roadIsAdmin() ? '' : 'none';
-    document.getElementById('road-sheet-short').value = r.site.short_name || '';
-    document.getElementById('road-sheet-short').placeholder = r.site.site_name;
     renderRoadSheet();
     document.getElementById('road-sheet').style.display = 'flex';
   }
@@ -7718,15 +7695,9 @@
     const units = roadCtx.rows.find(x => x.site.id === e.siteId)?.site.units || 0;
     if (e.slots.length > Math.max(1, units)) { showToast(`❌ ${units}대 현장은 ${Math.max(1, units)}일까지만 고를 수 있습니다.`); return; }
     if (e.slots.reduce((a, x) => a + (Number.isFinite(x.u) ? x.u : 0), 0) > units) { showToast(`❌ 날마다 정한 대수 합이 ${units}대를 넘습니다. 달력에서 대수를 고쳐 주세요.`); return; }
-    const short = document.getElementById('road-sheet-short').value.trim();
     const slots = e.slots.slice().sort((a, b) => a.w - b.w || a.d - b.d);
     const { error } = await db.from('road_site_plans').upsert({ site_id: e.siteId, slots, cycle: e.cycle, q_month: e.cycle === '분기' ? e.q : null }, { onConflict: 'site_id' });
     if (error) { showToast('❌ 저장하지 못했습니다: ' + error.message); return; }
-    const site = roadCtx.rows.find(x => x.site.id === e.siteId)?.site;
-    if (roadIsAdmin() && short !== (site?.short_name || '').trim()) {
-      const { error: e2 } = await db.from('managed_sites').update({ short_name: short || null }).eq('id', e.siteId);
-      if (e2) { showToast('❌ 짧은 이름을 저장하지 못했습니다: ' + e2.message); return; }
-    }
     closeRoadSheet();
     loadRoad();
   }
@@ -8157,12 +8128,13 @@
   function showAddMgmtModal() {
     editingMgmtId = null;
     document.getElementById('mgmt-modal-title').textContent = '현장 추가';
-    ['mgmt-name','mgmt-short-name','mgmt-site-type','mgmt-contract-type','mgmt-contract-date','mgmt-contract-start','mgmt-contract-end',
+    ['mgmt-name','mgmt-keywords','mgmt-site-type','mgmt-contract-type','mgmt-contract-date','mgmt-contract-start','mgmt-contract-end',
      'mgmt-site-phone','mgmt-site-phone2','mgmt-fax',
      'mgmt-manager-email','mgmt-elevator-address','mgmt-notes'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';
     });
     fillInspTeamSelect('mgmt', null);
+    document.getElementById('mgmt-name-history').style.display = 'none';
     resetEmergencyPhones();
     pendingElevators = [];
     renderElevatorRows();
@@ -8177,7 +8149,8 @@
     editingMgmtId = id;
     document.getElementById('mgmt-modal-title').textContent = '현장 수정';
     document.getElementById('mgmt-name').value = m.site_name || '';
-    document.getElementById('mgmt-short-name').value = m.short_name || '';
+    document.getElementById('mgmt-keywords').value = m.search_keywords || '';
+    loadSiteNameHistory(id);
     document.getElementById('mgmt-site-type').value = m.site_type || '';
     document.getElementById('mgmt-contract-type').value = m.contract_type || '';
     document.getElementById('mgmt-contract-date').value = m.contract_date || '';
@@ -8202,6 +8175,23 @@
     renderElevatorRows();
   }
 
+  // 관리현장 수정 창 맨 아래: 이 현장 이름 변경 이력
+  async function loadSiteNameHistory(id) {
+    const box = document.getElementById('mgmt-name-history');
+    box.style.display = 'none';
+    const { data } = await db.from('site_name_changes').select('old_name, new_name, counts, changed_by, changed_at').eq('site_id', id).order('changed_at', { ascending: false });
+    if (editingMgmtId !== id || !data || !data.length) return;
+    box.innerHTML = `<div style="margin-top:8px;padding-top:14px;border-top:2px solid #e2e8f0;font-size:13px;font-weight:700;color:#1a365d;margin-bottom:8px">📝 이름 변경 이력</div>` +
+      data.map(h => {
+        const detail = Object.entries(h.counts || {}).map(([k, v]) => k + ' ' + v).join(' · ');
+        return `<div style="font-size:12px;color:#4a5568;line-height:1.6;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;word-break:break-all">
+          <div style="color:#718096">${new Date(h.changed_at).toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })} · ${escHtml(h.changed_by || '')}</div>
+          <div>${escHtml(h.old_name)} → <b>${escHtml(h.new_name)}</b></div>
+          <div style="color:#718096">같이 바뀐 기록: ${detail ? escHtml(detail) : '없음'}</div></div>`;
+      }).join('');
+    box.style.display = '';
+  }
+
   async function mgmtConfirm() {
     const errEl = document.getElementById('mgmt-error');
     if (errEl) errEl.style.display = 'none';
@@ -8214,7 +8204,7 @@
 
     const payload = {
       site_name:         name,
-      short_name:        document.getElementById('mgmt-short-name').value.trim() || null,
+      search_keywords:   document.getElementById('mgmt-keywords').value.trim() || null,
       site_type:         document.getElementById('mgmt-site-type').value || null,
       contract_type:     ctype || null,
       contract_date:     document.getElementById('mgmt-contract-date').value || null,
@@ -8232,6 +8222,18 @@
 
     let siteId = editingMgmtId;
     if (editingMgmtId) {
+      const old = mgmtData.find(x => x.id === editingMgmtId);
+      if (old && (old.site_name || '').trim() !== name) {
+        // 현장명 변경: 고장 접수·다켓·전화기록·자재(견적·발주 등) 기록도 같은 이름으로 같이 바꾸고 이력 남김
+        const { data: pre, error: e1 } = await db.rpc('rename_site', { p_site_id: editingMgmtId, p_new_name: name, p_dry_run: true });
+        if (e1) { errEl.textContent = '현장명 변경 실패: ' + e1.message; errEl.style.display = 'block'; return; }
+        const detail = Object.entries(pre.counts || {}).map(([k, v]) => k + ' ' + v).join(' · ');
+        if (!confirm(`현장명을 바꿉니다.\n\n${old.site_name}\n→ ${name}\n\n` +
+          (pre.total ? `관련 기록 ${pre.total}건도 새 이름으로 바뀝니다.\n(${detail})` : '같이 바뀔 관련 기록은 없습니다.') + '\n\n진행할까요?')) return;
+        const { error: e2 } = await db.rpc('rename_site', { p_site_id: editingMgmtId, p_new_name: name });
+        if (e2) { errEl.textContent = '현장명 변경 실패: ' + e2.message; errEl.style.display = 'block'; return; }
+      }
+      delete payload.site_name;
       const { error } = await db.from('managed_sites').update(payload).eq('id', editingMgmtId);
       if (error) { errEl.textContent='저장 실패: ' + error.message; errEl.style.display='block'; return; }
     } else {
@@ -8567,11 +8569,17 @@
   }
 
   /* ── AUTOCOMPLETE ── */
-  let SITES = [];  // [{ name, address }, ...]
+  let SITES = [];  // [{ name, address, keywords }, ...]
 
   async function loadSiteNames() {
-    const { data } = await db.from('managed_sites').select('site_name, elevator_address').order('site_name');
-    SITES = data ? data.filter(m => m.site_name).map(m => ({ name: m.site_name, address: m.elevator_address || '' })) : [];
+    const { data } = await db.from('managed_sites').select('site_name, elevator_address, search_keywords').order('site_name');
+    SITES = data ? data.filter(m => m.site_name).map(m => ({ name: m.site_name, address: m.elevator_address || '', keywords: m.search_keywords || '' })) : [];
+  }
+  // 현장 검색: 현장명·검색 키워드 (띄어쓰기 무시)
+  function siteNameMatch(s, q) {
+    const noSp = t => (t || '').toLowerCase().replace(/\s+/g, '');
+    const qq = noSp(q);
+    return noSp(s.name).includes(qq) || noSp(s.keywords).includes(qq);
   }
 
 
@@ -8587,14 +8595,15 @@
   function acItemHTML(s, i, q) {
     const nameHTML = acHighlight(s.name, q);
     const addrHTML = s.address ? `<div style="font-size:11px;color:var(--tx-4);margin-top:2px">${acHighlight(s.address, q)}</div>` : '';
-    return `<div class="ac-item" data-i="${i}" onmousedown="acPick(${i})">${nameHTML}${addrHTML}</div>`;
+    const kwHTML = q && s.keywords && !s.name.toLowerCase().includes(q) && siteNameMatch({ keywords: s.keywords }, q) ? `<div style="font-size:11px;color:var(--tx-4);margin-top:2px">🔑 ${acHighlight(s.keywords, q)}</div>` : '';
+    return `<div class="ac-item" data-i="${i}" onmousedown="acPick(${i})">${nameHTML}${kwHTML}${addrHTML}</div>`;
   }
 
   async function acInput(inp) {
     if (SITES.length === 0) await loadSiteNames();
     const q = inp.value.trim().toLowerCase(), dd = document.getElementById('ac-dropdown');
     if (!q) { dd.style.display='none'; acMatches=[]; resetElevatorInput(); inp.style.borderColor=''; return; }
-    acMatches = SITES.filter(s => s.name.toLowerCase().includes(q) || (s.address && s.address.toLowerCase().includes(q)));
+    acMatches = SITES.filter(s => siteNameMatch(s, q) || (s.address && s.address.toLowerCase().includes(q)));
     if (!acMatches.length) {
       dd.style.display='none';
       inp.style.borderColor = '#e53e3e';
@@ -8670,7 +8679,7 @@
   function acInputSite(inp){
     const q=inp.value.trim().toLowerCase(),dd=document.getElementById('ac-site-dd');
     if(!q){dd.style.display='none';acSiteMatches=[];return;}
-    acSiteMatches=SITES.filter(s=>s.name.toLowerCase().includes(q));
+    acSiteMatches=SITES.filter(s=>siteNameMatch(s,q));
     if(!acSiteMatches.length){dd.style.display='none';return;}
     dd.innerHTML=acSiteMatches.map((s,i)=>{const nm=s.name,sl=nm.toLowerCase(),idx=sl.indexOf(q);return`<div class="ac-item" data-i="${i}" onmousedown="acPickSite(${i})">${escHtml(nm.slice(0,idx))}<mark>${escHtml(nm.slice(idx,idx+q.length))}</mark>${escHtml(nm.slice(idx+q.length))}</div>`;}).join('')+`<div class="ac-count">총 ${acSiteMatches.length}건</div>`;
     dd.style.display='block';
