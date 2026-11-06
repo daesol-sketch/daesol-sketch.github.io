@@ -3501,7 +3501,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.06-1';
+  const APP_VERSION = '2026.11.06-2';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -6063,7 +6063,7 @@
     if(!q){dd.style.display='none';acEditSiteMatches=[];return;}
     acEditSiteMatches=SITES.filter(s=>siteNameMatch(s,q));
     if(!acEditSiteMatches.length){dd.style.display='none';return;}
-    dd.innerHTML=acEditSiteMatches.map((s,i)=>{const nm=s.name,sl=nm.toLowerCase(),idx=sl.indexOf(q);return`<div class="ac-item" data-i="${i}" onmousedown="acPickEditSite(${i})">${escHtml(nm.slice(0,idx))}<mark>${escHtml(nm.slice(idx,idx+q.length))}</mark>${escHtml(nm.slice(idx+q.length))}</div>`;}).join('')+`<div class="ac-count">총 ${acEditSiteMatches.length}건</div>`;
+    dd.innerHTML=acEditSiteMatches.map((s,i)=>`<div class="ac-item" data-i="${i}" onmousedown="acPickEditSite(${i})">${acHighlight(s.name,q)}</div>`).join('')+`<div class="ac-count">총 ${acEditSiteMatches.length}건</div>`;
     dd.style.display='block';
   }
   function acToggleAllEditSite() {
@@ -8569,11 +8569,23 @@
   }
 
   /* ── AUTOCOMPLETE ── */
-  let SITES = [];  // [{ name, address, keywords }, ...]
+  let SITES = [];  // [{ name, address, keywords, elevs: [{ no, unit }] }, ...]
 
   async function loadSiteNames() {
-    const { data } = await db.from('managed_sites').select('site_name, elevator_address, search_keywords').order('site_name');
-    SITES = data ? data.filter(m => m.site_name).map(m => ({ name: m.site_name, address: m.elevator_address || '', keywords: m.search_keywords || '' })) : [];
+    const { data } = await db.from('managed_sites').select('id, site_name, elevator_address, search_keywords').order('site_name');
+    const elevs = {};
+    for (let from = 0; ; from += 1000) {
+      const { data: batch } = await db.from('site_elevators').select('site_id, elevator_number, unit_name').not('elevator_number', 'is', null).range(from, from + 999);
+      (batch || []).forEach(e => (elevs[e.site_id] = elevs[e.site_id] || []).push({ no: e.elevator_number, unit: e.unit_name || '' }));
+      if (!batch || batch.length < 1000) break;
+    }
+    SITES = data ? data.filter(m => m.site_name).map(m => ({ name: m.site_name, address: m.elevator_address || '', keywords: m.search_keywords || '', elevs: elevs[m.id] || [] })) : [];
+  }
+  // 승강기번호로 찾기 ('-'·띄어쓰기 무시, 숫자 4자리 이상 칠 때만)
+  function siteElevMatch(s, q) {
+    const qq = (q || '').replace(/[\s-]/g, '');
+    if (!/\d{4}/.test(qq)) return null;
+    return (s.elevs || []).find(e => e.no.replace(/[\s-]/g, '').includes(qq)) || null;
   }
   // 현장 검색: 현장명·검색 키워드 (띄어쓰기 무시)
   function siteNameMatch(s, q) {
@@ -8595,15 +8607,20 @@
   function acItemHTML(s, i, q) {
     const nameHTML = acHighlight(s.name, q);
     const addrHTML = s.address ? `<div style="font-size:11px;color:var(--tx-4);margin-top:2px">${acHighlight(s.address, q)}</div>` : '';
+    const elHTML = s.hitElev ? `<div style="font-size:11px;color:var(--tx-4);margin-top:2px">🛗 ${escHtml(s.hitElev.no)}${s.hitElev.unit ? ' (' + escHtml(s.hitElev.unit) + ')' : ''}</div>` : '';
     const kwHTML = q && s.keywords && !s.name.toLowerCase().includes(q) && siteNameMatch({ keywords: s.keywords }, q) ? `<div style="font-size:11px;color:var(--tx-4);margin-top:2px">🔑 ${acHighlight(s.keywords, q)}</div>` : '';
-    return `<div class="ac-item" data-i="${i}" onmousedown="acPick(${i})">${nameHTML}${kwHTML}${addrHTML}</div>`;
+    return `<div class="ac-item" data-i="${i}" onmousedown="acPick(${i})">${nameHTML}${elHTML}${kwHTML}${addrHTML}</div>`;
   }
 
   async function acInput(inp) {
     if (SITES.length === 0) await loadSiteNames();
     const q = inp.value.trim().toLowerCase(), dd = document.getElementById('ac-dropdown');
     if (!q) { dd.style.display='none'; acMatches=[]; resetElevatorInput(); inp.style.borderColor=''; return; }
-    acMatches = SITES.filter(s => siteNameMatch(s, q) || (s.address && s.address.toLowerCase().includes(q)));
+    acMatches = SITES.map(s => {
+      if (siteNameMatch(s, q) || (s.address && s.address.toLowerCase().includes(q))) return s;
+      const hitElev = siteElevMatch(s, q);
+      return hitElev ? { ...s, hitElev } : null;
+    }).filter(Boolean);
     if (!acMatches.length) {
       dd.style.display='none';
       inp.style.borderColor = '#e53e3e';
@@ -8629,7 +8646,7 @@
     inp.style.borderColor = '';
     document.getElementById('ac-dropdown').style.display = 'none';
     acMatches = [];
-    loadElevatorsForSite(name);
+    loadElevatorsForSite(name, item.hitElev?.no);
   }
   function acClose(){document.getElementById('ac-dropdown').style.display='none';}
 
@@ -8638,7 +8655,7 @@
     if (wrap) wrap.innerHTML = '<input type="text" id="f-elevator" placeholder="예: 1호기, B동 2호기" required />';
   }
 
-  async function loadElevatorsForSite(siteName) {
+  async function loadElevatorsForSite(siteName, pickNo) {
     const wrap = document.getElementById('f-elevator-wrap');
     if (!wrap) return;
     wrap.innerHTML = '<input type="text" id="f-elevator" placeholder="불러오는 중..." disabled style="color:#a0aec0" />';
@@ -8658,6 +8675,11 @@
       <option value="" data-regno="">-- 호기 선택 --</option>
       ${elevData.map(e => { const place = e.installation_place ? ' - ' + e.installation_place : ''; const fullName = e.unit_name + place; return `<option value="${escHtml(fullName)}" data-regno="${escHtml(e.elevator_number||'')}">${escHtml(fullName)}${e.elevator_number ? ' (' + escHtml(e.elevator_number) + ')' : ''}${e.elevator_model ? ' ' + escHtml(e.elevator_model) : ''}</option>`; }).join('')}
     </select>`;
+    if (pickNo) {   // 승강기번호로 찾았으면 그 호기 선택
+      const sel = document.getElementById('f-elevator');
+      const i = [...sel.options].findIndex(o => o.dataset.regno === pickNo);
+      if (i > 0) { sel.selectedIndex = i; fillRegno(sel); }
+    }
   }
 
   function fillRegno(select) {
@@ -8681,7 +8703,7 @@
     if(!q){dd.style.display='none';acSiteMatches=[];return;}
     acSiteMatches=SITES.filter(s=>siteNameMatch(s,q));
     if(!acSiteMatches.length){dd.style.display='none';return;}
-    dd.innerHTML=acSiteMatches.map((s,i)=>{const nm=s.name,sl=nm.toLowerCase(),idx=sl.indexOf(q);return`<div class="ac-item" data-i="${i}" onmousedown="acPickSite(${i})">${escHtml(nm.slice(0,idx))}<mark>${escHtml(nm.slice(idx,idx+q.length))}</mark>${escHtml(nm.slice(idx+q.length))}</div>`;}).join('')+`<div class="ac-count">총 ${acSiteMatches.length}건</div>`;
+    dd.innerHTML=acSiteMatches.map((s,i)=>`<div class="ac-item" data-i="${i}" onmousedown="acPickSite(${i})">${acHighlight(s.name,q)}</div>`).join('')+`<div class="ac-count">총 ${acSiteMatches.length}건</div>`;
     dd.style.display='block';
   }
   function acToggleAllSite(){

@@ -17,3 +17,7 @@ create trigger check_site_short_name before insert or update of short_name on ma
 
 -- 되돌리기:
 -- drop trigger if exists check_site_short_name on managed_sites; drop function if exists protect_site_short_name(); alter table managed_sites drop column if exists short_name;
+
+-- 11/6: 짧은 이름 기능 거둠 (현장명 짧게 + 검색 키워드 방식으로, site_rename.sql). 배포(a2ef7cb) 후 실행
+-- drop trigger if exists check_site_short_name on managed_sites; drop function if exists protect_site_short_name();
+-- alter table managed_sites drop column if exists short_name; alter table road_site_plans drop column if exists short_name;
