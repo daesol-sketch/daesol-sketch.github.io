@@ -3503,7 +3503,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.09-2';
+  const APP_VERSION = '2026.11.09-3';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -7483,10 +7483,10 @@
       const items = roadCellItems(c, date);
       items.forEach(i => { total += i.units; });
       const hol = c.holidays[date];
-      return `<td ${editable ? `onclick="openRoadDay('${date}')"` : ''} style="padding:3px 3px 5px;border:1px solid var(--br);vertical-align:top;font-size:10.5px;line-height:1.45;${editable ? 'cursor:pointer;' : ''}${hol ? 'background:rgba(229,62,62,.18)' : ''}">
+      return `<td ${editable ? `onclick="openRoadDay('${date}')"` : ''} style="position:relative;padding:3px 3px ${items.length ? 24 : 5}px;border:1px solid var(--br);vertical-align:top;font-size:10.5px;line-height:1.45;${editable ? 'cursor:pointer;' : ''}${hol ? 'background:rgba(229,62,62,.18)' : ''}">
         <div style="font-size:14px;font-weight:800;margin-bottom:2px;${hol ? 'background:#e53e3e;color:white;border-radius:4px;padding:0 5px;display:inline-block' : 'color:var(--tx)'}">${+date.slice(8)}${hol ? ' <span style="font-size:11px">' + escHtml(hol) + '</span>' : ''}</div>
         ${items.map(i => `<div style="color:${i.off ? 'var(--tx-4)' : 'var(--tx)'};word-break:keep-all;overflow-wrap:anywhere"><span style="color:${i.off ? 'var(--tx-4)' : i.mark.startsWith('T') ? '#3182ce' : '#38a169'};font-weight:700">${escHtml(i.mark.slice(0, 1))}</span> ${escHtml(i.name)} <b style="font-size:12px;font-weight:900;color:${i.off ? 'var(--tx-4)' : '#dd6b20'}">${i.units}</b></div>`).join('')}
-        ${items.length ? `<div style="margin-top:3px;padding-top:2px;border-top:1px dashed var(--br-mid);text-align:right;font-size:11.5px;font-weight:800;color:var(--tx)">합계 ${items.reduce((a, i) => a + i.units, 0)}대</div>` : ''}
+        ${items.length ? `<div style="position:absolute;left:3px;right:3px;bottom:3px;padding-top:2px;border-top:1px dashed var(--br-mid);text-align:right;font-size:11.5px;font-weight:800;color:var(--tx)">합계 ${items.reduce((a, i) => a + i.units, 0)}대</div>` : ''}
         ${editable && !items.length ? '<div style="color:var(--tx-5);font-size:16px;text-align:center;padding:6px 0">+</div>' : ''}
       </td>`;
     }).join('') + '</tr>').join('');
