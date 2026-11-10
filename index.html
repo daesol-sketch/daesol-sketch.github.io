@@ -3503,7 +3503,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.09-4';
+  const APP_VERSION = '2026.11.10-1';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -6343,9 +6343,10 @@
     renderElevatorRows();
   }
 
-  async function loadMgmt() {
+  async function loadMgmt(keepScroll) {
     const el = document.getElementById('mgmt-list');
-    el.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
+    const y = window.scrollY;   // 수정·삭제 후엔 보던 자리 그대로 (목록 안 비우고 다시 그림)
+    if (!keepScroll) el.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
     const { data, error } = await db.from('managed_sites').select('*').order('site_name');
     if (error || !data) { el.innerHTML = '<div class="loading-state">불러오기 실패</div>'; return; }
     // accounts 팀 정보 로드
@@ -6405,6 +6406,7 @@
       }
     }
     renderMgmtList();
+    if (keepScroll) window.scrollTo(0, y);
   }
 
   /* ── 점검조 (inspection_teams) ── */
@@ -6694,7 +6696,7 @@
     }
     showToast(`✅ ${ok}개 현장 계약이 ${years}년 연장되었습니다.`);
     selectedMgmtIds.clear();
-    loadMgmt();
+    loadMgmt(true);
   }
 
   function toggleMgmtFilterDropdown(e) {
@@ -6940,6 +6942,7 @@
         } else {
           val = v ? escHtml(String(v)) : '<span style="color:#cbd5e0">-</span>';
         }
+        if (k === '🔑 검색 키워드') return `<div style="font-size:16px;${extra}"><span style="color:#718096;font-weight:700;font-size:13px">${k}</span><br><span style="color:#1a202c;font-weight:700">${val}</span></div>`;
         return `<div style="font-size:14px${extra ? ';' + extra : ''}"><span style="color:#718096;font-weight:700;font-size:12px">${k}</span><br><span style="color:#1a202c;font-weight:500">${val}</span></div>`;
       }).join('')}${epHtml}</div>`;
 
@@ -8370,7 +8373,7 @@
 
     closeModal('mgmt-modal');
     showToast(editingMgmtId ? '✅ 현장이 수정되었습니다.' : '✅ 현장이 추가되었습니다.');
-    loadMgmt();
+    loadMgmt(!!editingMgmtId);
     loadSiteNames();
   }
 
@@ -8404,14 +8407,14 @@
     if (error) { errEl.textContent = '저장 실패: ' + error.message; errEl.style.display = 'block'; return; }
     closeModal('notes-modal');
     showToast('✅ 저장되었습니다.');
-    await loadMgmt();
+    await loadMgmt(true);
   }
 
   async function deleteMgmt(id, name) {
     if (!confirm(`"${name}" 현장을 삭제하시겠습니까?`)) return;
     const { error } = await db.from('managed_sites').delete().eq('id', id);
     if (error) { showToast('❌ 삭제 실패'); return; }
-    showToast('🗑 현장이 삭제되었습니다.'); loadMgmt(); loadSiteNames();
+    showToast('🗑 현장이 삭제되었습니다.'); loadMgmt(true); loadSiteNames();
   }
 
   /* ── EXCEL ── */
