@@ -1114,6 +1114,7 @@
             <div class="mgmt-fopt" id="mgmt-opt-free" data-val="free" onclick="selectMgmtFilter('free')">🆓 무상</div>
             <div class="mgmt-fopt" id="mgmt-opt-lost" data-val="lost" onclick="selectMgmtFilter('lost')">❌ 상실</div>
             <div class="mgmt-fopt" id="mgmt-opt-billing" data-val="billing" onclick="selectMgmtFilter('billing')">🧾 계산서발행용</div>
+            <div class="mgmt-fopt" id="mgmt-opt-support" data-val="support" onclick="selectMgmtFilter('support')">🔧 고장지원</div>
           </div>
         </div>
         <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -2108,7 +2109,7 @@
         <li>검색창에 <strong>현장명 · 점검자 · 승강기번호 · 전화번호 · 주소</strong> 중 아무거나 입력</li>
         <li><strong>띄어쓰기는 신경 쓰지 않아도 됩니다.</strong> (예: "삼송로138" → 삼송로 138-1)</li>
         <li>전화번호·승강기번호는 <strong>"-" 없이</strong> 입력해도 찾아집니다.</li>
-        <li>위쪽 필터로 보기 범위를 바꿀 수 있습니다: <strong>✅ 보수현장(기본)</strong> / 전체 / ⚠️ 계약만료 / 🔍 검사만료 / 🏗️ 하자 / 🆓 무상 / ❌ 상실 / 🧾 계산서발행용, 그리고 <strong>팀별 · 조별</strong> 보기</li>
+        <li>위쪽 필터로 보기 범위를 바꿀 수 있습니다: <strong>✅ 보수현장(기본)</strong> / 전체 / ⚠️ 계약만료 / 🔍 검사만료 / 🏗️ 하자 / 🆓 무상 / ❌ 상실 / 🧾 계산서발행용 / 🔧 고장지원(점검은 안 하고 고장만 처리 — 보수현장·로드표에서 빠지고 고장 접수에는 나옴), 그리고 <strong>팀별 · 조별</strong> 보기</li>
       </ul>
       <div class="mn-tip">검사만료가 <strong>30일 이내</strong>인 현장은 주황색, <strong>이미 만료</strong>된 현장은 빨간색으로 표시됩니다.</div>
     </div>
@@ -2740,6 +2741,7 @@
           <option value="무상">무상</option>
           <option value="상실">상실</option>
           <option value="계산서발행용">계산서발행용</option>
+          <option value="고장지원">고장지원 (점검 안 하고 고장만)</option>
         </select>
       </div>
       <div>
@@ -3503,7 +3505,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.10-2';
+  const APP_VERSION = '2026.11.11-1';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -5229,7 +5231,7 @@
     try {
       const building = document.getElementById('f-building').value.trim();
       if (SITES.length === 0) await loadSiteNames();
-      if (!SITES.some(s => s.name === building)) {
+      if (!acSites().some(s => s.name === building)) {
         document.getElementById('f-building').style.borderColor = '#e53e3e';
         showToast('⚠️ 등록되지 않은 현장명입니다. 목록에서 선택해 주세요.');
         btn.disabled = false; btn.textContent = '✅ 신고 접수하기';
@@ -6715,7 +6717,7 @@
     if (arrow) arrow.style.transform = '';
   });
 
-  const MGMT_FILTER_LABELS = { active: '✅ 보수현장(TK+대솔)', all: '전체', daesol: '🔵 대솔', tk: '🟣 TK', dpog: '🔹 대솔POG', tkpog: '🔸 TK-POG(3종)', expire: '⚠️ 계약만료', insp_expire: '🔍 검사만료', defect: '🏗️ 하자', free: '🆓 무상', lost: '❌ 상실', billing: '🧾 계산서발행용' };
+  const MGMT_FILTER_LABELS = { active: '✅ 보수현장(TK+대솔)', all: '전체', daesol: '🔵 대솔', tk: '🟣 TK', dpog: '🔹 대솔POG', tkpog: '🔸 TK-POG(3종)', expire: '⚠️ 계약만료', insp_expire: '🔍 검사만료', defect: '🏗️ 하자', free: '🆓 무상', lost: '❌ 상실', billing: '🧾 계산서발행용', support: '🔧 고장지원' };
 
   function selectMgmtFilter(type) {
     document.getElementById('mgmt-filter-menu').style.display = 'none';
@@ -6803,7 +6805,7 @@
     }
 
     if (mgmtFilter === 'active') {
-      list = list.filter(m => m.site_type !== '상실' && m.site_type !== '계산서발행용');
+      list = list.filter(m => m.site_type !== '상실' && m.site_type !== '계산서발행용' && m.site_type !== '고장지원');
     }
     if (mgmtFilter === 'expire') {
       list = list.filter(m => isAlreadyExpired(m.contract_end) || isExpireThisMonth(m.contract_end));
@@ -6822,6 +6824,9 @@
     }
     if (mgmtFilter === 'billing') {
       list = list.filter(m => m.site_type === '계산서발행용');
+    }
+    if (mgmtFilter === 'support') {
+      list = list.filter(m => m.site_type === '고장지원');
     }
     if (MGMT_CONTRACT_GROUPS[mgmtFilter]) {
       list = list.filter(m => mgmtContractMatch(m, mgmtFilter));
@@ -6845,12 +6850,15 @@
     const lostCount = mgmtData.filter(m => m.site_type === '상실').length;
     const optLost = document.getElementById('mgmt-opt-lost');
     if (optLost) optLost.innerHTML = `❌ 상실${lostCount > 0 ? ` <span class="fopt-badge">${lostCount}</span>` : ''}`;
-    const activeCount = mgmtData.filter(m => m.site_type !== '상실' && m.site_type !== '계산서발행용').length;
+    const activeCount = mgmtData.filter(m => m.site_type !== '상실' && m.site_type !== '계산서발행용' && m.site_type !== '고장지원').length;
     const optActive = document.getElementById('mgmt-opt-active');
     if (optActive) optActive.innerHTML = `✅ 보수현장(TK+대솔)${activeCount > 0 ? ` <span class="fopt-badge">${activeCount}</span>` : ''}`;
     const billingCount = mgmtData.filter(m => m.site_type === '계산서발행용').length;
     const optBilling = document.getElementById('mgmt-opt-billing');
     if (optBilling) optBilling.innerHTML = `🧾 계산서발행용${billingCount > 0 ? ` <span class="fopt-badge">${billingCount}</span>` : ''}`;
+    const supportCount = mgmtData.filter(m => m.site_type === '고장지원').length;
+    const optSupport = document.getElementById('mgmt-opt-support');
+    if (optSupport) optSupport.innerHTML = `🔧 고장지원${supportCount > 0 ? ` <span class="fopt-badge">${supportCount}</span>` : ''}`;
 
 
     // 필터 적용 후 현장수 / 대수 표시
@@ -6888,7 +6896,7 @@
         return `<tr style="cursor:pointer" onclick="showMgmtDetail(${m.id})">
         ${showCheck ? `<td onclick="event.stopPropagation()" style="text-align:center"><input type="checkbox" class="mgmt-row-check" data-id="${m.id}" onchange="handleMgmtCheck(${m.id},this.checked)" ${selectedMgmtIds.has(m.id)?'checked':''} /></td>` : ''}
         <td>${i+1}</td>
-        <td><strong style="${m.site_type==='상실'?'color:#e53e3e':''}">${escHtml(m.site_name||'')}</strong>${m.site_type==='상실'?` <span style="background:#fed7d7;color:#c53030;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">상실</span>`:''}${m.site_type==='무상'?` <span style="background:#c6f6d5;color:#276749;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">무상</span>`:''}${m.defect_count > 0 ? ` <span style="background:#fefcbf;color:#744210;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">하자 ${m.defect_count}대</span>` : ''}</td>
+        <td><strong style="${m.site_type==='상실'?'color:#e53e3e':''}">${escHtml(m.site_name||'')}</strong>${m.site_type==='상실'?` <span style="background:#fed7d7;color:#c53030;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">상실</span>`:''}${m.site_type==='무상'?` <span style="background:#c6f6d5;color:#276749;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">무상</span>`:''}${m.site_type==='고장지원'?` <span style="background:#feebc8;color:#9c4221;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">고장지원</span>`:''}${m.defect_count > 0 ? ` <span style="background:#fefcbf;color:#744210;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">하자 ${m.defect_count}대</span>` : ''}</td>
         <td style="text-align:center">${m.elev_count > 0 ? `<span style="background:#f0fff4;color:#276749;border:1px solid #9ae6b4;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:700">${m.elev_count}대</span>` : '<span style="color:#a0aec0;font-size:12px">-</span>'}</td>
         <td><span style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;border-radius:12px;padding:2px 8px;font-size:11px;white-space:nowrap">${escHtml(m.contract_type||'-')}</span></td>
         <td style="font-size:13px;word-break:keep-all">${escHtml(inspectorText(m)||'-')}</td>
@@ -7397,7 +7405,7 @@
 
   async function roadLoadData(teamId, ym) {
     const { data: sites } = await db.from('managed_sites').select('id, site_name, search_keywords, elevator_address, contract_type, site_type').eq('team_id', teamId);
-    const list = (sites || []).filter(x => x.site_type !== '상실' && x.site_type !== '계산서발행용');
+    const list = (sites || []).filter(x => x.site_type !== '상실' && x.site_type !== '계산서발행용' && x.site_type !== '고장지원');   // 고장지원 = 점검 안 하는 현장
     const ids = list.map(x => x.id);
     const cnt = {};
     for (let i = 0; i < ids.length; i += 200) {
@@ -8670,17 +8678,18 @@
   }
 
   /* ── AUTOCOMPLETE ── */
-  let SITES = [];  // [{ name, address, keywords, elevs: [{ no, unit }] }, ...]
+  let SITES = [];  // [{ name, address, keywords, type(현장유형), elevs: [{ no, unit }] }, ...]
+  const acSites = () => SITES.filter(s => s.type !== '상실');   // 고장 접수엔 상실 현장 안 보임
 
   async function loadSiteNames() {
-    const { data } = await db.from('managed_sites').select('id, site_name, elevator_address, search_keywords').order('site_name');
+    const { data } = await db.from('managed_sites').select('id, site_name, elevator_address, search_keywords, site_type').order('site_name');
     const elevs = {};
     for (let from = 0; ; from += 1000) {
       const { data: batch } = await db.from('site_elevators').select('site_id, elevator_number, unit_name').not('elevator_number', 'is', null).range(from, from + 999);
       (batch || []).forEach(e => (elevs[e.site_id] = elevs[e.site_id] || []).push({ no: e.elevator_number, unit: e.unit_name || '' }));
       if (!batch || batch.length < 1000) break;
     }
-    SITES = data ? data.filter(m => m.site_name).map(m => ({ name: m.site_name, address: m.elevator_address || '', keywords: m.search_keywords || '', elevs: elevs[m.id] || [] })) : [];
+    SITES = data ? data.filter(m => m.site_name).map(m => ({ name: m.site_name, address: m.elevator_address || '', keywords: m.search_keywords || '', type: m.site_type || '', elevs: elevs[m.id] || [] })) : [];
   }
   // 승강기번호로 찾기 ('-'·띄어쓰기 무시, 숫자 4자리 이상 칠 때만)
   function siteElevMatch(s, q) {
@@ -8717,7 +8726,7 @@
     if (SITES.length === 0) await loadSiteNames();
     const q = inp.value.trim().toLowerCase(), dd = document.getElementById('ac-dropdown');
     if (!q) { dd.style.display='none'; acMatches=[]; resetElevatorInput(); inp.style.borderColor=''; return; }
-    acMatches = SITES.map(s => {
+    acMatches = acSites().map(s => {
       if (siteNameMatch(s, q) || (s.address && s.address.toLowerCase().includes(q))) return s;
       const hitElev = siteElevMatch(s, q);
       return hitElev ? { ...s, hitElev } : null;
@@ -8735,8 +8744,8 @@
     if (SITES.length === 0) await loadSiteNames();
     const dd=document.getElementById('ac-dropdown');
     if (dd.style.display!=='none'){dd.style.display='none';return;}
-    acMatches=[...SITES];
-    dd.innerHTML = acMatches.map((s,i) => acItemHTML(s, i, '')).join('') + `<div class="ac-count">전체 ${SITES.length}건</div>`;
+    acMatches=acSites();
+    dd.innerHTML = acMatches.map((s,i) => acItemHTML(s, i, '')).join('') + `<div class="ac-count">전체 ${acMatches.length}건</div>`;
     dd.style.display='block'; document.getElementById('f-building').focus();
   }
   function acPick(i){
