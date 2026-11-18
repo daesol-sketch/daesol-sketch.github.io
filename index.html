@@ -3505,7 +3505,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.11-1';
+  const APP_VERSION = '2026.11.19-1';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -7369,15 +7369,22 @@
   }
   function roadCycleText(r) { return r.cycle === '분기' ? '분기(' + ROAD_Q[r.q] + ')' : ''; }
 
+  // 로드표에 들어가는 현장 (상실·계산서발행용·고장지원(점검 안 함) 빼고)
+  const roadSiteOk = x => x.site_type !== '상실' && x.site_type !== '계산서발행용' && x.site_type !== '고장지원';
   async function loadRoad() {
     if (!inspTeams.length) await loadInspTeams();
     if (!roadYm) roadYm = roadDefaultYm();
-    const teams = roadIsAdmin() ? inspTeams : inspTeams.filter(roadIsMember);
+    // 상주 조, 로드표에 들어갈 현장이 하나도 없는 조는 안 보임
+    const { data: tsites } = await db.from('managed_sites').select('team_id, site_type').not('team_id', 'is', null);
+    const hasSite = new Set((tsites || []).filter(roadSiteOk).map(x => x.team_id));
+    const teams = (roadIsAdmin() ? inspTeams : inspTeams.filter(roadIsMember)).filter(t => t.team !== '상주' && hasSite.has(t.id));
     const sel = document.getElementById('road-team');
     document.getElementById('road-ym-label').textContent = roadYmLabel(roadYm);
     if (!teams.length) {
       sel.style.display = 'none';
-      document.getElementById('road-body').innerHTML = '<div class="empty-state"><div class="icon">📆</div>소속된 점검조가 없습니다.<br>관리현장 → 👥 점검조에서 조원으로 등록되어 있어야 합니다.</div>';
+      document.getElementById('road-body').innerHTML = !roadIsAdmin() && inspTeams.some(roadIsMember)
+        ? '<div class="empty-state"><div class="icon">📆</div>로드표를 쓰지 않는 조입니다.<br>(상주 조이거나 점검 현장이 없는 조)</div>'
+        : '<div class="empty-state"><div class="icon">📆</div>소속된 점검조가 없습니다.<br>관리현장 → 👥 점검조에서 조원으로 등록되어 있어야 합니다.</div>';
       document.getElementById('road-actions').style.display = 'none';
       return;
     }
@@ -7405,7 +7412,7 @@
 
   async function roadLoadData(teamId, ym) {
     const { data: sites } = await db.from('managed_sites').select('id, site_name, search_keywords, elevator_address, contract_type, site_type').eq('team_id', teamId);
-    const list = (sites || []).filter(x => x.site_type !== '상실' && x.site_type !== '계산서발행용' && x.site_type !== '고장지원');   // 고장지원 = 점검 안 하는 현장
+    const list = (sites || []).filter(roadSiteOk);
     const ids = list.map(x => x.id);
     const cnt = {};
     for (let i = 0; i < ids.length; i += 200) {
