@@ -3505,7 +3505,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.25-1';
+  const APP_VERSION = '2026.11.25-2';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -7435,7 +7435,56 @@
     const weeks = roadWeeks(ym), wd = roadWorkdays(weeks, holidays);
     Object.values(plans).forEach(pl => { pl.slots = pl.slots.map(x => roadSlotIn(x, weeks, wd)); });
     const rows = list.map(x => roadSiteMonth({ ...x, units: cnt[x.id] || 0 }, plans[x.id], ym, weeks));
-    return { teamId, ym, weeks, wd, holidays, rows, sub: sub || null, noYearHol: yearHol === 0 };
+    let away = {};
+    try { away = await roadLoadAway(inspTeamById(teamId), from, to, wd); } catch (e) { away = {}; }   // 못 읽어도 로드표는 그대로
+    return { teamId, ym, weeks, wd, holidays, rows, away, sub: sub || null, noYearHol: yearHol === 0 };
+  }
+
+  // 조원 퇴근·휴가 (자재관리 데이터, 읽기만)
+  //  - 퇴근: 근무표 등록(work_duty_roster)의 평일당직·휴일당직·야간점검 → 다음날이 로드 평일이면 '퇴근'
+  //    (월~목 평당·수 야점 → 다음날 / 금 평당·토 휴당 → 다음날 주말이라 없음 / 일 휴당 → 월요일)
+  //  - 휴가: 승인된 휴가신청(leave_requests) 중 연차·경조·휴가·훈련
+  const ROAD_OFF_DUTY = ['평일당직', '휴일당직', '야간점검'];
+  const ROAD_LEAVE = ['연차', '경조', '휴가', '훈련'];
+  async function roadLoadAway(t, from, to, wd) {
+    const names = new Set([t?.main_inspector, t?.sub_inspector, t?.sub_inspector2].map(n => (n || '').trim()).filter(Boolean));
+    if (!names.size) return {};
+    const work = new Set(wd), away = {};
+    const add = (date, name, kind) => { if (!work.has(date)) return; (away[date] = away[date] || []).push({ name, kind }); };
+    const dayBefore = new Date(Date.parse(from) - 86400000).toISOString().slice(0, 10);   // 1일 퇴근 = 전날 당직
+    const [{ data: duty }, { data: leave }] = await Promise.all([
+      db.from('work_duty_roster').select('duty_date, duty_type, account_id').gte('duty_date', dayBefore).lt('duty_date', to).in('duty_type', ROAD_OFF_DUTY),
+      db.from('leave_requests').select('author_id, leave_type, s_yr, s_mo, s_dy, e_yr, e_mo, e_dy').eq('approval_status', 'approved').in('leave_type', ROAD_LEAVE)
+    ]);
+    const ids = [...new Set([...(duty || []).map(x => x.account_id), ...(leave || []).map(x => x.author_id)].filter(Boolean))];
+    if (!ids.length) return {};
+    const { data: acc } = await db.from('accounts').select('id, username').in('id', ids);
+    const nameOf = {};
+    (acc || []).forEach(a => { nameOf[a.id] = (a.username || '').trim(); });
+    (duty || []).forEach(x => {
+      const n = nameOf[x.account_id];
+      if (!names.has(n)) return;
+      const next = new Date(Date.parse(x.duty_date) + 86400000).toISOString().slice(0, 10);
+      add(next, n, '퇴근');
+    });
+    const ymd = (y, m, d) => { y = +y; if (y < 100) y += 2000; return y && +m && +d ? `${y}-${String(+m).padStart(2, '0')}-${String(+d).padStart(2, '0')}` : null; };
+    (leave || []).forEach(x => {
+      const n = nameOf[x.author_id];
+      if (!names.has(n)) return;
+      const s = ymd(x.s_yr, x.s_mo, x.s_dy), e = ymd(x.e_yr || x.s_yr, x.e_mo || x.s_mo, x.e_dy || x.s_dy) || s;
+      if (!s || e < from || s >= to) return;
+      wd.forEach(d => { if (d >= s && d <= e) add(d, n, x.leave_type); });
+    });
+    Object.values(away).forEach(L => L.sort((a, b) => (a.kind === '퇴근') - (b.kind === '퇴근') || a.name.localeCompare(b.name, 'ko')));
+    return away;
+  }
+  function roadAwayHtml(c, date, big) {
+    const L = (c.away || {})[date];
+    if (!L?.length) return '';
+    return `<div style="display:flex;flex-wrap:wrap;gap:2px;margin:${big ? '6px 0 0' : '0 0 3px'}">` + L.map(a => {
+      const off = a.kind === '퇴근';
+      return `<span style="font-size:${big ? 12 : 10}px;font-weight:700;padding:${big ? '2px 7px' : '0 4px'};border-radius:4px;white-space:nowrap;${off ? 'background:rgba(113,128,150,.18);color:var(--tx-2)' : 'background:rgba(159,122,234,.18);color:#805ad5'}">${escHtml(a.kind)} ${escHtml(a.name)}</span>`;
+    }).join('') + '</div>';
   }
   function roadName(r) { return r.site.site_name; }
 
@@ -7504,6 +7553,7 @@
       const hol = c.holidays[date];
       return `<td ${editable ? `onclick="openRoadDay('${date}')"` : ''} style="position:relative;padding:3px 3px ${items.length ? 24 : 5}px;border:1px solid var(--br);vertical-align:top;font-size:10.5px;line-height:1.45;${editable ? 'cursor:pointer;' : ''}${hol ? 'background:rgba(229,62,62,.18)' : ''}">
         <div style="font-size:14px;font-weight:800;margin-bottom:2px;${hol ? 'background:#e53e3e;color:white;border-radius:4px;padding:0 5px;display:inline-block' : 'color:var(--tx)'}">${+date.slice(8)}${hol ? ' <span style="font-size:11px">' + escHtml(hol) + '</span>' : ''}</div>
+        ${hol ? '' : roadAwayHtml(c, date)}
         ${items.map(i => `<div style="color:${i.off ? 'var(--tx-4)' : 'var(--tx)'};word-break:keep-all;overflow-wrap:anywhere"><span style="color:${i.off ? 'var(--tx-4)' : i.mark.startsWith('T') ? '#3182ce' : '#38a169'};font-weight:700">${escHtml(i.mark.slice(0, 1))}</span> ${escHtml(i.name)} <b style="font-size:12px;font-weight:900;color:${i.off ? 'var(--tx-4)' : '#dd6b20'}">${i.units}</b></div>`).join('')}
         ${items.length ? `<div style="position:absolute;left:3px;right:3px;bottom:3px;padding-top:2px;border-top:1px dashed var(--br-mid);text-align:right;font-size:11.5px;font-weight:800;color:var(--tx)">합계 ${items.reduce((a, i) => a + i.units, 0)}대</div>` : ''}
         ${editable && !items.length ? '<div style="color:var(--tx-5);font-size:16px;text-align:center;padding:6px 0">+</div>' : ''}
@@ -7515,7 +7565,7 @@
       ${body}
       <tr><td colspan="6" style="padding:6px 8px;border:1px solid var(--br);text-align:right;font-weight:800;color:var(--tx);font-size:13px">합계 ${total}대</td></tr>
     </table></div>
-    <div style="font-size:11px;color:var(--tx-3);margin-top:8px;line-height:1.6">${editable ? '<b style="color:var(--tx-2)">날짜 칸을 누르면 그날 현장을 넣고 뺄 수 있습니다.</b><br>' : ''}T = TK 계약, D = 대솔 계약. 빨간 칸 = 휴일(☰ 휴일 관리), 회색 = 이번 달이 점검 달이 아닌 분기 현장(합계엔 포함).</div>`;
+    <div style="font-size:11px;color:var(--tx-3);margin-top:8px;line-height:1.6">${editable ? '<b style="color:var(--tx-2)">날짜 칸을 누르면 그날 현장을 넣고 뺄 수 있습니다.</b><br>' : ''}T = TK 계약, D = 대솔 계약. 빨간 칸 = 휴일(☰ 휴일 관리), 회색 = 이번 달이 점검 달이 아닌 분기 현장(합계엔 포함).<br>날짜 밑 <b style="color:var(--tx-2)">퇴근</b>·<b style="color:#805ad5">연차 등</b> = 조원 일정(자재관리 근무표 등록·승인된 휴가신청). 평당·휴당·야점 다음날이 퇴근입니다.</div>`;
   }
 
   // ── 날짜 하나 눌러서 그날 현장 넣기·빼기 (여러 곳 한 번에) ──
@@ -7530,7 +7580,7 @@
     if (!w) return;
     if (c.holidays[date]) return showToast(`${roadMD(date)}은 휴일(${c.holidays[date]})이라 로드에서 건너뜁니다.`);
     roadDay = { date, w, d, work: new Map(), all: false, q: '', ask: null, edit: null, moving: false, moveTo: null };
-    document.getElementById('road-day-title').innerHTML = `${roadMD(date)} 로드표${c.holidays[date] ? ` <span style="font-size:12px;background:#e53e3e;color:white;border-radius:4px;padding:1px 6px;margin-left:4px">${escHtml(c.holidays[date])}</span>` : ''}`;
+    document.getElementById('road-day-title').innerHTML = `${roadMD(date)} 로드표${c.holidays[date] ? ` <span style="font-size:12px;background:#e53e3e;color:white;border-radius:4px;padding:1px 6px;margin-left:4px">${escHtml(c.holidays[date])}</span>` : ''}${roadAwayHtml(c, date, true)}`;
     document.getElementById('road-day-search').value = '';
     renderRoadDay();
     document.getElementById('road-day-sheet').style.display = 'flex';
