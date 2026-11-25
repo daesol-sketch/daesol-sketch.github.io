@@ -279,6 +279,9 @@
     .drawer-menu-item { display: flex; align-items: center; gap: 14px; padding: 15px 20px; font-size: 15px; font-family: inherit; color: var(--tx-2); cursor: pointer; border: none; background: none; width: 100%; text-align: left; border-bottom: 1px solid var(--br); font-weight: 500; transition: background 0.15s, color 0.15s; }
     .drawer-menu-item:hover { background: var(--bg-high); color: var(--tx); }
     .drawer-menu-item .menu-icon { font-size: 20px; width: 28px; text-align: center; }
+    /* 달력 아이콘 3개(검사일정·로드표·휴일 관리) 구분용 색 — 로드표 초록, 휴일 빨강 */
+    .ico-green { display: inline-block; filter: hue-rotate(260deg); }
+    .ico-red { display: inline-block; filter: hue-rotate(140deg) saturate(1.3); }
     .drawer-logout { margin: 16px; padding: 12px; background: none; color: #fc8181; border: 1px solid #3a1a1a; border-radius: 10px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; transition: background 0.15s; margin-top: auto; }
     .drawer-logout:hover { background: #2a0a0a; }
 
@@ -508,12 +511,12 @@
   <button class="drawer-menu-item tab-btn" id="tab-fault-btn" onclick="switchTab('fault');closeNavMenu()"><span class="menu-icon">🔧</span> 고장 관리</button>
   <button class="drawer-menu-item tab-btn" id="tab-mgmt-btn" onclick="switchTab('mgmt');closeNavMenu()" style="display:none"><span class="menu-icon">🏢</span> 관리현장</button>
   <button class="drawer-menu-item tab-btn" id="tab-insp-calendar-btn" onclick="switchTab('insp-calendar');closeNavMenu()" style="display:none"><span class="menu-icon">🗓️</span> 검사일정</button>
-  <button class="drawer-menu-item tab-btn" id="tab-road-btn" onclick="switchTab('road');closeNavMenu()" style="display:none"><span class="menu-icon">📆</span> 로드표</button>
+  <button class="drawer-menu-item tab-btn" id="tab-road-btn" onclick="switchTab('road');closeNavMenu()" style="display:none"><span class="menu-icon ico-green">📆</span> 로드표</button>
   <button class="drawer-menu-item tab-btn" id="tab-jungong-btn" onclick="switchTab('jungong');closeNavMenu()" style="display:none"><span class="menu-icon">📋</span> 준공계</button>
   <button class="drawer-menu-item tab-btn" id="tab-gongsa-btn" onclick="switchTab('gongsa');closeNavMenu()" style="display:none"><span class="menu-icon">📸</span> 공사팀 사진철</button>
   <button class="drawer-menu-item tab-btn" id="tab-docket-btn" onclick="switchTab('docket');closeNavMenu()" style="display:none"><span class="menu-icon">📝</span> 서비스다켓</button>
   <button class="drawer-menu-item tab-btn" id="tab-sites-btn" onclick="switchTab('sites');closeNavMenu()" style="display:none"><span class="menu-icon">👤</span> 인사 관리</button>
-  <button class="drawer-menu-item tab-btn" id="tab-holiday-btn" onclick="switchTab('holiday');closeNavMenu()" style="display:none"><span class="menu-icon">📅</span> 휴일 관리</button>
+  <button class="drawer-menu-item tab-btn" id="tab-holiday-btn" onclick="switchTab('holiday');closeNavMenu()" style="display:none"><span class="menu-icon ico-red">📅</span> 휴일 관리</button>
   <button class="drawer-menu-item tab-btn" id="tab-call-logs-btn" onclick="switchTab('call-logs');closeNavMenu()" style="display:none"><span class="menu-icon">📞</span> 전화 기록</button>
   <button class="drawer-menu-item tab-btn" id="tab-contracts-btn" onclick="switchTab('contracts');closeNavMenu()" style="display:none"><span class="menu-icon">📄</span> 계약서</button>
   <button class="drawer-menu-item tab-btn" id="tab-stats-btn" onclick="switchTab('stats');closeNavMenu()" style="display:none"><span class="menu-icon">📊</span> 통계</button>
@@ -935,7 +938,7 @@
   <!-- 휴일 관리 -->
   <div class="page" id="page-holiday">
     <div class="card">
-      <h2>📅 휴일 관리</h2>
+      <h2><span class="ico-red">📅</span> 휴일 관리</h2>
       <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
         <div style="position:relative;display:flex;flex:1;min-width:140px">
           <input type="text" id="holiday-date-input" placeholder="2026-04-15" maxlength="10" oninput="autoFormatDate(this)" style="padding:9px 12px;border:1.5px solid #cbd5e0;border-radius:8px 0 0 8px;font-size:14px;font-family:inherit;width:100%" />
@@ -1068,7 +1071,7 @@
   <div class="page" id="page-road">
     <div style="padding:14px 14px 90px;max-width:760px;margin:0 auto">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-        <h2 style="font-size:18px;font-weight:800;margin:0;color:var(--tx)">📆 로드표</h2>
+        <h2 style="font-size:18px;font-weight:800;margin:0;color:var(--tx)"><span class="ico-green">📆</span> 로드표</h2>
         <span style="font-size:11px;font-weight:700;color:#dd6b20;border:1px solid #dd6b20;border-radius:10px;padding:1px 8px">시험 운영</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
@@ -2250,7 +2253,7 @@
     <h3>👀 관리자 메뉴 한눈에 보기</h3>
     <table class="mn-table">
       <tr><td><strong>👤 인사 관리</strong></td><td>계정 추가 · 비밀번호 초기화 · 삭제</td></tr>
-      <tr><td><strong>📅 휴일 관리</strong></td><td>공휴일·단체연차 등록</td></tr>
+      <tr><td><strong><span class="ico-red">📅</span> 휴일 관리</strong></td><td>공휴일·단체연차 등록</td></tr>
       <tr><td><strong>📄 계약서</strong></td><td>계약서 PDF 보관</td></tr>
       <tr><td><strong>📊 통계</strong></td><td>접속 · 메뉴 이용 · 고장 통계</td></tr>
       <tr><td><strong>📝 서비스다켓</strong> <span class="mn-tag mn-tag-admin">마스터</span></td><td>TKE·대솔이엘 작업보고서 작성 · 고객 서명 · PDF</td></tr>
@@ -2343,7 +2346,7 @@
       <div class="mn-tip"><strong>전화번호를 등록하면</strong> 해당 직원이 회사로 전화할 때 알림에 이름이 표시됩니다.</div>
     </div>
     <div class="mn-card">
-      <h3>📅 휴일 관리</h3>
+      <h3><span class="ico-red">📅</span> 휴일 관리</h3>
       <ul class="mn-steps">
         <li>날짜와 휴일명(예: 개천절, 단체연차) 입력 → <strong>+ 추가</strong></li>
       </ul>
@@ -3505,7 +3508,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.25-6';
+  const APP_VERSION = '2026.11.25-7';
   const RELEASE_NOTES = [
     { version: '2026.11.25-6', date: '11/25', items: [
       { text: '🔁 <b>반복고장현황</b> 카드를 누르면 고장마다 <b>신고 내용·처리 내용</b>을 볼 수 있습니다. (펼친 뒤 <b>[상세 보기]</b>로 접수 내용 전체 확인)' },
@@ -5520,19 +5523,26 @@
   /* ── 계정 관리 ── */
   const ROLE_LABEL = { '직원':'👷 직원', '관리자':'👑 관리자', '마스터':'🔱 마스터' };
 
+  // 지난 휴일은 목록에서만 숨김 (DB엔 남김 — 지난달 로드표 순번·당직 휴일 판단에 씀)
+  let holidayShowPast = false;
   async function loadHolidayList() {
     const el = document.getElementById('holiday-list');
     if (!el) return;
     const { data } = await db.from('holidays').select('*').order('date', { ascending: true });
     if (!data || !data.length) { el.innerHTML = '<div style="color:#a0aec0;font-size:13px;padding:8px 0">등록된 휴일이 없습니다.</div>'; return; }
-    el.innerHTML = data.map(h => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f7fafc;border-radius:8px;margin-bottom:8px">
+    const today = new Date().toLocaleDateString('sv');
+    const past = data.filter(h => h.date < today), coming = data.filter(h => h.date >= today);
+    const row = (h, old) => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f7fafc;border-radius:8px;margin-bottom:8px;${old ? 'opacity:.55' : ''}">
         <div>
           <span style="font-weight:700;color:#1a365d;margin-right:10px">${h.date}</span>
-          <span style="font-size:13px;color:#4a5568">${h.name}</span>
+          <span style="font-size:13px;color:#4a5568">${escHtml(h.name || '')}</span>
         </div>
         <button onclick="deleteHoliday(${h.id})" style="padding:4px 12px;background:none;border:1.5px solid #fed7d7;color:#c53030;border-radius:6px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">삭제</button>
-      </div>`).join('');
+      </div>`;
+    el.innerHTML = (coming.length ? coming.map(h => row(h, false)).join('') : '<div style="color:#a0aec0;font-size:13px;padding:8px 0">앞으로 남은 휴일이 없습니다.</div>') +
+      (past.length ? `<button type="button" onclick="holidayShowPast=!holidayShowPast;loadHolidayList()" style="width:100%;padding:9px;margin:4px 0 8px;border:1.5px dashed #cbd5e0;border-radius:8px;background:none;color:#718096;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">${holidayShowPast ? '▲ 지난 휴일 숨기기' : '▼ 지난 휴일 보기 (' + past.length + '건)'}</button>` +
+        (holidayShowPast ? past.slice().reverse().map(h => row(h, true)).join('') : '') : '');
   }
 
   async function addHoliday() {
