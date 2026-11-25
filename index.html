@@ -3505,7 +3505,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.25-4';
+  const APP_VERSION = '2026.11.25-5';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -7476,15 +7476,21 @@
       if (!s || e < from || s >= to) return;
       wd.forEach(d => { if (d >= s && d <= e) add(d, n, x.leave_type); });
     });
-    Object.values(away).forEach(L => L.sort((a, b) => (a.kind === '퇴근') - (b.kind === '퇴근') || a.name.localeCompare(b.name, 'ko')));
+    Object.values(away).forEach(L => L.sort((a, b) => (b.kind === '퇴근') - (a.kind === '퇴근') || a.kind.localeCompare(b.kind, 'ko') || a.name.localeCompare(b.name, 'ko')));
     return away;
   }
+  // 같은 종류끼리 묶기: [{kind:'퇴근', names:['박진원','윤태웅']}, {kind:'연차', ...}] → "퇴근 박진원, 윤태웅"
+  function roadAwayGroups(L) {
+    const g = [];
+    (L || []).forEach(a => { const x = g.find(y => y.kind === a.kind); if (x) { if (!x.names.includes(a.name)) x.names.push(a.name); } else g.push({ kind: a.kind, names: [a.name] }); });
+    return g;
+  }
   function roadAwayHtml(c, date, big) {
-    const L = (c.away || {})[date];
-    if (!L?.length) return '';
-    return `<div style="display:flex;flex-wrap:wrap;gap:2px;margin:${big ? '6px 0 0' : '0 0 3px'}">` + L.map(a => {
+    const G = roadAwayGroups((c.away || {})[date]);
+    if (!G.length) return '';
+    return `<div style="display:flex;flex-wrap:wrap;gap:2px;margin:${big ? '6px 0 0' : '0 0 3px'}">` + G.map(a => {
       const off = a.kind === '퇴근';
-      return `<span style="font-size:${big ? 12 : 10}px;font-weight:700;padding:${big ? '2px 7px' : '0 4px'};border-radius:4px;white-space:nowrap;${off ? 'background:rgba(113,128,150,.18);color:var(--tx-2)' : 'background:rgba(159,122,234,.18);color:#805ad5'}">${escHtml(a.kind)} ${escHtml(a.name)}</span>`;
+      return `<span style="font-size:${big ? 12 : 10}px;font-weight:700;padding:${big ? '2px 7px' : '0 4px'};border-radius:4px;${off ? 'background:rgba(229,62,62,.15);color:#e53e3e' : 'background:rgba(159,122,234,.18);color:#805ad5'}">${escHtml(a.kind)} ${escHtml(a.names.join(', '))}</span>`;
     }).join('') + '</div>';
   }
   function roadName(r) { return r.site.site_name; }
@@ -7566,7 +7572,7 @@
       ${body}
       <tr><td colspan="6" style="padding:6px 8px;border:1px solid var(--br);text-align:right;font-weight:800;color:var(--tx);font-size:13px">합계 ${total}대</td></tr>
     </table></div>
-    <div style="font-size:11px;color:var(--tx-3);margin-top:8px;line-height:1.6">${editable ? '<b style="color:var(--tx-2)">날짜 칸을 누르면 그날 현장을 넣고 뺄 수 있습니다.</b><br>' : ''}T = TK 계약, D = 대솔 계약. 빨간 칸 = 휴일(☰ 휴일 관리), 회색 = 이번 달이 점검 달이 아닌 분기 현장(합계엔 포함).<br>날짜 밑 <b style="color:var(--tx-2)">퇴근</b>·<b style="color:#805ad5">연차 등</b> = 조원 일정(자재관리 근무표 등록·승인된 휴가신청). 평당·휴당·야점 다음날이 퇴근입니다.</div>`;
+    <div style="font-size:11px;color:var(--tx-3);margin-top:8px;line-height:1.6">${editable ? '<b style="color:var(--tx-2)">날짜 칸을 누르면 그날 현장을 넣고 뺄 수 있습니다.</b><br>' : ''}T = TK 계약, D = 대솔 계약. 빨간 칸 = 휴일(☰ 휴일 관리), 회색 = 이번 달이 점검 달이 아닌 분기 현장(합계엔 포함).<br>날짜 밑 <b style="color:#e53e3e">퇴근</b>·<b style="color:#805ad5">연차 등</b> = 조원 일정(자재관리 근무표 등록·승인된 휴가신청). 평당·휴당·야점 다음날이 퇴근입니다.</div>`;
   }
 
   // ── 날짜 하나 눌러서 그날 현장 넣기·빼기 (여러 곳 한 번에) ──
@@ -7931,7 +7937,7 @@
         const L = [];
         if (c.holidays[date]) L.push({ name: c.holidays[date], red: true });
         roadCellItems(c, date).forEach(i => L.push(i));
-        // 조원 퇴근·휴가는 맨 아래 한 줄 (대수 없음 → 합계 안 들어감)
+        // 조원 퇴근·휴가는 그 주 맨 아래 줄에 한 줄 (현장이 8개 꽉 차면 그 주만 한 줄 늘어남, 대수 없음 → 합계 안 들어감)
         const aw = c.holidays[date] ? null : (c.away || {})[date];
         if (aw?.length) L.push({ away: aw });
         return L;
@@ -7961,10 +7967,10 @@
         if (date) Object.assign(ws.getCell(r, b0), { value: +date.slice(8), font: font(), alignment: { horizontal: 'center', vertical: 'middle' },
           ...(c.holidays[date] ? { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: RED } } } : {}) });
         lines[k].forEach((L, li) => {
-          if (L.away) {   // "퇴근 김형준 · 연차 박선웅" — 퇴근 회색, 휴가 보라
-            ws.getCell(r + li, b0 + 2).value = { richText: L.away.flatMap((a, ai) => [
+          if (L.away) {   // 그 주 맨 아래 줄에 "퇴근 박진원, 윤태웅 · 연차 박선웅" — 퇴근 빨강, 휴가 보라
+            ws.getCell(r + n - 1, b0 + 2).value = { richText: roadAwayGroups(L.away).flatMap((a, ai) => [
               ...(ai ? [{ text: ' · ', font: font({ color: { argb: 'FF808080' } }) }] : []),
-              { text: a.kind + ' ' + a.name, font: font({ bold: true, color: { argb: a.kind === '퇴근' ? 'FF808080' : 'FF805AD5' } }) }
+              { text: a.kind + ' ' + a.names.join(', '), font: font({ bold: true, color: { argb: a.kind === '퇴근' ? RED : 'FF805AD5' } }) }
             ]) };
             return;
           }
