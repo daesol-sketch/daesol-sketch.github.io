@@ -3505,7 +3505,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.19-1';
+  const APP_VERSION = '2026.11.25-1';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -3603,7 +3603,7 @@
   }
   async function _showInspUpcomingInner() {
     _inspUpcomingDone = true;
-    const isAdmin = currentRole === '관리자' || currentRole === '마스터';
+    const isAdmin = currentRole === '마스터';   // 전체 요약은 마스터만 (관리자는 안 띄움)
     if (!isAdmin && currentRole !== '직원') return;
     const today = new Date().toLocaleDateString('sv');
     try { if (localStorage.getItem(INSP_HIDE_KEY) === today + '|' + currentUser.username) return; } catch (e) {}
@@ -3725,7 +3725,7 @@
   // 관리자: 휴일 관리에 올해(11월부터는 내년도) 휴일이 하나도 없으면 하루 한 번 알림 — 로드표·당직이 휴일을 못 알아봄
   let _holidayRemindDone = false;
   async function checkHolidayReminder() {
-    if (_holidayRemindDone || (currentRole !== '관리자' && currentRole !== '마스터')) return;
+    if (_holidayRemindDone || currentRole !== '마스터') return;   // 마스터만
     _holidayRemindDone = true;
     const now = new Date(), today = now.toLocaleDateString('sv'), y = now.getFullYear();
     try { if (localStorage.getItem('daesol_holiday_remind') === today) return; } catch (e) {}
