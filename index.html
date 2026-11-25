@@ -3505,7 +3505,7 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.25-2';
+  const APP_VERSION = '2026.11.25-3';
   const RELEASE_NOTES = [
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -7930,6 +7930,9 @@
         const L = [];
         if (c.holidays[date]) L.push({ name: c.holidays[date], red: true });
         roadCellItems(c, date).forEach(i => L.push(i));
+        // 조원 퇴근·휴가는 맨 아래 한 줄 (대수 없음 → 합계 안 들어감)
+        const aw = c.holidays[date] ? null : (c.away || {})[date];
+        if (aw?.length) L.push({ away: aw });
         return L;
       });
       const n = Math.max(8, ...lines.map(l => l.length));
@@ -7957,6 +7960,13 @@
         if (date) Object.assign(ws.getCell(r, b0), { value: +date.slice(8), font: font(), alignment: { horizontal: 'center', vertical: 'middle' },
           ...(c.holidays[date] ? { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: RED } } } : {}) });
         lines[k].forEach((L, li) => {
+          if (L.away) {   // "퇴근 김형준 · 연차 박선웅" — 퇴근 회색, 휴가 보라
+            ws.getCell(r + li, b0 + 2).value = { richText: L.away.flatMap((a, ai) => [
+              ...(ai ? [{ text: ' · ', font: font({ color: { argb: 'FF808080' } }) }] : []),
+              { text: a.kind + ' ' + a.name, font: font({ bold: true, color: { argb: a.kind === '퇴근' ? 'FF808080' : 'FF805AD5' } }) }
+            ]) };
+            return;
+          }
           ws.getCell(r + li, b0 + 1).value = L.mark || null;
           ws.getCell(r + li, b0 + 2).value = L.name;
           ws.getCell(r + li, b0 + 3).value = L.units ?? null;
@@ -7964,6 +7974,12 @@
           if (L.off) [1, 2, 3].forEach(j => { ws.getCell(r + li, b0 + j).font = font({ color: { argb: 'FFA0A0A0' } }); });
         });
         sumRanges[k].push(ws.getCell(r, b0 + 3).address + ':' + ws.getCell(r + n - 1, b0 + 3).address);
+      });
+      // 세로로 합친 칸(주·날짜)은 합칠 때 맨 위 칸 테두리로 덮여 아래 선이 사라짐 → 맨 아래 칸에 다시 그음
+      // (style 객체를 맨 위 칸과 같이 쓰므로 새 객체로 바꿔 넣음)
+      [1, ...w.map((_, k) => 2 + k * 4)].forEach(cc => {
+        const cell = ws.getCell(r + n - 1, cc);
+        cell.style = { ...cell.style, border: { ...(cell.style.border || {}), bottom: { style: lastWeek ? 'medium' : 'thin' } } };
       });
       r += n;
     });
