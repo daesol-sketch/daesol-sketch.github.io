@@ -3508,7 +3508,7 @@
   const APP_VERSION = '2026.11.25-6';
   const RELEASE_NOTES = [
     { version: '2026.11.25-6', date: '11/25', items: [
-      { text: '🔁 <b>반복고장현황</b> 카드를 누르면 고장마다 <b>신고 내용·처리 내용</b>을 볼 수 있습니다. (날짜 칸을 누르면 그 건 상세로 바로 이동)' },
+      { text: '🔁 <b>반복고장현황</b> 카드를 누르면 고장마다 <b>신고 내용·처리 내용</b>을 볼 수 있습니다. (펼친 뒤 <b>[상세 보기]</b>로 접수 내용 전체 확인)' },
     ]},
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
@@ -4963,7 +4963,7 @@
             ${g.items.map(r => {
               const d = r.completion_at ? new Date(r.completion_at) : null;
               const dt = d ? `${d.getMonth()+1}/${d.getDate()}` : '-';
-              return `<span onclick="event.stopPropagation();showReportDetail('${escHtml(r.id)}')" title="이 건 상세 보기" style="background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;padding:3px 8px;font-size:11px;color:#4a5568;cursor:pointer">${dt} ${escHtml(r.type||'')} ${r.completion_handler ? '('+escHtml(r.completion_handler)+')' : ''}</span>`;
+              return `<span style="background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;padding:3px 8px;font-size:11px;color:#4a5568">${dt} ${escHtml(r.type||'')} ${r.completion_handler ? '('+escHtml(r.completion_handler)+')' : ''}</span>`;
             }).join('')}
           </div>
           <div style="margin-top:6px;font-size:11px;color:var(--tx-3)" id="repeat-hint-${gi}">▼ 눌러서 신고·처리 내용 보기</div>
