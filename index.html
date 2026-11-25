@@ -3505,8 +3505,11 @@
   /* ── 앱 버전 / 업데이트 안내 ──
      배포할 때마다: APP_VERSION과 version.json의 version을 같은 값으로 올리고,
      직원에게 알릴 내용이 있으면 RELEASE_NOTES 맨 위에 추가 (roles를 주면 해당 역할에게만 표시) */
-  const APP_VERSION = '2026.11.25-5';
+  const APP_VERSION = '2026.11.25-6';
   const RELEASE_NOTES = [
+    { version: '2026.11.25-6', date: '11/25', items: [
+      { text: '🔁 <b>반복고장현황</b> 카드를 누르면 고장마다 <b>신고 내용·처리 내용</b>을 볼 수 있습니다. (날짜 칸을 누르면 그 건 상세로 바로 이동)' },
+    ]},
     { version: '2026.11.03-1', date: '11/3', items: [
       { text: '🗺️ 카톡 알림에 <b>[T맵 길안내]</b> 버튼이 생겼습니다. 누르면 앱이 열리고 바로 길안내를 시작할 수 있습니다.' },
     ]},
@@ -4872,6 +4875,25 @@
     }).join('');
   }
 
+  // 반복고장 카드 펼치기: 그 호기 고장마다 신고 내용·처리 내용 (보기만)
+  function toggleRepeatCard(gi) {
+    const box = document.getElementById('repeat-detail-' + gi), hint = document.getElementById('repeat-hint-' + gi);
+    const g = repeatGroups[gi];
+    if (!box || !g) return;
+    if (box.style.display !== 'none') { box.style.display = 'none'; hint.textContent = '▼ 눌러서 신고·처리 내용 보기'; return; }
+    const fmt = v => { if (!v) return '-'; const d = new Date(v); return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+    const line = (icon, label, text) => text ? `<div style="display:flex;gap:6px;margin-top:4px;font-size:13px;line-height:1.5"><span style="flex-shrink:0;color:var(--tx-3)">${icon} ${label}</span><span style="color:var(--tx);white-space:pre-wrap;word-break:break-all">${escHtml(text)}</span></div>` : '';
+    box.innerHTML = g.items.map(r => `<div onclick="event.stopPropagation()" style="margin-top:8px;padding:10px 12px;background:var(--bg-high);border:1px solid var(--br);border-radius:8px;cursor:default">
+        <div style="font-size:13px;font-weight:700;color:var(--tx)">${fmt(r.completion_at)} · ${escHtml(r.type || '-')} · ${escHtml(r.completion_handler || '-')}</div>
+        ${line('📞', '신고:', r.description || '(내용 없음)')}
+        ${line('🔧', '처리:', r.completion_content || r.completion_detail || '(내용 없음)')}
+        ${line('🔩', '부품:', r.parts_replaced ? '교체함' : '')}
+        <div style="text-align:right;margin-top:6px"><button type="button" onclick="event.stopPropagation();showReportDetail('${escHtml(r.id)}')" style="padding:5px 12px;border:1px solid #3182ce;border-radius:6px;background:transparent;color:#3182ce;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">상세 보기 →</button></div>
+      </div>`).join('');
+    box.style.display = 'block';
+    hint.textContent = '▲ 접기';
+  }
+
   async function renderRepeatPage() {
     const el = document.getElementById('repeat-content');
     if (!currentRole) { el.style.display = 'none'; return; }
@@ -4888,7 +4910,7 @@
     repeatGroups = [];
 
     const { data } = await db.from('reports')
-      .select('id, building, elevator, type, completion_at, created_at, completion_handler')
+      .select('id, building, elevator, type, completion_at, created_at, completion_handler, description, completion_content, completion_detail, parts_replaced')
       .eq('status', '완료')
       .gte('completion_at', fromStr)
       .order('completion_at', { ascending: false });
@@ -4921,14 +4943,14 @@
       return;
     }
 
-    document.getElementById('repeat-list').innerHTML = filtered.map(g => {
+    document.getElementById('repeat-list').innerHTML = filtered.map((g, gi) => {
       const types = g.items.map(r => r.type).filter(Boolean);
       const typeCounts = {};
       types.forEach(t => { typeCounts[t] = (typeCounts[t] || 0) + 1; });
       const topType = Object.entries(typeCounts).sort((a,b) => b[1]-a[1])[0];
       const lastDate = g.items[0].completion_at ? new Date(g.items[0].completion_at).toLocaleDateString('ko-KR') : '-';
-      return `<div class="report-item" style="cursor:default">
-        <div class="report-left">
+      return `<div class="report-item" onclick="toggleRepeatCard(${gi})" style="cursor:pointer">
+        <div class="report-left" style="flex:1;min-width:0">
           <div class="report-header">
             <span class="report-title">${escHtml(g.building||'')} · ${escHtml(g.elevator||'')}</span>
             <span style="background:#fff5f5;color:#c53030;border:1.5px solid #feb2b2;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:700">${g.items.length}회</span>
@@ -4941,9 +4963,11 @@
             ${g.items.map(r => {
               const d = r.completion_at ? new Date(r.completion_at) : null;
               const dt = d ? `${d.getMonth()+1}/${d.getDate()}` : '-';
-              return `<span style="background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;padding:3px 8px;font-size:11px;color:#4a5568">${dt} ${escHtml(r.type||'')} ${r.completion_handler ? '('+escHtml(r.completion_handler)+')' : ''}</span>`;
+              return `<span onclick="event.stopPropagation();showReportDetail('${escHtml(r.id)}')" title="이 건 상세 보기" style="background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;padding:3px 8px;font-size:11px;color:#4a5568;cursor:pointer">${dt} ${escHtml(r.type||'')} ${r.completion_handler ? '('+escHtml(r.completion_handler)+')' : ''}</span>`;
             }).join('')}
           </div>
+          <div style="margin-top:6px;font-size:11px;color:var(--tx-3)" id="repeat-hint-${gi}">▼ 눌러서 신고·처리 내용 보기</div>
+          <div id="repeat-detail-${gi}" style="display:none"></div>
         </div>
       </div>`;
     }).join('');
